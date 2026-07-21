@@ -1,0 +1,11 @@
+<svg width="480" height="110" viewBox="0 0 480 110" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@700&amp;display=swap');
+      .word-muni{ font-family:'Arial Rounded MT Bold','Baloo 2', Arial, sans-serif; font-weight:700; }
+    </style>
+  </defs>
+  <rect x="0" y="10" width="90" height="90" rx="18" fill="#16424A"/>
+  <text x="45" y="67" text-anchor="middle" class="word-muni" font-size="42" fill="#B8842C">MF</text>
+  <text x="110" y="67" class="word-muni" font-size="52" fill="#16424A">Muni<tspan fill="#B8842C">Forte</tspan></text>
+</svg>

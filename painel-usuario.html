@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel do Usuário — MuniForte</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2316424A'/%3E%3Cpath d='M15,44 L15,20 L24,34 L33,20 L33,44 M41,44 L41,20 L51,20 M41,31 L49,31' fill='none' stroke='%23B8842C' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5F4EF; --surface:#FFFFFF; --ink:#1C2B2E; --ink-soft:#566063;
+    --primary:#16424A; --primary-light:#2C6E76; --primary-wash:#E7EEEE;
+    --gold:#B8842C; --gold-soft:#F3E8D2;
+    --success:#3A7A5D; --success-soft:#E4EFE7;
+    --warning:#B4472A; --warning-soft:#F7E6DE;
+    --info:#3D6B8C; --info-soft:#E3ECF2;
+    --border:#E0DCCF; --radius:10px;
+    --sidebar-w:240px;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--ink); font-family:'IBM Plex Sans', sans-serif; -webkit-font-smoothing:antialiased; }
+  @media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important;} }
+  a{color:inherit;} button{font-family:inherit; cursor:pointer;}
+  a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
+
+  .shell{ display:flex; min-height:100vh; }
+
+  .sidebar{ width:var(--sidebar-w); flex-shrink:0; background:var(--primary); color:#fff; display:flex; flex-direction:column; position:sticky; top:0; height:100vh; }
+  .sidebar-brand{ display:flex; align-items:center; gap:10px; padding:20px 18px; border-bottom:1px solid rgba(255,255,255,0.12); }
+  .brand-mark{ width:30px; height:30px; border-radius:19%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-family:'Arial Rounded MT Bold','Baloo 2', Arial, sans-serif; font-size:14px; color:var(--gold); font-weight:700; flex-shrink:0; }
+  .sidebar-brand div{ font-family:'Arial Rounded MT Bold','Baloo 2', Arial, sans-serif; font-weight:700; font-size:15.5px; line-height:1.3; }
+  .sidebar-brand small{ display:block; font-family:'IBM Plex Sans', sans-serif; font-weight:400; font-size:10.5px; color:#B9D0CE; }
+  .tenant-tag{ margin:14px 18px 6px; font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:0.4px; text-transform:uppercase; color:#8FB0AE; }
+  .tenant-name{ margin:0 18px 18px; font-size:12.5px; color:#DCEAE9; padding-bottom:16px; border-bottom:1px solid rgba(255,255,255,0.12); }
+
+  .nav-group{ padding:6px 12px; }
+  .nav-label{ font-size:10px; text-transform:uppercase; letter-spacing:0.6px; color:#7FA3A1; padding:10px 10px 6px; font-weight:600; }
+  .nav-item{ display:flex; align-items:center; gap:10px; width:100%; text-align:left; padding:10px 12px; border-radius:7px; background:none; border:none; color:#CFE3E1; font-size:13.5px; margin-bottom:2px; }
+  .nav-item .ic{ width:16px; text-align:center; font-size:14px; }
+  .nav-item:hover{ background:rgba(255,255,255,0.06); color:#fff; }
+  .nav-item.active{ background:rgba(255,255,255,0.14); color:#fff; font-weight:600; }
+  .sidebar-foot{ margin-top:auto; padding:16px 18px; border-top:1px solid rgba(255,255,255,0.12); display:flex; align-items:center; gap:10px; }
+  .avatar{ width:32px; height:32px; border-radius:50%; background:var(--primary-light); display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono', monospace; font-size:12px; border:1px solid rgba(255,255,255,0.25); flex-shrink:0; }
+  .sidebar-foot .who{ font-size:12.5px; line-height:1.35; }
+  .sidebar-foot .who strong{ display:block; font-weight:600; }
+  .sidebar-foot .who span{ color:#9DBAB8; font-size:11px; }
+  .sidebar-wa{ margin:6px 18px 18px; display:flex; align-items:center; justify-content:center; gap:7px; background:#25D366; color:#fff; text-decoration:none; padding:9px 10px; border-radius:8px; font-size:12px; font-weight:700; }
+  .sidebar-wa:hover{ background:#1EBE5A; }
+
+  .main{ flex:1; min-width:0; }
+  .topbar{ background:var(--surface); border-bottom:1px solid var(--border); padding:16px 30px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
+  .topbar h1{ font-family:'IBM Plex Serif', serif; font-size:20px; margin:0; }
+  .topbar .sub{ font-size:12.5px; color:var(--ink-soft); margin-top:2px; }
+  .topbar-actions{ display:flex; gap:10px; align-items:center; }
+  .btn-primary{ background:var(--primary); color:#fff; border:none; border-radius:7px; padding:10px 18px; font-size:13px; font-weight:600; text-decoration:none; display:inline-flex; align-items:center; gap:7px; }
+  .btn-primary:hover{ background:var(--primary-light); }
+  .btn-gold{ background:var(--gold); color:#fff; border:none; border-radius:7px; padding:10px 18px; font-size:13px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:7px; }
+  .btn-gold:hover{ background:#A2751F; }
+  .btn-ghost{ background:none; border:1px solid var(--border); border-radius:7px; padding:9px 14px; font-size:12.5px; color:var(--ink); font-weight:600; }
+  .btn-ghost:hover{ border-color:var(--primary); }
+  .btn-wa{ background:#25D366; color:#fff; border:none; border-radius:7px; padding:10px 18px; font-size:13px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:7px; }
+  .btn-wa:hover{ background:#1EBE5A; }
+
+  .content{ padding:26px 30px 60px; max-width:1180px; }
+  .view{ display:none; }
+  .view.active{ display:block; animation:viewIn .3s ease both; }
+  @keyframes viewIn{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
+
+  .kpi-row{ display:grid; grid-template-columns:repeat(4,1fr); gap:16px; margin-bottom:26px; }
+  .kpi-card{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:18px 20px; }
+  .kpi-label{ font-size:11.5px; color:var(--ink-soft); text-transform:uppercase; letter-spacing:0.4px; margin-bottom:8px; font-weight:600; }
+  .kpi-value{ font-family:'IBM Plex Serif', serif; font-size:26px; color:var(--primary); font-weight:600; }
+  .kpi-note{ font-family:'IBM Plex Mono', monospace; font-size:11px; margin-top:6px; color:var(--ink-soft); }
+  @media (max-width:980px){ .kpi-row{ grid-template-columns:1fr 1fr; } }
+
+  .panel{ background:var(--surface); border:1px solid var(--border); border-radius:var(--radius); padding:22px 24px; margin-bottom:22px; }
+  .panel-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:10px; }
+  .panel-head h2{ font-family:'IBM Plex Serif', serif; font-size:17px; margin:0; }
+  .panel-head .note{ font-size:11.5px; color:var(--ink-soft); font-family:'IBM Plex Mono', monospace; }
+  .split-panels{ display:grid; grid-template-columns:1.3fr 1fr; gap:20px; }
+  @media (max-width:980px){ .split-panels{ grid-template-columns:1fr; } }
+
+  .progress-track{ height:8px; background:var(--border); border-radius:4px; overflow:hidden; margin:10px 0 6px; }
+  .progress-fill{ height:100%; background:var(--gold); border-radius:4px; transition:width .3s ease; }
+  .progress-text{ font-size:12px; color:var(--ink-soft); font-family:'IBM Plex Mono', monospace; }
+
+  .deadline-row{ display:grid; grid-template-columns:1fr 140px 90px; align-items:center; gap:14px; padding:10px 0; border-bottom:1px solid var(--border); font-size:13px; }
+  .deadline-row:last-child{ border-bottom:none; }
+  .deadline-bar{ height:6px; border-radius:4px; }
+  .deadline-bar.urgent{ background:var(--warning); }
+  .deadline-bar.medio{ background:var(--gold); }
+  .deadline-bar.longo{ background:var(--success); }
+  .deadline-days{ font-family:'IBM Plex Mono', monospace; font-size:11.5px; text-align:right; }
+
+  .status-pill{ font-size:10.5px; font-weight:600; padding:4px 9px; border-radius:20px; text-transform:uppercase; letter-spacing:0.3px; white-space:nowrap; }
+  .status-pill.proposto{ background:var(--info-soft); color:var(--info); }
+  .status-pill.aprovado{ background:var(--gold-soft); color:var(--gold); }
+  .status-pill.execucao{ background:var(--primary-wash); color:var(--primary); }
+  .status-pill.prestacao{ background:var(--success-soft); color:var(--success); }
+
+  table{ width:100%; border-collapse:collapse; font-size:13px; }
+  thead th{ text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:0.4px; color:var(--ink-soft); font-weight:600; padding:10px 12px; border-bottom:1px solid var(--border); }
+  tbody td{ padding:13px 12px; border-bottom:1px solid var(--border); vertical-align:middle; }
+  tbody tr:last-child td{ border-bottom:none; }
+
+  /* ===== entity toggle (Prefeitura / OSC) ===== */
+  .entity-badge{ display:flex; align-items:center; gap:8px; background:var(--primary-wash); border:1px solid #CFE0DE; border-radius:9px; padding:10px 16px; margin-bottom:18px; font-size:13px; color:var(--primary); }
+  .entity-badge .ic{ font-size:14px; }
+  .demo-switcher{ display:flex; align-items:center; gap:4px; background:var(--gold-soft); border:1px dashed var(--gold); border-radius:8px; padding:4px; }
+  .demo-switcher-label{ font-size:10.5px; font-weight:700; color:var(--gold); padding:0 6px; font-family:'IBM Plex Mono', monospace; }
+  .demo-opt{ border:none; background:none; padding:6px 10px; border-radius:6px; font-size:11.5px; font-weight:600; color:#8A6420; }
+  .demo-opt.active{ background:var(--gold); color:#fff; }
+  .demo-strip{ background:var(--gold-soft); color:#7A5A1E; font-size:11px; font-family:'IBM Plex Mono', monospace; padding:6px 30px; border-bottom:1px solid var(--border); }
+
+  /* ===== accordion (diagnóstico) ===== */
+  .accordion-item{ border:1px solid var(--border); border-radius:10px; margin-bottom:12px; overflow:hidden; }
+  .accordion-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:15px 18px; background:var(--surface); cursor:pointer; }
+  .accordion-head:hover{ background:var(--bg); }
+  .accordion-num{ width:26px; height:26px; border-radius:50%; background:var(--primary-wash); color:var(--primary); display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:700; flex-shrink:0; }
+  .accordion-item.done .accordion-num{ background:var(--success); color:#fff; }
+  .accordion-title{ flex:1; }
+  .accordion-title strong{ display:block; font-size:14px; }
+  .accordion-title span{ font-size:11.5px; color:var(--ink-soft); }
+  .accordion-chev{ font-size:13px; color:var(--ink-soft); transition:transform .2s ease; }
+  .accordion-item.open .accordion-chev{ transform:rotate(180deg); }
+  .accordion-body{ display:none; padding:4px 18px 20px; border-top:1px solid var(--border); }
+  .accordion-item.open .accordion-body{ display:block; }
+
+  .field-group{ margin-bottom:16px; }
+  .field-group-title{ font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; color:var(--ink-soft); margin:16px 0 10px; display:flex; align-items:center; gap:8px; }
+  .badge-count{ font-family:'IBM Plex Mono', monospace; font-weight:400; text-transform:none; letter-spacing:0; font-size:11px; color:#8A8577; }
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:12px; }
+  .field-row.three{ grid-template-columns:1fr 1fr 1fr; }
+  @media (max-width:760px){ .field-row, .field-row.three{ grid-template-columns:1fr; } }
+  .field label{ display:flex; justify-content:space-between; align-items:center; font-size:12.5px; font-weight:600; margin-bottom:6px; }
+  .field input, .field select, .field textarea{ width:100%; border:1px solid var(--border); border-radius:7px; padding:9px 11px; font-size:13px; font-family:'IBM Plex Sans', sans-serif; background:#fff; }
+  .field input:disabled{ background:var(--bg); color:var(--ink-soft); }
+  .src-tag{ font-family:'IBM Plex Mono', monospace; font-size:9.5px; font-weight:600; padding:2px 7px; border-radius:20px; background:var(--bg); color:var(--ink-soft); text-transform:uppercase; }
+  .src-tag.auto{ background:var(--success-soft); color:var(--success); }
+
+  .skip-note{ font-size:11.5px; color:var(--ink-soft); }
+  .diag-footer{ display:flex; align-items:center; justify-content:space-between; margin-top:6px; flex-wrap:wrap; gap:10px; }
+  .diag-savebar{ position:sticky; bottom:0; background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px 20px; display:flex; align-items:center; justify-content:space-between; gap:14px; margin-top:6px; flex-wrap:wrap; }
+  .diag-savebar .msg{ font-size:12.5px; color:var(--ink-soft); }
+
+  .callout{ background:var(--primary-wash); border:1px solid #CFE0DE; border-radius:10px; padding:14px 16px; font-size:12.5px; color:var(--primary); margin-bottom:20px; line-height:1.55; }
+  .callout strong{ display:block; margin-bottom:2px; }
+
+  /* ===== busca / ideias (reaproveitado) ===== */
+  .chip-row{ display:flex; gap:7px; flex-wrap:wrap; }
+  .chip{ border:1px solid var(--border); background:#fff; padding:7px 13px; border-radius:20px; font-size:12.5px; color:var(--ink-soft); }
+  .chip.active{ background:var(--primary); border-color:var(--primary); color:#fff; font-weight:500; }
+  .card-list{ display:flex; flex-direction:column; gap:14px; }
+  .prog-card{ background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px 20px; display:flex; justify-content:space-between; gap:18px; flex-wrap:wrap; }
+  .prog-card h3{ font-size:15px; margin:6px 0 6px; }
+  .prog-card .org{ font-size:11.5px; color:var(--ink-soft); font-family:'IBM Plex Mono', monospace; }
+  .audience-tag{ display:inline-block; margin-left:8px; font-size:9.5px; font-weight:700; text-transform:uppercase; padding:2px 7px; border-radius:20px; letter-spacing:.2px; }
+  .audience-tag.municipio{ background:var(--primary-wash); color:var(--primary); }
+  .audience-tag.osc{ background:var(--gold-soft); color:var(--gold); }
+  .audience-tag.ambos{ background:var(--success-soft); color:var(--success); }
+  .prog-card .desc{ font-size:12.5px; color:var(--ink-soft); max-width:520px; margin:6px 0 10px; line-height:1.5; }
+  .prog-card .side{ display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
+  .deadline-chip{ font-size:11px; font-weight:600; padding:4px 10px; border-radius:20px; }
+  .deadline-chip.urgent{ background:var(--warning-soft); color:var(--warning); }
+  .deadline-chip.ok{ background:var(--success-soft); color:var(--success); }
+
+  .idea-card{ background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:18px 20px; margin-bottom:14px; }
+  .idea-card h3{ font-size:15px; margin:8px 0 6px; }
+  .fit-badge{ font-size:10.5px; font-weight:700; text-transform:uppercase; padding:3px 9px; border-radius:20px; background:var(--success-soft); color:var(--success); }
+  .idea-meta{ display:flex; gap:22px; margin:10px 0 14px; flex-wrap:wrap; }
+  .idea-meta .item .k{ display:block; font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; }
+  .idea-meta .item .v{ font-size:13px; font-weight:600; }
+  .idea-footer{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+
+  .ref-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-top:14px; }
+  @media (max-width:900px){ .ref-grid{ grid-template-columns:1fr; } }
+  .ref-card{ background:var(--bg); border:1px solid var(--border); border-radius:10px; padding:15px 17px; }
+  .ref-card .area-tag{ display:inline-block; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.4px; color:var(--primary); background:var(--primary-wash); border-radius:20px; padding:3px 10px; margin-bottom:8px; }
+  .ref-card h4{ font-size:13px; margin:0 0 6px; line-height:1.35; }
+  .ref-card .org{ font-size:11px; color:var(--ink-soft); margin-bottom:10px; }
+  .ref-card .ref-meta{ display:flex; justify-content:space-between; font-size:11px; color:var(--ink-soft); border-top:1px solid var(--border); padding-top:8px; }
+  .ref-card .ref-meta strong{ color:var(--primary); font-family:'IBM Plex Mono', monospace; }
+
+  .profile-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+  @media (max-width:900px){ .profile-grid{ grid-template-columns:1fr; } }
+  .profile-fact{ background:var(--bg); border-radius:8px; padding:14px 16px; }
+  .profile-fact .k{ font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:var(--ink-soft); text-transform:uppercase; }
+  .profile-fact .v{ font-size:15px; font-weight:600; margin-top:4px; }
+  .sources-modal-overlay{ display:none; position:fixed; inset:0; background:rgba(20,30,32,0.55); z-index:9000; align-items:center; justify-content:center; padding:20px; }
+  .sources-modal-overlay.open{ display:flex; }
+  .sources-modal{ background:#fff; border-radius:14px; max-width:760px; width:100%; max-height:86vh; overflow-y:auto; padding:26px 28px; }
+  .sources-modal-head{ display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+  .sources-modal-head h2{ font-family:'IBM Plex Serif', serif; font-size:19px; margin:0; color:var(--primary); }
+  .sources-modal-close{ background:none; border:none; font-size:16px; color:var(--ink-soft); width:30px; height:30px; border-radius:50%; }
+  .sources-modal-close:hover{ background:var(--bg); }
+  .sources-modal-note{ font-size:12.5px; color:var(--ink-soft); line-height:1.6; margin:0 0 18px; }
+  .sources-grid{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  @media (max-width:640px){ .sources-grid{ grid-template-columns:1fr; } }
+  .source-card{ display:block; border:1px solid var(--border); border-radius:9px; padding:12px 14px; text-decoration:none; color:var(--ink); transition:border-color .15s ease; }
+  .source-card:hover{ border-color:var(--primary); background:var(--bg); }
+  .source-card strong{ display:block; font-size:13px; color:var(--primary); margin-bottom:3px; }
+  .source-card span{ font-size:11.5px; color:var(--ink-soft); line-height:1.4; }
+  .btn-sources{ background:var(--surface); border:1px solid var(--border); border-radius:7px; padding:9px 15px; font-size:12.5px; color:var(--ink); font-weight:600; display:inline-flex; align-items:center; gap:6px; }
+  .btn-sources:hover{ border-color:var(--primary); }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <aside class="sidebar">
+    <div class="sidebar-brand">
+      <div class="brand-mark"><svg viewBox="0 0 64 64" style="width:60%;height:60%;overflow:visible;" aria-hidden="true"><path d="M15,44 L15,20 L24,34 L33,20 L33,44 M41,44 L41,20 L51,20 M41,31 L49,31" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div>MuniForte<small>ÁREA DO CLIENTE</small></div>
+    </div>
+    <div class="tenant-tag" id="tenant-tag">PREFEITURA</div>
+    <div class="tenant-name" id="tenant-name">Vila Serrana — PB</div>
+
+    <div class="nav-group">
+      <div class="nav-label">Painel</div>
+      <button class="nav-item active" data-view="usr-inicio"><span class="ic">🏠</span> Início</button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Meu diagnóstico</div>
+      <button class="nav-item" data-view="usr-diagnostico"><span class="ic">📋</span> Diagnóstico</button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Oportunidades</div>
+      <button class="nav-item" data-view="usr-buscar"><span class="ic">🔎</span> Buscar programas</button>
+      <button class="nav-item" data-view="usr-ideias"><span class="ic">💡</span> Ideias de projeto</button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Acompanhamento</div>
+      <button class="nav-item" data-view="usr-status"><span class="ic">📈</span> Meus projetos</button>
+      <button class="nav-item" data-view="usr-prazos"><span class="ic">⏱</span> Prazos</button>
+    </div>
+    <div class="nav-group">
+      <div class="nav-label">Conta</div>
+      <button class="nav-item" data-view="usr-perfil"><span class="ic">🏛</span> Perfil institucional</button>
+    </div>
+
+    <button class="btn-sources" style="margin:6px 18px 8px; justify-content:center; width:calc(100% - 36px);" onclick="openSourcesModal()">🔗 Fontes de dados oficiais</button>
+    <a class="sidebar-wa" href="https://wa.me/5593991154436?text=Ol%C3%A1%2C%20sou%20cliente%20MuniForte%20e%20preciso%20de%20ajuda." target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.48 1.32 4.99L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.005c5.46 0 9.91-4.45 9.91-9.91C21.93 6.45 17.5 2 12.04 2zm5.78 14.15c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.13.11-1.82-.11-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36.2 0 .39 0 .56.01.18.01.42-.07.66.5.24.58.82 2 .89 2.15.07.15.12.32.02.51-.1.19-.15.31-.3.48-.15.17-.31.38-.44.51-.15.15-.31.31-.13.61.18.3.79 1.31 1.71 2.12 1.17 1.05 2.16 1.37 2.46 1.53.3.15.48.13.65-.08.18-.2.75-.87.95-1.17.2-.3.4-.25.66-.15.27.1 1.7.8 1.99.95.29.15.48.22.55.34.08.13.08.72-.16 1.4z"/></svg> Falar no WhatsApp</a>
+    <div class="sidebar-foot">
+      <div class="avatar">PM</div>
+      <div class="who"><strong>Paulo Marreiro</strong><span>Prefeito — Vila Serrana/PB</span></div>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="topbar">
+      <div>
+        <h1 id="topbar-title">Início</h1>
+        <div class="sub" id="topbar-sub">Bem-vindo(a) de volta — aqui está o resumo da sua captação de recursos.</div>
+      </div>
+      <div class="topbar-actions">
+        <div class="demo-switcher" title="Ferramenta apenas para demonstração do protótipo — no produto real, o tipo de conta é definido no cadastro e não fica visível/editável aqui.">
+          <span class="demo-switcher-label">🧪 Protótipo:</span>
+          <button class="demo-opt active" data-demo-entity="municipio" onclick="applyEntity('municipio')">Ver como Prefeitura</button>
+          <button class="demo-opt" data-demo-entity="osc" onclick="applyEntity('osc')">Ver como OSC</button>
+        </div>
+        <a class="btn-wa" href="https://wa.me/5593991154436?text=Ol%C3%A1%2C%20quero%20falar%20com%20um%20especialista%20da%20MuniForte." target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.48 1.32 4.99L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.005c5.46 0 9.91-4.45 9.91-9.91C21.93 6.45 17.5 2 12.04 2zm5.78 14.15c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.13.11-1.82-.11-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36.2 0 .39 0 .56.01.18.01.42-.07.66.5.24.58.82 2 .89 2.15.07.15.12.32.02.51-.1.19-.15.31-.3.48-.15.17-.31.38-.44.51-.15.15-.31.31-.13.61.18.3.79 1.31 1.71 2.12 1.17 1.05 2.16 1.37 2.46 1.53.3.15.48.13.65-.08.18-.2.75-.87.95-1.17.2-.3.4-.25.66-.15.27.1 1.7.8 1.99.95.29.15.48.22.55.34.08.13.08.72-.16 1.4z"/></svg> Falar com especialista</a>
+      </div>
+    </div>
+    <div class="demo-strip">🧪 Este seletor "Ver como Prefeitura / OSC" existe só nesta demonstração para você avaliar as duas experiências. No produto final, o tipo de conta é definido no cadastro pela equipe MuniForte e o usuário não vê nem troca isso.</div>
+
+    <div class="content">
+
+      <!-- ===================== INÍCIO ===================== -->
+      <section id="usr-inicio" class="view active">
+        <div class="kpi-row">
+          <div class="kpi-card"><div class="kpi-label">Diagnóstico completo</div><div class="kpi-value">72%</div><div class="kpi-note">5 de 7 etapas</div></div>
+          <div class="kpi-card"><div class="kpi-label">Programas compatíveis</div><div class="kpi-value">12</div><div class="kpi-note">atualizado hoje</div></div>
+          <div class="kpi-card"><div class="kpi-label">Ideias geradas</div><div class="kpi-value">3</div><div class="kpi-note">para o edital em aberto</div></div>
+          <div class="kpi-card"><div class="kpi-label">Prazo mais próximo</div><div class="kpi-value">12 dias</div><div class="kpi-note">Novo PAC Saúde</div></div>
+        </div>
+
+        <div class="split-panels">
+          <div class="panel">
+            <div class="panel-head"><h2>Complete seu diagnóstico</h2><span class="note">quanto mais completo, melhores as sugestões</span></div>
+            <div class="progress-track"><div class="progress-fill" style="width:72%"></div></div>
+            <div class="progress-text">72% concluído · faltam Assistência social e Cultura/Esporte/Meio ambiente</div>
+            <div style="margin-top:16px;"><button class="btn-primary" onclick="setView('usr-diagnostico')">Continuar diagnóstico →</button></div>
+          </div>
+          <div class="panel">
+            <div class="panel-head"><h2>Próximos prazos</h2></div>
+            <div class="deadline-row"><span>Novo PAC Saúde — UBS</span><div class="deadline-bar urgent"></div><span class="deadline-days">12 dias</span></div>
+            <div class="deadline-row"><span>Saúde Sobre Rodas</span><div class="deadline-bar medio"></div><span class="deadline-days">47 dias</span></div>
+            <div class="deadline-row"><span>Bibliotecas Públicas</span><div class="deadline-bar longo"></div><span class="deadline-days">98 dias</span></div>
+            <div style="margin-top:12px;"><button class="btn-ghost" onclick="setView('usr-prazos')">Ver todos os prazos</button></div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h2>Atalhos</h2></div>
+          <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <button class="btn-ghost" onclick="setView('usr-buscar')">🔎 Buscar programas</button>
+            <button class="btn-ghost" onclick="setView('usr-ideias')">💡 Ver ideias de projeto</button>
+            <button class="btn-ghost" onclick="setView('usr-status')">📈 Acompanhar meus projetos</button>
+            <a class="btn-wa" href="https://wa.me/5593991154436?text=Ol%C3%A1%2C%20quero%20agendar%20uma%20conversa%20com%20a%20MuniForte." target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.48 1.32 4.99L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.005c5.46 0 9.91-4.45 9.91-9.91C21.93 6.45 17.5 2 12.04 2zm5.78 14.15c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.13.11-1.82-.11-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36.2 0 .39 0 .56.01.18.01.42-.07.66.5.24.58.82 2 .89 2.15.07.15.12.32.02.51-.1.19-.15.31-.3.48-.15.17-.31.38-.44.51-.15.15-.31.31-.13.61.18.3.79 1.31 1.71 2.12 1.17 1.05 2.16 1.37 2.46 1.53.3.15.48.13.65-.08.18-.2.75-.87.95-1.17.2-.3.4-.25.66-.15.27.1 1.7.8 1.99.95.29.15.48.22.55.34.08.13.08.72-.16 1.4z"/></svg> Agendar conversa</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== DIAGNÓSTICO ===================== -->
+      <section id="usr-diagnostico" class="view">
+        <div class="callout">
+          <strong>Para que serve este diagnóstico</strong>
+          As informações preenchidas aqui alimentam automaticamente a sugestão de ideias de projeto e, no futuro, a elaboração dos relatórios periódicos de análise financeira e de investimentos do seu município ou OSC. Você pode preencher aos poucos — nada se perde.
+          <div style="margin-top:10px;"><button class="btn-sources" onclick="openSourcesModal()">🔗 Ver fontes de dados oficiais usadas aqui</button></div>
+        </div>
+
+        <div class="entity-badge" id="entity-badge">
+          <span class="ic">🏛</span> <span id="entity-badge-text">Diagnóstico configurado para <strong>Prefeitura</strong></span>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head">
+            <h2>Progresso geral</h2>
+            <span class="note" id="diag-progress-note">5 de 7 etapas concluídas</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" id="diag-progress-fill" style="width:72%"></div></div>
+        </div>
+
+        <!-- ===== FORMULÁRIO — MUNICÍPIO ===== -->
+        <div id="diag-municipio">
+
+          <div class="accordion-item done open">
+            <div class="accordion-head" onclick="toggleAcc(this)">
+              <div class="accordion-num">✓</div>
+              <div class="accordion-title"><strong>1. Perfil geral</strong><span>População, IDH, PIB — preenchido automaticamente</span></div>
+              <div class="accordion-chev">▾</div>
+            </div>
+            <div class="accordion-body">
+              <div class="field-group">
+                <div class="field-group-title">Dados públicos <span class="badge-count">fonte: IBGE / Atlas Brasil-PNUD</span></div>
+                <div class="field-row">
+                  <div class="field"><label>Município <span class="src-tag auto">IBGE</span></label><input type="text" value="Vila Serrana — PB" disabled></div>
+                  <div class="field"><label>População <span class="src-tag auto">IBGE</span></label><input type="text" value="18.400 habitantes" disabled></div>
+                </div>
+                <div class="field-row">
+                  <div class="field"><label>IDH municipal <span class="src-tag auto">PNUD</span></label><input type="text" value="0,612" disabled></div>
+                  <div class="field"><label>PIB per capita <span class="src-tag auto">IBGE</span></label><input type="text" value="R$ 14.200" disabled></div>
+                </div>
+              </div>
+              <div class="field-group">
+                <div class="field-group-title">Capacidade institucional</div>
+                <div class="field-row">
+                  <div class="field"><label>Equipe dedicada à captação de recursos? <span class="src-tag">Manual</span></label><select><option>Não há equipe dedicada</option><option>1 pessoa parcialmente dedicada</option><option>Equipe/setor estruturado</option></select></div>
+                  <div class="field"><label>Convênios federais já executados <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 3"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item done">
+            <div class="accordion-head" onclick="toggleAcc(this)">
+              <div class="accordion-num">✓</div>
+              <div class="accordion-title"><strong>2. Saúde</strong><span>UBS por zona (CNES) + detalhe manual</span></div>
+              <div class="accordion-chev">▾</div>
+            </div>
+            <div class="accordion-body">
+              <div class="field-group">
+                <div class="field-group-title">Rede de saúde <span class="badge-count">fonte: CNES/DATASUS</span></div>
+                <div class="field-row">
+                  <div class="field"><label>UBS na zona urbana <span class="src-tag auto">CNES</span></label><input type="text" value="5 unidades" disabled></div>
+                  <div class="field"><label>UBS na zona rural <span class="src-tag auto">CNES</span></label><input type="text" value="3 unidades" disabled></div>
+                </div>
+              </div>
+              <div class="field-group">
+                <div class="field-group-title">Detalhe local</div>
+                <div class="field-row">
+                  <div class="field"><label>Idade média da última reforma <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: 11 anos"></div>
+                  <div class="field"><label>Possui telessaúde? <span class="src-tag">Manual</span></label><select><option>Não</option><option>Sim, em 1 unidade</option><option>Sim, em mais de 1</option></select></div>
+                </div>
+                <div class="field-row">
+                  <div class="field"><label>Frota de transporte sanitário <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 4 veículos"></div>
+                  <div class="field"><label>Equipes de saúde da família <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 6 equipes"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item done">
+            <div class="accordion-head" onclick="toggleAcc(this)">
+              <div class="accordion-num">✓</div>
+              <div class="accordion-title"><strong>3. Educação</strong><span>Escolas (Censo Escolar/INEP) + detalhe manual</span></div>
+              <div class="accordion-chev">▾</div>
+            </div>
+            <div class="accordion-body">
+              <div class="field-group">
+                <div class="field-group-title">Rede escolar <span class="badge-count">fonte: Censo Escolar/INEP</span></div>
+                <div class="field-row">
+                  <div class="field"><label>Escolas municipais <span class="src-tag auto">INEP</span></label><input type="text" value="14 escolas" disabled></div>
+                  <div class="field"><label>Matrículas ativas <span class="src-tag auto">INEP</span></label><input type="text" value="3.120 alunos" disabled></div>
+                </div>
+              </div>
+              <div class="field-group">
+                <div class="field-group-title">Detalhe local</div>
+                <div class="field-row">
+                  <div class="field"><label>Creches em tempo integral <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 2"></div>
+                  <div class="field"><label>Transporte escolar rural <span class="src-tag">Manual</span></label><select><option>Atende bem a demanda</option><option>Atende parcialmente</option><option>Não atende</option></select></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item done">
+            <div class="accordion-head" onclick="toggleAcc(this)">
+              <div class="accordion-num">✓</div>
+              <div class="accordion-title"><strong>4. Infraestrutura viária</strong><span>100% manual — não há base federal aberta neste nível</span></div>
+              <div class="accordion-chev">▾</div>
+            </div>
+            <div class="accordion-body">
+              <div class="field-group">
+                <div class="field-row three">
+                  <div class="field"><label>Estradas vicinais sem pavimentação <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: 42 km"></div>
+                  <div class="field"><label>Pontes em situação crítica <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 3"></div>
+                  <div class="field"><label>Vias urbanas sem pavimentação <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: 4,2 km"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-head" onclick="toggleAcc(this)">
+              <div class="accordion-num">5</div>
+              <div class="accordion-title"><strong>5. Saneamento</strong><span>Cobertura (SINISA) + detalhe local — pendente</span></div>
+              <div class="accordion-chev">▾</div>
+            </div>
+            <div class="accordion-body">
+              <div class="field-group">
+                <div class="field-group-title">Cobertura <span class="badge-count">fonte: SINISA</span></div>
+                <div class="field-row">
+                  <div class="field"><label>Cobertura de água tratada <span class="src-tag auto">SINISA</span></label><input type="text" value="81%" disabled></div>
+                  <div class="field"><label>Cobertura de esgotamento sanitário <span class="src-tag auto">SINISA</span></label><input type="text" value="47%" disabled></div>
+                </div>
+              </div>
+              <div class="field-group">
+                <div class="field-group-title">Detalhe local</div>
+                <div class="field-row">
+                  <div class="field"><label>Bairros/localidades sem coleta de esgoto <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: 3 bairros"></div>
+                  <div class="field"><label>Destinação de resíduos sólidos <span class="src-tag">Manual</span></label><select><option>Aterro sanitário licenciado</option><option>Lixão a céu aberto</option><option>Consórcio intermunicipal</option></select></div>
+                </div>
+              </div>
+              <div class="skip-note">Você pode pular esta etapa e completar depois.</div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-head" onclick="toggleAcc(this)">
+              <div class="accordion-num">6</div>
+              <div class="accordion-title"><strong>6. Assistência social</strong><span>CRAS/CREAS (CadÚnico) — pendente</span></div>
+              <div class="accordion-chev">▾</div>
+            </div>
+            <div class="accordion-body">
+              <div class="field-group">
+                <div class="field-group-title">Rede socioassistencial <span class="badge-count">fonte: Censo SUAS/CadÚnico</span></div>
+                <div class="field-row">
+                  <div class="field"><label>CRAS ativos <span class="src-tag auto">Censo SUAS</span></label><input type="text" value="2 unidades" disabled></div>
+                  <div class="field"><label>Famílias no CadÚnico <span class="src-tag auto">CadÚnico</span></label><input type="text" value="2.340 famílias" disabled></div>
+                </div>
+              </div>
+              <div class="field-group">
+                <div class="field-group-title">Detalhe local</div>
+                <div class="field-row">
+                  <div class="field"><label>Cobertura territorial do CRAS <span class="src-tag">Manual</span></label><select><option>Cobre toda a zona rural</option><option>Cobertura parcial</option><option>Só zona urbana</option></select></div>
+                  <div class="field"><label>Possui CREAS? <span class="src-tag">Manual</span></label><select><option>Sim</option><option>Não</option><option>Compartilhado com consórcio</option></select></div>
+                </div>
+              </div>
+              <div class="skip-note">Você pode pular esta etapa e completar depois.</div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-head" onclick="toggleAcc(this)">
+              <div class="accordion-num">7</div>
+              <div class="accordion-title"><strong>7. Cultura, esporte e meio ambiente</strong><span>Bibliotecas (parcial) + detalhe manual — pendente</span></div>
+              <div class="accordion-chev">▾</div>
+            </div>
+            <div class="accordion-body">
+              <div class="field-group">
+                <div class="field-row">
+                  <div class="field"><label>Bibliotecas públicas <span class="src-tag auto">Sist. Nac. Bibliotecas</span></label><input type="text" value="1 unidade" disabled></div>
+                  <div class="field"><label>Bens tombados (IPHAN) <span class="src-tag auto">IPHAN</span></label><input type="text" value="0" disabled></div>
+                </div>
+                <div class="field-row">
+                  <div class="field"><label>Equipamentos esportivos públicos <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 2 quadras"></div>
+                  <div class="field"><label>Áreas de risco ambiental mapeadas <span class="src-tag">Manual</span></label><select><option>Sim, mapeadas</option><option>Parcialmente</option><option>Não mapeadas</option></select></div>
+                </div>
+              </div>
+              <div class="skip-note">Você pode pular esta etapa e completar depois.</div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ===== FORMULÁRIO — OSC ===== -->
+        <div id="diag-osc" style="display:none;">
+
+          <div class="accordion-item done open">
+            <div class="accordion-head" onclick="toggleAcc(this)">
+              <div class="accordion-num">✓</div>
+              <div class="accordion-title"><strong>1. Perfil da OSC</strong><span>Identificação e abrangência</span></div>
+              <div class="accordion-chev">▾</div>
+            </div>
+            <div class="accordion-body">
+              <div class="field-group">
+                <div class="field-row">
+                  <div class="field"><label>Nome da OSC <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: Instituto Semear"></div>
+                  <div class="field"><label>CNPJ <span class="src-tag">Manual</span></label><input type="text" placeholder="00.000.000/0001-00"></div>
+                </div>
+                <div class="field-row">
+                  <div class="field"><label>Ano de fundação <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: 2014"></div>
+                  <div class="field"><label>Município sede <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: Vila Serrana — PB"></div>
+                </div>
+                <div class="field-row">
+                  <div class="field"><label>Área de atuação principal <span class="src-tag">Manual</span></label>
+                    <select id="osc-area-select" onchange="swapOscTema(this.value)">
+                      <option value="educacao">Educação</option>
+                      <option value="saude">Saúde</option>
+                      <option value="meioambiente">Meio ambiente</option>
+                      <option value="cultura">Cultura e esporte</option>
+                      <option value="assistencia">Assistência social</option>
+                    </select>
+                  </div>
+                  <div class="field"><label>Público atendido (média/ano) <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 450 pessoas"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item done">
+            <div class="accordion-head" onclick="toggleAcc(this)">
+              <div class="accordion-num">✓</div>
+              <div class="accordion-title"><strong>2. Regularidade e capacidade de execução</strong><span>CNEAS, certidões e histórico</span></div>
+              <div class="accordion-chev">▾</div>
+            </div>
+            <div class="accordion-body">
+              <div class="field-group">
+                <div class="field-row">
+                  <div class="field"><label>Inscrita no CNEAS? <span class="src-tag">Manual</span></label><select><option>Sim</option><option>Não</option><option>Em processo</option></select></div>
+                  <div class="field"><label>Certidões federais em dia? <span class="src-tag">Manual</span></label><select><option>Sim, todas</option><option>Parcialmente</option><option>Não</option></select></div>
+                </div>
+                <div class="field-row">
+                  <div class="field"><label>Convênios/parcerias já executados <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 2"></div>
+                  <div class="field"><label>Equipe técnica dedicada a projetos <span class="src-tag">Manual</span></label><select><option>Não há</option><option>1 pessoa parcial</option><option>Equipe estruturada</option></select></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-head" onclick="toggleAcc(this)">
+              <div class="accordion-num">3</div>
+              <div class="accordion-title"><strong>3. Diagnóstico temático</strong><span id="osc-tema-sub">Adaptado à área de atuação escolhida acima</span></div>
+              <div class="accordion-chev">▾</div>
+            </div>
+            <div class="accordion-body">
+              <div id="osc-tema-educacao" class="field-group">
+                <div class="field-row">
+                  <div class="field"><label>Alunos atendidos por ano <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 180"></div>
+                  <div class="field"><label>Nº de educadores/voluntários <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 12"></div>
+                </div>
+              </div>
+              <div id="osc-tema-saude" class="field-group" style="display:none;">
+                <div class="field-row">
+                  <div class="field"><label>Atendimentos de saúde por ano <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 900"></div>
+                  <div class="field"><label>Profissionais de saúde envolvidos <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 5"></div>
+                </div>
+              </div>
+              <div id="osc-tema-meioambiente" class="field-group" style="display:none;">
+                <div class="field-row">
+                  <div class="field"><label>Área ambiental sob cuidado (ha) <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: 40 ha"></div>
+                  <div class="field"><label>Mudas plantadas / ano <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 3.000"></div>
+                </div>
+              </div>
+              <div id="osc-tema-cultura" class="field-group" style="display:none;">
+                <div class="field-row">
+                  <div class="field"><label>Eventos/oficinas por ano <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 24"></div>
+                  <div class="field"><label>Espaço cultural próprio? <span class="src-tag">Manual</span></label><select><option>Sim</option><option>Não, usa espaço cedido</option></select></div>
+                </div>
+              </div>
+              <div id="osc-tema-assistencia" class="field-group" style="display:none;">
+                <div class="field-row">
+                  <div class="field"><label>Famílias atendidas por ano <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 320"></div>
+                  <div class="field"><label>Serviços ofertados <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: acolhimento, oficinas, cesta básica"></div>
+                </div>
+              </div>
+              <div class="field-group">
+                <div class="field-group-title">Captação de recursos privados <span class="badge-count">exclusivo para OSC</span></div>
+                <div class="field-row">
+                  <div class="field"><label>Recursos privados captados (últimos 12 meses) <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: R$ 60.000"></div>
+                  <div class="field"><label>Principais fontes privadas <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: doações, editais de institutos"></div>
+                </div>
+              </div>
+              <div class="skip-note">Você pode pular esta etapa e completar depois.</div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="diag-savebar">
+          <span class="msg">Suas respostas são salvas automaticamente a cada etapa concluída.</span>
+          <button class="btn-primary" onclick="alert('Diagnóstico salvo. Obrigado por manter seus dados atualizados!')">Salvar diagnóstico</button>
+        </div>
+      </section>
+
+      <!-- ===================== BUSCAR PROGRAMAS ===================== -->
+      <section id="usr-buscar" class="view">
+        <div class="panel">
+          <div class="panel-head"><h2>Buscar programas de repasse federal</h2><span class="note">dados sincronizados diariamente com o Transferegov</span></div>
+          <div class="callout" id="buscar-osc-note" style="display:none; margin-bottom:16px;">Mostrando só programas abertos a Organizações da Sociedade Civil. Editais de obra pública (construção de escolas, UBS, pavimentação etc.) são exclusivos de prefeituras e não aparecem aqui.</div>
+          <div style="display:flex; gap:10px; margin-bottom:16px;">
+            <input type="text" placeholder="Descreva o que você precisa: ex. reforma de UBS, projeto cultural…" style="flex:1; border:1px solid var(--border); border-radius:7px; padding:10px 12px; font-size:13px;">
+            <button class="btn-primary">Buscar</button>
+          </div>
+          <div class="chip-row" id="buscar-area-chips">
+            <span class="chip active" data-area="todas">Todas as áreas</span>
+            <span class="chip" data-area="saude">Saúde</span>
+            <span class="chip" data-area="educacao">Educação</span>
+            <span class="chip" data-area="infraestrutura">Infraestrutura</span>
+            <span class="chip" data-area="saneamento">Saneamento</span>
+            <span class="chip" data-area="assistencia">Assistência social</span>
+            <span class="chip" data-area="cultura">Cultura</span>
+          </div>
+        </div>
+
+        <div class="card-list" id="buscar-card-list">
+          <div class="prog-card" data-area="saude" data-entity="municipio">
+            <div>
+              <span class="deadline-chip urgent">Encerra em 12 dias</span>
+              <h3>Requalificação de UBS — Novo PAC Saúde</h3>
+              <div class="org">Ministério da Saúde · Fundo a Fundo <span class="audience-tag municipio">Exclusivo prefeituras</span></div>
+              <p class="desc">Repasse para reforma, ampliação e equipamento de UBS em municípios com população de até 50 mil habitantes.</p>
+            </div>
+            <div class="side"><button class="btn-primary" onclick="setView('usr-ideias')">Ver ideias de projeto</button></div>
+          </div>
+          <div class="prog-card" data-area="saude" data-entity="municipio">
+            <div>
+              <span class="deadline-chip ok">Encerra em 47 dias</span>
+              <h3>Aquisição de Ambulâncias — Saúde Sobre Rodas</h3>
+              <div class="org">Ministério da Saúde · Convênio <span class="audience-tag municipio">Exclusivo prefeituras</span></div>
+              <p class="desc">Financiamento para compra de veículos de transporte sanitário em municípios com cobertura insuficiente.</p>
+            </div>
+            <div class="side"><button class="btn-primary" onclick="setView('usr-ideias')">Ver ideias de projeto</button></div>
+          </div>
+          <div class="prog-card" data-area="infraestrutura" data-entity="municipio">
+            <div>
+              <span class="deadline-chip ok">Encerra em 63 dias</span>
+              <h3>Pavimentação de vias urbanas — Pró-Transporte</h3>
+              <div class="org">Ministério das Cidades <span class="audience-tag municipio">Exclusivo prefeituras</span></div>
+              <p class="desc">Financiamento para pavimentação e requalificação de vias urbanas municipais.</p>
+            </div>
+            <div class="side"><button class="btn-primary" onclick="setView('usr-ideias')">Ver ideias de projeto</button></div>
+          </div>
+          <div class="prog-card" data-area="assistencia" data-entity="osc">
+            <div>
+              <span class="deadline-chip ok">Encerra em 38 dias</span>
+              <h3>Chamamento para Termo de Fomento — Proteção Social Básica</h3>
+              <div class="org">MDS <span class="audience-tag osc">Exclusivo OSCs</span></div>
+              <p class="desc">Parceria com OSCs para execução de serviços de convivência e fortalecimento de vínculos familiares.</p>
+            </div>
+            <div class="side"><button class="btn-primary" onclick="setView('usr-ideias')">Ver ideias de projeto</button></div>
+          </div>
+          <div class="prog-card" data-area="cultura" data-entity="osc">
+            <div>
+              <span class="deadline-chip ok">Encerra em 55 dias</span>
+              <h3>Edital de fomento a coletivos e OSCs culturais</h3>
+              <div class="org">Ministério da Cultura <span class="audience-tag osc">Exclusivo OSCs</span></div>
+              <p class="desc">Apoio a projetos culturais executados por organizações da sociedade civil.</p>
+            </div>
+            <div class="side"><button class="btn-primary" onclick="setView('usr-ideias')">Ver ideias de projeto</button></div>
+          </div>
+          <div class="prog-card" data-area="educacao" data-entity="ambos">
+            <div>
+              <span class="deadline-chip ok">Encerra em 71 dias</span>
+              <h3>Educação ambiental e capacitação comunitária</h3>
+              <div class="org">Ministério do Meio Ambiente · Parceria <span class="audience-tag ambos">Prefeituras e OSCs</span></div>
+              <p class="desc">Recursos para ações formativas em educação ambiental, executáveis por município ou por OSC parceira.</p>
+            </div>
+            <div class="side"><button class="btn-primary" onclick="setView('usr-ideias')">Ver ideias de projeto</button></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== IDEIAS DE PROJETO ===================== -->
+      <section id="usr-ideias" class="view">
+        <div class="panel">
+          <div class="panel-head"><h2>Ideias sugeridas para o seu perfil</h2><span class="note">geradas a partir do edital + modelos aprovados no Transferegov + seu diagnóstico</span></div>
+
+          <div class="idea-card" data-entity="municipio">
+            <span class="fit-badge">Alta aderência</span>
+            <h3>Reforma e ampliação da UBS Central com sala de telessaúde</h3>
+            <p class="desc">Sua UBS Central está há 11 anos sem reforma e o programa financia readequação de estrutura física e telediagnóstico.</p>
+            <div class="idea-meta">
+              <div class="item"><span class="k">Investimento</span><span class="v">R$ 380–620 mil</span></div>
+              <div class="item"><span class="k">Contrapartida</span><span class="v">Não exigida</span></div>
+              <div class="item"><span class="k">Execução</span><span class="v">até 18 meses</span></div>
+            </div>
+            <div class="idea-footer">
+              <button class="btn-ghost">Ver justificativa</button>
+              <a href="https://wa.me/5593991154436?text=Ol%C3%A1%2C%20vi%20uma%20ideia%20de%20projeto%20na%20plataforma%20e%20quero%20falar%20com%20um%20especialista." target="_blank" rel="noopener" class="btn-primary"><svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.48 1.32 4.99L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.005c5.46 0 9.91-4.45 9.91-9.91C21.93 6.45 17.5 2 12.04 2zm5.78 14.15c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.13.11-1.82-.11-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36.2 0 .39 0 .56.01.18.01.42-.07.66.5.24.58.82 2 .89 2.15.07.15.12.32.02.51-.1.19-.15.31-.3.48-.15.17-.31.38-.44.51-.15.15-.31.31-.13.61.18.3.79 1.31 1.71 2.12 1.17 1.05 2.16 1.37 2.46 1.53.3.15.48.13.65-.08.18-.2.75-.87.95-1.17.2-.3.4-.25.66-.15.27.1 1.7.8 1.99.95.29.15.48.22.55.34.08.13.08.72-.16 1.4z"/></svg> Falar com especialista sobre esta ideia</a>
+            </div>
+          </div>
+
+          <div class="idea-card" data-entity="municipio">
+            <span class="fit-badge">Alta aderência</span>
+            <h3>Climatização e acessibilidade das 4 UBS da zona rural</h3>
+            <p class="desc">O edital prevê recursos para acessibilidade e conforto térmico — as UBS rurais ainda não têm rampas nem climatização.</p>
+            <div class="idea-meta">
+              <div class="item"><span class="k">Investimento</span><span class="v">R$ 140–210 mil</span></div>
+              <div class="item"><span class="k">Contrapartida</span><span class="v">Não exigida</span></div>
+              <div class="item"><span class="k">Execução</span><span class="v">até 10 meses</span></div>
+            </div>
+            <div class="idea-footer">
+              <button class="btn-ghost">Ver justificativa</button>
+              <a href="https://wa.me/5593991154436?text=Ol%C3%A1%2C%20vi%20uma%20ideia%20de%20projeto%20na%20plataforma%20e%20quero%20falar%20com%20um%20especialista." target="_blank" rel="noopener" class="btn-primary"><svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.48 1.32 4.99L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.005c5.46 0 9.91-4.45 9.91-9.91C21.93 6.45 17.5 2 12.04 2zm5.78 14.15c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.13.11-1.82-.11-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36.2 0 .39 0 .56.01.18.01.42-.07.66.5.24.58.82 2 .89 2.15.07.15.12.32.02.51-.1.19-.15.31-.3.48-.15.17-.31.38-.44.51-.15.15-.31.31-.13.61.18.3.79 1.31 1.71 2.12 1.17 1.05 2.16 1.37 2.46 1.53.3.15.48.13.65-.08.18-.2.75-.87.95-1.17.2-.3.4-.25.66-.15.27.1 1.7.8 1.99.95.29.15.48.22.55.34.08.13.08.72-.16 1.4z"/></svg> Falar com especialista sobre esta ideia</a>
+            </div>
+          </div>
+
+          <div class="idea-card" data-entity="osc" style="display:none;">
+            <span class="fit-badge">Alta aderência</span>
+            <h3>Ampliação do atendimento socioeducativo com novo Termo de Fomento</h3>
+            <p class="desc">Seu público atendido cresceu 30% no último ano — este edital financia ampliação de vagas e material didático para OSCs de assistência social.</p>
+            <div class="idea-meta">
+              <div class="item"><span class="k">Investimento</span><span class="v">R$ 60–110 mil</span></div>
+              <div class="item"><span class="k">Contrapartida</span><span class="v">Não exigida</span></div>
+              <div class="item"><span class="k">Execução</span><span class="v">até 12 meses</span></div>
+            </div>
+            <div class="idea-footer">
+              <button class="btn-ghost">Ver justificativa</button>
+              <a href="https://wa.me/5593991154436?text=Ol%C3%A1%2C%20vi%20uma%20ideia%20de%20projeto%20na%20plataforma%20e%20quero%20falar%20com%20um%20especialista." target="_blank" rel="noopener" class="btn-primary"><svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.48 1.32 4.99L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.005c5.46 0 9.91-4.45 9.91-9.91C21.93 6.45 17.5 2 12.04 2zm5.78 14.15c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.13.11-1.82-.11-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36.2 0 .39 0 .56.01.18.01.42-.07.66.5.24.58.82 2 .89 2.15.07.15.12.32.02.51-.1.19-.15.31-.3.48-.15.17-.31.38-.44.51-.15.15-.31.31-.13.61.18.3.79 1.31 1.71 2.12 1.17 1.05 2.16 1.37 2.46 1.53.3.15.48.13.65-.08.18-.2.75-.87.95-1.17.2-.3.4-.25.66-.15.27.1 1.7.8 1.99.95.29.15.48.22.55.34.08.13.08.72-.16 1.4z"/></svg> Falar com especialista sobre esta ideia</a>
+            </div>
+          </div>
+
+          <div class="idea-card" data-entity="osc" style="display:none;">
+            <span class="fit-badge">Aderência média</span>
+            <h3>Edital de fomento cultural — oficinas itinerantes</h3>
+            <p class="desc">Seu histórico de eventos culturais (24/ano) se encaixa no perfil deste edital, voltado a coletivos e OSCs sem espaço físico próprio.</p>
+            <div class="idea-meta">
+              <div class="item"><span class="k">Investimento</span><span class="v">R$ 25–45 mil</span></div>
+              <div class="item"><span class="k">Contrapartida</span><span class="v">Não exigida</span></div>
+              <div class="item"><span class="k">Execução</span><span class="v">até 8 meses</span></div>
+            </div>
+            <div class="idea-footer">
+              <button class="btn-ghost">Ver justificativa</button>
+              <a href="https://wa.me/5593991154436?text=Ol%C3%A1%2C%20vi%20uma%20ideia%20de%20projeto%20na%20plataforma%20e%20quero%20falar%20com%20um%20especialista." target="_blank" rel="noopener" class="btn-primary"><svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.48 1.32 4.99L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.005c5.46 0 9.91-4.45 9.91-9.91C21.93 6.45 17.5 2 12.04 2zm5.78 14.15c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.13.11-1.82-.11-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36.2 0 .39 0 .56.01.18.01.42-.07.66.5.24.58.82 2 .89 2.15.07.15.12.32.02.51-.1.19-.15.31-.3.48-.15.17-.31.38-.44.51-.15.15-.31.31-.13.61.18.3.79 1.31 1.71 2.12 1.17 1.05 2.16 1.37 2.46 1.53.3.15.48.13.65-.08.18-.2.75-.87.95-1.17.2-.3.4-.25.66-.15.27.1 1.7.8 1.99.95.29.15.48.22.55.34.08.13.08.72-.16 1.4z"/></svg> Falar com especialista sobre esta ideia</a>
+            </div>
+          </div>
+
+          <div class="disclaimer" style="font-size:11.5px;color:var(--ink-soft);margin:6px 0 4px;"><strong>Sobre estas sugestões:</strong> são rascunhos — não constituem plano de trabalho nem garantem aprovação. Só a equipe MuniForte elabora a proposta final.</div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-head"><h2>Projetos aprovados de referência no Transferegov</h2><span class="note">exemplos reais, por área — usados como inspiração e parâmetro de valores</span></div>
+          <div class="chip-row" id="ref-area-chips-usr">
+            <span class="chip active" data-area="todas">Todas as áreas</span>
+            <span class="chip" data-area="saude">Saúde</span>
+            <span class="chip" data-area="educacao">Educação</span>
+            <span class="chip" data-area="infraestrutura">Infraestrutura</span>
+            <span class="chip" data-area="saneamento">Saneamento</span>
+            <span class="chip" data-area="assistencia">Assistência social</span>
+            <span class="chip" data-area="cultura">Cultura/Esporte/Meio Amb.</span>
+          </div>
+          <div class="ref-grid" id="ref-grid-usr">
+            <div class="ref-card" data-area="saude" data-entity="municipio"><span class="area-tag">Saúde</span><h4>Reforma e climatização de 6 UBS da zona urbana</h4><div class="org">Novo PAC Saúde — Fundo a Fundo</div><div class="ref-meta"><span>Barra do Rio — MA</span><strong>R$ 512 mil</strong></div></div>
+            <div class="ref-card" data-area="educacao" data-entity="municipio"><span class="area-tag">Educação</span><h4>Construção de 2 creches em tempo integral</h4><div class="org">FNDE · Novo PAC Creches</div><div class="ref-meta"><span>Serra Bonita — PI</span><strong>R$ 1,8 mi</strong></div></div>
+            <div class="ref-card" data-area="infraestrutura" data-entity="municipio"><span class="area-tag">Infraestrutura</span><h4>Pavimentação de 4,2 km de vias urbanas</h4><div class="org">Ministério das Cidades · Pró-Transporte</div><div class="ref-meta"><span>Vale Formoso — TO</span><strong>R$ 2,3 mi</strong></div></div>
+            <div class="ref-card" data-area="saneamento" data-entity="municipio"><span class="area-tag">Saneamento</span><h4>Ampliação da rede de esgotamento sanitário</h4><div class="org">Novo PAC Saneamento</div><div class="ref-meta"><span>Rio Manso — PB</span><strong>R$ 3,1 mi</strong></div></div>
+            <div class="ref-card" data-area="assistencia" data-entity="municipio"><span class="area-tag">Assistência social</span><h4>Construção de CRAS com veículo adaptado</h4><div class="org">MDS · Proteção Social Básica</div><div class="ref-meta"><span>Campo Alegre — SE</span><strong>R$ 460 mil</strong></div></div>
+            <div class="ref-card" data-area="cultura" data-entity="municipio"><span class="area-tag">Cultura/Esporte/Meio Amb.</span><h4>Requalificação de biblioteca e praça pública</h4><div class="org">Sist. Nac. Bibliotecas Públicas</div><div class="ref-meta"><span>Boa Vista do Sul — RN</span><strong>R$ 290 mil</strong></div></div>
+            <div class="ref-card" data-area="assistencia" data-entity="osc" style="display:none;"><span class="area-tag">Assistência social</span><h4>Termo de Fomento para ampliação de vagas de acolhimento</h4><div class="org">MDS · Proteção Social Básica</div><div class="ref-meta"><span>OSC — Recanto Feliz — CE</span><strong>R$ 95 mil</strong></div></div>
+            <div class="ref-card" data-area="cultura" data-entity="osc" style="display:none;"><span class="area-tag">Cultura/Esporte/Meio Amb.</span><h4>Edital de fomento a coletivo cultural itinerante</h4><div class="org">Ministério da Cultura</div><div class="ref-meta"><span>OSC — Ponto de Cultura Raiz — BA</span><strong>R$ 38 mil</strong></div></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== MEUS PROJETOS / STATUS ===================== -->
+      <section id="usr-status" class="view">
+        <div class="panel">
+          <div class="panel-head"><h2>Meus projetos</h2><span class="note">acompanhamento — só a equipe MuniForte elabora e opera o Transferegov</span></div>
+          <table>
+            <thead><tr><th>Projeto</th><th>Programa</th><th>Valor</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Reforma da UBS Central</td><td>Novo PAC Saúde</td><td>R$ 480 mil</td><td><span class="status-pill execucao">Em execução</span></td></tr>
+              <tr><td>Aquisição de ambulância</td><td>Saúde Sobre Rodas</td><td>R$ 210 mil</td><td><span class="status-pill aprovado">Aprovado</span></td></tr>
+              <tr><td>Requalificação de biblioteca</td><td>Sist. Nac. Bibliotecas</td><td>R$ 130 mil</td><td><span class="status-pill proposto">Proposto</span></td></tr>
+              <tr><td>Reforma da praça central</td><td>Programa anterior 2023</td><td>R$ 95 mil</td><td><span class="status-pill prestacao">Prestação de contas</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ===================== PRAZOS ===================== -->
+      <section id="usr-prazos" class="view">
+        <div class="panel">
+          <div class="panel-head"><h2>Prazos</h2><span class="note">vermelho ≤15 dias · dourado 16–45 dias · verde &gt;45 dias</span></div>
+          <div class="deadline-row"><span>Novo PAC Saúde — UBS</span><div class="deadline-bar urgent"></div><span class="deadline-days">12 dias</span></div>
+          <div class="deadline-row"><span>Saúde Sobre Rodas</span><div class="deadline-bar medio"></div><span class="deadline-days">47 dias</span></div>
+          <div class="deadline-row"><span>Bibliotecas Públicas</span><div class="deadline-bar longo"></div><span class="deadline-days">98 dias</span></div>
+          <div class="deadline-row"><span>Prestação de contas — Praça Central</span><div class="deadline-bar medio"></div><span class="deadline-days">31 dias</span></div>
+        </div>
+      </section>
+
+      <!-- ===================== PERFIL INSTITUCIONAL ===================== -->
+      <section id="usr-perfil" class="view">
+        <div class="panel">
+          <div class="panel-head"><h2>Perfil institucional</h2><span class="note">resumo do que já foi preenchido no diagnóstico</span></div>
+          <div class="profile-grid">
+            <div class="profile-fact"><div class="k">Entidade</div><div class="v">Vila Serrana — PB</div></div>
+            <div class="profile-fact"><div class="k">População</div><div class="v">18.400 hab.</div></div>
+            <div class="profile-fact"><div class="k">Responsável</div><div class="v">Paulo Marreiro (Prefeito)</div></div>
+            <div class="profile-fact"><div class="k">Diagnóstico</div><div class="v">72% completo</div></div>
+            <div class="profile-fact"><div class="k">Projetos ativos</div><div class="v">4</div></div>
+            <div class="profile-fact"><div class="k">Cliente desde</div><div class="v">Mar/2025</div></div>
+          </div>
+          <div style="margin-top:18px;"><button class="btn-ghost" onclick="setView('usr-diagnostico')">Editar diagnóstico</button></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><h2>Dados de acesso</h2></div>
+          <div class="field-row">
+            <div class="field"><label>E-mail institucional</label><input type="text" value="prefeito@vilaserrana.pb.gov.br" disabled></div>
+            <div class="field"><label>Telefone</label><input type="text" value="(83) 99999-0000" disabled></div>
+          </div>
+          <div class="skip-note">Para alterar dados de acesso, fale com a equipe MuniForte.</div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+</div>
+
+<script>
+  function setView(id){
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === id));
+    const titles = {
+      'usr-inicio':['Início','Bem-vindo(a) de volta — aqui está o resumo da sua captação de recursos.'],
+      'usr-diagnostico':['Diagnóstico','Quanto mais completo, melhores as sugestões de projeto e os relatórios futuros.'],
+      'usr-buscar':['Buscar programas','Encontre programas de repasse federal compatíveis com seu perfil.'],
+      'usr-ideias':['Ideias de projeto','Sugestões geradas a partir do edital, do Transferegov e do seu diagnóstico.'],
+      'usr-status':['Meus projetos','Acompanhe o status de cada projeto em andamento.'],
+      'usr-prazos':['Prazos','Fique de olho nos prazos de cada programa e prestação de contas.'],
+      'usr-perfil':['Perfil institucional','Seus dados cadastrais e de acesso à plataforma.'],
+    };
+    const t = titles[id] || ['',''];
+    document.getElementById('topbar-title').textContent = t[0];
+    document.getElementById('topbar-sub').textContent = t[1];
+    window.scrollTo({top:0, behavior:'smooth'});
+  }
+  document.querySelectorAll('.nav-item').forEach(item => item.addEventListener('click', () => setView(item.dataset.view)));
+
+  function toggleAcc(headEl){
+    headEl.parentElement.classList.toggle('open');
+  }
+
+  // ===== Tipo de conta: definido no cadastro (aqui simulado por applyEntity) =====
+  let currentEntity = 'municipio';
+  let currentRefArea = 'todas';
+  let currentBuscarArea = 'todas';
+
+  function applyEntity(entity){
+    currentEntity = entity;
+    const isMunicipio = entity === 'municipio';
+
+    document.querySelectorAll('.demo-opt').forEach(b => b.classList.toggle('active', b.dataset.demoEntity === entity));
+
+    document.getElementById('tenant-tag').textContent = isMunicipio ? 'PREFEITURA' : 'OSC';
+    document.getElementById('tenant-name').textContent = isMunicipio ? 'Vila Serrana — PB' : 'Instituto Semear';
+    document.querySelector('.sidebar-foot .who strong').textContent = isMunicipio ? 'Paulo Marreiro' : 'Ana Beatriz Lopes';
+    document.querySelector('.sidebar-foot .who span').textContent = isMunicipio ? 'Prefeito — Vila Serrana/PB' : 'Diretora — Instituto Semear';
+    document.querySelector('.avatar').textContent = isMunicipio ? 'PM' : 'AL';
+
+    document.getElementById('diag-municipio').style.display = isMunicipio ? 'block' : 'none';
+    document.getElementById('diag-osc').style.display = isMunicipio ? 'none' : 'block';
+    document.getElementById('entity-badge-text').innerHTML = isMunicipio
+      ? 'Diagnóstico configurado para <strong>Prefeitura</strong>'
+      : 'Diagnóstico configurado para <strong>OSC</strong> — adaptado à sua área de atuação';
+
+    // Buscar programas: OSC não vê editais exclusivos de obra pública municipal
+    document.getElementById('buscar-osc-note').style.display = isMunicipio ? 'none' : 'block';
+    filterBuscarCards();
+
+    // Ideias: mostra só os cards compatíveis com o tipo de conta
+    document.querySelectorAll('#usr-ideias .idea-card').forEach(card => {
+      card.style.display = (card.dataset.entity === entity) ? '' : 'none';
+    });
+
+    // Banco de referências: some com áreas exclusivas de município quando for OSC
+    filterRefCards();
+
+    setView(document.querySelector('.nav-item.active')?.dataset.view || 'usr-inicio');
+  }
+
+  function filterBuscarCards(){
+    const isMunicipio = currentEntity === 'municipio';
+    document.querySelectorAll('#buscar-card-list .prog-card').forEach(card => {
+      const areaOk = (currentBuscarArea === 'todas' || card.dataset.area === currentBuscarArea);
+      const entityOk = isMunicipio ? (card.dataset.entity === 'municipio' || card.dataset.entity === 'ambos') : (card.dataset.entity === 'osc' || card.dataset.entity === 'ambos');
+      card.style.display = (areaOk && entityOk) ? '' : 'none';
+    });
+  }
+
+  function filterRefCards(){
+    const isMunicipio = currentEntity === 'municipio';
+    document.querySelectorAll('#ref-grid-usr .ref-card').forEach(card => {
+      const areaOk = (currentRefArea === 'todas' || card.dataset.area === currentRefArea);
+      const entityOk = isMunicipio ? (card.dataset.entity === 'municipio' || card.dataset.entity === 'ambos') : (card.dataset.entity === 'osc' || card.dataset.entity === 'ambos');
+      card.style.display = (areaOk && entityOk) ? '' : 'none';
+    });
+  }
+
+  // OSC: troca de bloco temático conforme área de atuação
+  function swapOscTema(area){
+    ['educacao','saude','meioambiente','cultura','assistencia'].forEach(a => {
+      const el = document.getElementById('osc-tema-' + a);
+      if(el) el.style.display = (a === area) ? 'block' : 'none';
+    });
+    const labels = {educacao:'Educação', saude:'Saúde', meioambiente:'Meio ambiente', cultura:'Cultura e esporte', assistencia:'Assistência social'};
+    document.getElementById('osc-tema-sub').textContent = 'Adaptado à área de atuação: ' + labels[area];
+  }
+
+  // banco de referências do Transferegov — filtro por área (combinado com tipo de conta)
+  const refChipsUsr = document.querySelectorAll('#ref-area-chips-usr .chip');
+  refChipsUsr.forEach(chip => chip.addEventListener('click', () => {
+    refChipsUsr.forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    currentRefArea = chip.dataset.area;
+    filterRefCards();
+  }));
+
+  // busca: filtro por área (combinado com tipo de conta)
+  const buscarChips = document.querySelectorAll('#buscar-area-chips .chip');
+  buscarChips.forEach(chip => chip.addEventListener('click', () => {
+    buscarChips.forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    currentBuscarArea = chip.dataset.area;
+    filterBuscarCards();
+  }));
+
+  function openSourcesModal(){ document.getElementById('sources-modal-overlay').classList.add('open'); }
+  function closeSourcesModal(){ document.getElementById('sources-modal-overlay').classList.remove('open'); }
+
+  // estado inicial
+  filterBuscarCards();
+  filterRefCards();
+  document.querySelectorAll('#usr-ideias .idea-card').forEach(card => {
+    card.style.display = (card.dataset.entity === currentEntity) ? '' : 'none';
+  });
+</script>
+
+<!-- ===== MODAL: FONTES DE DADOS OFICIAIS ===== -->
+<div id="sources-modal-overlay" class="sources-modal-overlay" onclick="if(event.target===this) closeSourcesModal()">
+  <div class="sources-modal">
+    <div class="sources-modal-head">
+      <h2>Fontes de dados oficiais</h2>
+      <button class="sources-modal-close" onclick="closeSourcesModal()" aria-label="Fechar">✕</button>
+    </div>
+    <p class="sources-modal-note">Estes são os cadastros e sistemas públicos federais usados para preencher automaticamente o diagnóstico. Use os links para conferir, na fonte oficial, os dados que aparecem na plataforma. <em>Referências de prototipagem — confirme os endereços mais atuais antes de publicar em produção.</em></p>
+    <div class="sources-grid">
+      <a class="source-card" href="https://www.gov.br/transferegov" target="_blank" rel="noopener"><strong>Transferegov</strong><span>Editais, convênios e propostas de transferências voluntárias da União</span></a>
+      <a class="source-card" href="https://siconfi.tesouro.gov.br" target="_blank" rel="noopener"><strong>SICONFI</strong><span>Receitas, despesas e limites fiscais (RGF, RREO, FINBRA)</span></a>
+      <a class="source-card" href="https://cauc.tesouro.gov.br" target="_blank" rel="noopener"><strong>CAUC</strong><span>Situação de regularidade fiscal para celebrar convênios com a União</span></a>
+      <a class="source-card" href="https://portaldatransparencia.gov.br" target="_blank" rel="noopener"><strong>Portal da Transparência</strong><span>Consulta pública de convênios e repasses federais</span></a>
+      <a class="source-card" href="https://cidades.ibge.gov.br" target="_blank" rel="noopener"><strong>IBGE Cidades</strong><span>População, PIB e indicadores gerais do município</span></a>
+      <a class="source-card" href="http://www.atlasbrasil.org.br" target="_blank" rel="noopener"><strong>Atlas Brasil / PNUD</strong><span>Índice de Desenvolvimento Humano Municipal (IDHM)</span></a>
+      <a class="source-card" href="https://cnes.datasus.gov.br" target="_blank" rel="noopener"><strong>CNES/DATASUS</strong><span>Cadastro de unidades e equipes de saúde por município</span></a>
+      <a class="source-card" href="https://www.gov.br/inep/pt-br/areas-de-atuacao/pesquisas-estatisticas-e-indicadores/censo-escolar" target="_blank" rel="noopener"><strong>Censo Escolar / INEP</strong><span>Escolas, matrículas e infraestrutura educacional</span></a>
+      <a class="source-card" href="https://www.gov.br/cidades/pt-br/assuntos/saneamento/sinisa" target="_blank" rel="noopener"><strong>SINISA</strong><span>Cobertura de água tratada e esgotamento sanitário</span></a>
+      <a class="source-card" href="https://cecad.cidadania.gov.br" target="_blank" rel="noopener"><strong>Censo SUAS / CadÚnico</strong><span>CRAS, CREAS e famílias cadastradas na assistência social</span></a>
+      <a class="source-card" href="https://www.gov.br/cultura/pt-br" target="_blank" rel="noopener"><strong>Sist. Nac. Bibliotecas Públicas</strong><span>Bibliotecas públicas cadastradas no município</span></a>
+      <a class="source-card" href="http://portal.iphan.gov.br" target="_blank" rel="noopener"><strong>IPHAN</strong><span>Bens tombados e patrimônio histórico municipal</span></a>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
