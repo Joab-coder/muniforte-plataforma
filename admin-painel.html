@@ -59,7 +59,7 @@
   .topbar{
     background:var(--surface); border-bottom:1px solid var(--border);
     padding:16px 30px; display:flex; align-items:center; justify-content:space-between; gap:20px;
-    position:sticky; top:0; z-index:600;
+    position:fixed; top:0; left:var(--sidebar-w); right:0; z-index:600;
   }
   .topbar h1{ font-family:'IBM Plex Serif', serif; font-size:20px; margin:0; }
   .topbar .sub{ font-size:12.5px; color:var(--ink-soft); margin-top:2px; }
@@ -71,7 +71,7 @@
   .btn-ghost{ background:none; border:1px solid var(--border); border-radius:7px; padding:9px 14px; font-size:12.5px; color:var(--ink); font-weight:600; }
   .btn-ghost:hover{ border-color:var(--primary); }
 
-  .content{ padding:26px 30px 60px; max-width:1280px; }
+  .content{ padding:96px 30px 60px; max-width:1280px; }
   .view{ display:none; }
   .view.active{ display:block; animation:viewIn .3s ease both; }
   @keyframes viewIn{ from{opacity:0; transform:translateY(8px);} to{opacity:1; transform:translateY(0);} }
@@ -360,6 +360,8 @@
     .elab-layout{ grid-template-columns:1fr; }
     .kpi-row{ grid-template-columns:1fr 1fr; }
     .fact-grid{ grid-template-columns:1fr 1fr; }
+    .topbar{ position:static; left:auto; right:auto; }
+    .content{ padding:26px 30px 60px; }
   }
   .sources-modal-overlay{ display:none; position:fixed; inset:0; background:rgba(20,30,32,0.55); z-index:9000; align-items:center; justify-content:center; padding:20px; }
   .sources-modal-overlay.open{ display:flex; }
@@ -1245,11 +1247,11 @@
     <section id="admin-site" class="view">
       <div class="topbar">
         <div><h1>Personalizar página inicial</h1><div class="sub">Edite todo o conteúdo do site institucional, do cabeçalho ao rodapé — sem precisar mexer em código</div></div>
-        <div class="topbar-actions"><button class="btn-ghost">Ver site publicado</button><button class="btn-primary">Salvar e publicar</button><button class="btn-logout" onclick="logout()">⏻ Sair</button></div>
+        <div class="topbar-actions"><button class="btn-ghost" onclick="viewPublishedSite()">Ver site publicado</button><button class="btn-primary" onclick="publishSiteChanges()">Salvar e publicar</button><button class="btn-logout" onclick="logout()">⏻ Sair</button></div>
       </div>
       <div class="content">
 
-        <div class="cms-preview-note">✓ Última publicação: hoje às 09:14 · alterações ficam visíveis no site em poucos segundos</div>
+        <div class="cms-preview-note" id="cms-preview-note">✓ Última publicação: hoje às 09:14 · alterações ficam visíveis no site em poucos segundos</div>
 
         <div class="cms-tabs">
           <button class="cms-tab active" data-cms="cms-cabecalho">Cabeçalho</button>
@@ -1273,10 +1275,12 @@
           </div>
           <div class="form-field">
             <label>Itens do menu (na ordem em que aparecem)</label>
-            <div class="repeatable-item"><div class="field-row2"><div class="form-field"><label>Texto</label><input type="text" value="Início"></div><div class="form-field"><label>Destino</label><input type="text" value="screen-landing"></div></div></div>
-            <div class="repeatable-item"><div class="field-row2"><div class="form-field"><label>Texto</label><input type="text" value="Sobre nós"></div><div class="form-field"><label>Destino</label><input type="text" value="screen-sobre"></div></div></div>
-            <div class="repeatable-item"><div class="field-row2"><div class="form-field"><label>Texto</label><input type="text" value="Contato"></div><div class="form-field"><label>Destino</label><input type="text" value="screen-contato"></div></div></div>
-            <button class="btn-add-item">+ Adicionar item de menu</button>
+            <div id="menu-items-list">
+              <div class="repeatable-item"><button class="remove-btn" onclick="removeRepeatableItem(this)">Remover ✕</button><div class="field-row2"><div class="form-field"><label>Texto</label><input type="text" value="Início"></div><div class="form-field"><label>Destino</label><input type="text" value="screen-landing"></div></div></div>
+              <div class="repeatable-item"><button class="remove-btn" onclick="removeRepeatableItem(this)">Remover ✕</button><div class="field-row2"><div class="form-field"><label>Texto</label><input type="text" value="Sobre nós"></div><div class="form-field"><label>Destino</label><input type="text" value="screen-sobre"></div></div></div>
+              <div class="repeatable-item"><button class="remove-btn" onclick="removeRepeatableItem(this)">Remover ✕</button><div class="field-row2"><div class="form-field"><label>Texto</label><input type="text" value="Contato"></div><div class="form-field"><label>Destino</label><input type="text" value="screen-contato"></div></div></div>
+            </div>
+            <button class="btn-add-item" onclick="addMenuItem()">+ Adicionar item de menu</button>
           </div>
         </div>
 
@@ -1307,23 +1311,25 @@
         <div id="cms-depoimentos" class="cms-section panel">
           <div class="panel-head"><h2>Depoimentos em vídeo</h2><span class="note">exibidos na ordem cadastrada</span></div>
 
-          <div class="repeatable-item">
-            <button class="remove-btn">Remover ✕</button>
-            <div class="field-row2">
-              <div class="form-field"><label>Nome</label><input type="text" placeholder="Ex.: João Marreiro"></div>
-              <div class="form-field"><label>Cargo / Município ou OSC</label><input type="text" placeholder="Ex.: Prefeito de Vila Serrana — PB"></div>
+          <div id="depoimentos-list">
+            <div class="repeatable-item">
+              <button class="remove-btn" onclick="removeRepeatableItem(this)">Remover ✕</button>
+              <div class="field-row2">
+                <div class="form-field"><label>Nome</label><input type="text" placeholder="Ex.: João Marreiro"></div>
+                <div class="form-field"><label>Cargo / Município ou OSC</label><input type="text" placeholder="Ex.: Prefeito de Vila Serrana — PB"></div>
+              </div>
+              <div class="form-field"><label>Vídeo (link ou upload)</label><input type="text" placeholder="https://..."></div>
             </div>
-            <div class="form-field"><label>Vídeo (link ou upload)</label><input type="text" placeholder="https://..."></div>
-          </div>
-          <div class="repeatable-item">
-            <button class="remove-btn">Remover ✕</button>
-            <div class="field-row2">
-              <div class="form-field"><label>Nome</label><input type="text" placeholder="Ex.: Ana Beatriz Lopes"></div>
-              <div class="form-field"><label>Cargo / Município ou OSC</label><input type="text" placeholder="Ex.: Diretora do Instituto Semear"></div>
+            <div class="repeatable-item">
+              <button class="remove-btn" onclick="removeRepeatableItem(this)">Remover ✕</button>
+              <div class="field-row2">
+                <div class="form-field"><label>Nome</label><input type="text" placeholder="Ex.: Ana Beatriz Lopes"></div>
+                <div class="form-field"><label>Cargo / Município ou OSC</label><input type="text" placeholder="Ex.: Diretora do Instituto Semear"></div>
+              </div>
+              <div class="form-field"><label>Vídeo (link ou upload)</label><input type="text" placeholder="https://..."></div>
             </div>
-            <div class="form-field"><label>Vídeo (link ou upload)</label><input type="text" placeholder="https://..."></div>
           </div>
-          <button class="btn-add-item">+ Adicionar depoimento</button>
+          <button class="btn-add-item" onclick="addDepoimento()">+ Adicionar depoimento</button>
         </div>
 
         <!-- SOBRE NÓS -->
@@ -1517,6 +1523,45 @@
       document.getElementById(tab.dataset.cms).classList.add('active');
     });
   });
+
+  function publishSiteChanges(){
+    const now = new Date();
+    const hh = String(now.getHours()).padStart(2,'0');
+    const mm = String(now.getMinutes()).padStart(2,'0');
+    const note = document.getElementById('cms-preview-note');
+    if (note) note.textContent = '✓ Última publicação: hoje às ' + hh + ':' + mm + ' · alterações ficam visíveis no site em poucos segundos';
+    alert('Alterações publicadas com sucesso! O site institucional já reflete o novo conteúdo.');
+  }
+
+  function viewPublishedSite(){
+    window.open('index.html', '_blank');
+  }
+
+  function removeRepeatableItem(btn){
+    const item = btn.closest('.repeatable-item');
+    const list = item.parentElement;
+    if (list.querySelectorAll('.repeatable-item').length <= 1) {
+      alert('Deixe pelo menos um item nesta lista.');
+      return;
+    }
+    item.remove();
+  }
+
+  function addMenuItem(){
+    const list = document.getElementById('menu-items-list');
+    const div = document.createElement('div');
+    div.className = 'repeatable-item';
+    div.innerHTML = '<button class="remove-btn" onclick="removeRepeatableItem(this)">Remover ✕</button><div class="field-row2"><div class="form-field"><label>Texto</label><input type="text" placeholder="Ex.: Programas"></div><div class="form-field"><label>Destino</label><input type="text" placeholder="Ex.: screen-search"></div></div>';
+    list.appendChild(div);
+  }
+
+  function addDepoimento(){
+    const list = document.getElementById('depoimentos-list');
+    const div = document.createElement('div');
+    div.className = 'repeatable-item';
+    div.innerHTML = '<button class="remove-btn" onclick="removeRepeatableItem(this)">Remover ✕</button><div class="field-row2"><div class="form-field"><label>Nome</label><input type="text" placeholder="Ex.: Maria Souza"></div><div class="form-field"><label>Cargo / Município ou OSC</label><input type="text" placeholder="Ex.: Prefeita de..."></div></div><div class="form-field"><label>Vídeo (link ou upload)</label><input type="text" placeholder="https://..."></div>';
+    list.appendChild(div);
+  }
   function openSourcesModal(){ document.getElementById('sources-modal-overlay').classList.add('open'); }
   function closeSourcesModal(){ document.getElementById('sources-modal-overlay').classList.remove('open'); }
 </script>
