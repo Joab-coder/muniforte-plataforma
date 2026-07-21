@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="color-scheme" content="light">
 <title>MuniForte — Protótipo do fluxo completo</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2316424A'/%3E%3Cpath d='M15,44 L15,20 L24,34 L33,20 L33,44 M41,44 L41,20 L51,20 M41,31 L49,31' fill='none' stroke='%23B8842C' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,6 +11,7 @@
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root{
+    color-scheme: light;
     --bg: #F5F4EF; --surface: #FFFFFF; --ink: #1C2B2E; --ink-soft: #566063;
     --primary: #16424A; --primary-light: #2C6E76; --primary-wash: #E7EEEE;
     --gold: #B8842C; --gold-soft: #F3E8D2;
@@ -101,7 +103,16 @@
   a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible{ outline:2px solid var(--gold); outline-offset:2px; }
 
   /* ===================== LANDING ===================== */
-  #screen-landing .landing-top{ background:var(--primary); padding:14px 28px; display:flex; align-items:center; justify-content:space-between; }
+  .landing-top{ background:var(--primary); padding:14px 28px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; position:relative; }
+  .hamburger-btn{ display:none; background:none; border:none; color:#fff; font-size:22px; line-height:1; padding:4px 8px; }
+  .mobile-menu-panel{ display:none; flex-direction:column; position:absolute; top:100%; right:16px; background:var(--primary); border:1px solid rgba(255,255,255,0.18); border-radius:10px; padding:6px; min-width:170px; z-index:700; box-shadow:0 10px 24px rgba(0,0,0,0.25); }
+  .mobile-menu-panel.open{ display:flex; }
+  .mobile-menu-panel button{ background:none; border:none; color:#fff; text-align:left; padding:11px 12px; font-size:13.5px; font-weight:500; border-radius:6px; }
+  .mobile-menu-panel button:hover{ background:rgba(255,255,255,0.1); }
+  @media (max-width:760px){
+    .public-tabs{ display:none; }
+    .hamburger-btn{ display:inline-block; }
+  }
   .hero{
     background:linear-gradient(180deg, var(--primary) 0%, var(--primary) 72%, var(--bg) 72%);
     padding:64px 28px 40px;
@@ -527,6 +538,12 @@
     </div>
     <div class="top-actions">
       <button class="btn-topbar" onclick="goTo('screen-login')">Entrar</button>
+      <button class="hamburger-btn" onclick="toggleMobileMenu(this)" aria-label="Abrir menu">☰</button>
+    </div>
+    <div class="mobile-menu-panel">
+      <button onclick="goTo('screen-landing')">Início</button>
+      <button onclick="goTo('screen-sobre')">Sobre nós</button>
+      <button onclick="goTo('screen-contato')">Contato</button>
     </div>
   </div>
 
@@ -667,7 +684,12 @@
       <button class="public-tab" data-tab="screen-sobre" onclick="goTo('screen-sobre')">Sobre nós</button>
       <button class="public-tab" data-tab="screen-contato" onclick="goTo('screen-contato')">Contato</button>
     </div>
-    <div class="top-actions"><button class="btn-topbar" onclick="goTo('screen-login')">Entrar</button></div>
+    <div class="top-actions"><button class="btn-topbar" onclick="goTo('screen-login')">Entrar</button><button class="hamburger-btn" onclick="toggleMobileMenu(this)" aria-label="Abrir menu">☰</button></div>
+    <div class="mobile-menu-panel">
+      <button onclick="goTo('screen-landing')">Início</button>
+      <button onclick="goTo('screen-sobre')">Sobre nós</button>
+      <button onclick="goTo('screen-contato')">Contato</button>
+    </div>
   </div>
 
   <div class="public-hero">
@@ -719,7 +741,12 @@
       <button class="public-tab" data-tab="screen-sobre" onclick="goTo('screen-sobre')">Sobre nós</button>
       <button class="public-tab" data-tab="screen-contato" onclick="goTo('screen-contato')">Contato</button>
     </div>
-    <div class="top-actions"><button class="btn-topbar" onclick="goTo('screen-login')">Entrar</button></div>
+    <div class="top-actions"><button class="btn-topbar" onclick="goTo('screen-login')">Entrar</button><button class="hamburger-btn" onclick="toggleMobileMenu(this)" aria-label="Abrir menu">☰</button></div>
+    <div class="mobile-menu-panel">
+      <button onclick="goTo('screen-landing')">Início</button>
+      <button onclick="goTo('screen-sobre')">Sobre nós</button>
+      <button onclick="goTo('screen-contato')">Contato</button>
+    </div>
   </div>
 
   <div class="public-hero">
@@ -767,7 +794,12 @@
       <button class="public-tab" data-tab="screen-sobre" onclick="goTo('screen-sobre')">Sobre nós</button>
       <button class="public-tab" data-tab="screen-contato" onclick="goTo('screen-contato')">Contato</button>
     </div>
-    <div class="top-actions"><button class="btn-topbar" onclick="goTo('screen-login')">Entrar</button></div>
+    <div class="top-actions"><button class="btn-topbar" onclick="goTo('screen-login')">Entrar</button><button class="hamburger-btn" onclick="toggleMobileMenu(this)" aria-label="Abrir menu">☰</button></div>
+    <div class="mobile-menu-panel">
+      <button onclick="goTo('screen-landing')">Início</button>
+      <button onclick="goTo('screen-sobre')">Sobre nós</button>
+      <button onclick="goTo('screen-contato')">Contato</button>
+    </div>
   </div>
 
   <div class="public-hero">
@@ -1502,7 +1534,21 @@
     window.scrollTo({top:0, behavior:'smooth'});
     if(id.startsWith('screen-diag-')) renderStepper(id);
     document.querySelectorAll('.public-tab').forEach(t => t.classList.toggle('current', t.dataset.tab === id));
+    closeAllMobileMenus();
   }
+
+  function toggleMobileMenu(btn){
+    const panel = btn.closest('.landing-top').querySelector('.mobile-menu-panel');
+    const wasOpen = panel.classList.contains('open');
+    closeAllMobileMenus();
+    if(!wasOpen) panel.classList.add('open');
+  }
+  function closeAllMobileMenus(){
+    document.querySelectorAll('.mobile-menu-panel').forEach(p => p.classList.remove('open'));
+  }
+  document.addEventListener('click', (e) => {
+    if(!e.target.closest('.hamburger-btn') && !e.target.closest('.mobile-menu-panel')) closeAllMobileMenus();
+  });
 
   function renderStepper(activeId){
     const activeIndex = diagSteps.findIndex(s => s.id === activeId);
