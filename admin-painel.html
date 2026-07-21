@@ -31,7 +31,7 @@
     display:flex; flex-direction:column; position:sticky; top:0; height:100vh;
   }
   .sidebar-brand{ display:flex; align-items:center; gap:10px; padding:20px 18px; border-bottom:1px solid rgba(255,255,255,0.12); }
-  .brand-mark{ width:30px; height:30px; border-radius:19%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-family:'Arial Rounded MT Bold','Baloo 2', Arial, sans-serif; font-size:14px; color:var(--gold); font-weight:700; flex-shrink:0; }
+  .brand-mark{ width:38px; height:38px; border-radius:19%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-family:'Arial Rounded MT Bold','Baloo 2', Arial, sans-serif; font-size:14px; color:var(--gold); font-weight:700; flex-shrink:0; }
   .sidebar-brand div{ font-family:'Arial Rounded MT Bold','Baloo 2', Arial, sans-serif; font-weight:700; font-size:15.5px; line-height:1.3; }
   .sidebar-brand small{ display:block; font-family:'IBM Plex Sans', sans-serif; font-weight:400; font-size:10.5px; color:#B9D0CE; }
   .tenant-tag{ margin:14px 18px 6px; font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:0.4px; text-transform:uppercase; color:#8FB0AE; }
@@ -371,6 +371,38 @@
   .source-card span{ font-size:11.5px; color:var(--ink-soft); line-height:1.4; }
   .btn-sources{ background:var(--surface); border:1px solid var(--border); border-radius:7px; padding:9px 15px; font-size:12.5px; color:var(--ink); font-weight:600; display:inline-flex; align-items:center; gap:6px; }
   .btn-sources:hover{ border-color:var(--primary); }
+
+  .row-delete{ background:none; border:1px solid var(--border); border-radius:7px; width:30px; height:30px; font-size:13px; color:var(--warning); }
+  .row-delete:hover{ background:var(--warning-soft); border-color:var(--warning); }
+
+  .danger-zone{ border-color:#E8C7B8; }
+  .danger-zone .panel-head h2{ color:var(--warning); }
+  .danger-row{ display:flex; align-items:center; justify-content:space-between; gap:18px; padding:14px 0; border-top:1px solid var(--border); }
+  .danger-row:first-of-type{ border-top:none; }
+  .danger-row strong{ display:block; font-size:13.5px; margin-bottom:3px; }
+  .danger-row span{ font-size:12px; color:var(--ink-soft); line-height:1.5; max-width:520px; display:block; }
+  .btn-danger{ background:#fff; border:1px solid var(--warning); color:var(--warning); border-radius:7px; padding:9px 16px; font-size:12.5px; font-weight:700; white-space:nowrap; }
+  .btn-danger:hover{ background:var(--warning); color:#fff; }
+
+  /* ===== modal: excluir / limpar dados ===== */
+  .delete-modal-overlay{ display:none; position:fixed; inset:0; background:rgba(20,30,32,0.55); z-index:9100; align-items:center; justify-content:center; padding:20px; }
+  .delete-modal-overlay.open{ display:flex; }
+  .delete-modal{ background:#fff; border-radius:14px; max-width:520px; width:100%; padding:26px 28px; }
+  .delete-modal h2{ font-family:'IBM Plex Serif', serif; font-size:18px; margin:0 0 4px; color:var(--primary); }
+  .delete-modal .sub{ font-size:12.5px; color:var(--ink-soft); margin-bottom:18px; }
+  .delete-opt{ border:1.5px solid var(--border); border-radius:10px; padding:14px 16px; margin-bottom:10px; cursor:pointer; }
+  .delete-opt:hover{ border-color:var(--primary-light); }
+  .delete-opt.selected{ border-color:var(--primary); background:var(--primary-wash); }
+  .delete-opt .row1{ display:flex; align-items:center; justify-content:space-between; }
+  .delete-opt strong{ font-size:13.5px; }
+  .delete-opt .rec-badge{ font-size:9.5px; font-weight:700; text-transform:uppercase; background:var(--success-soft); color:var(--success); padding:2px 8px; border-radius:20px; }
+  .delete-opt p{ font-size:12px; color:var(--ink-soft); margin:6px 0 0; line-height:1.5; }
+  .delete-opt.danger.selected{ border-color:var(--warning); background:var(--warning-soft); }
+  .delete-confirm-input{ display:none; margin-top:10px; }
+  .delete-confirm-input.show{ display:block; }
+  .delete-confirm-input label{ font-size:11.5px; color:var(--warning); font-weight:600; display:block; margin-bottom:5px; }
+  .delete-confirm-input input{ width:100%; border:1px solid var(--warning); border-radius:7px; padding:8px 10px; font-size:13px; }
+  .delete-modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
 </style>
 </head>
 <body>
@@ -409,6 +441,7 @@
     <div class="sidebar-foot">
       <div class="avatar">RC</div>
       <div class="who"><strong>Renata Campos</strong><span>Administradora</span></div>
+      <a href="index.html" style="margin-left:auto; color:#9DBAB8; font-size:11px; text-decoration:none;" title="Sair">↩ Sair</a>
     </div>
   </aside>
 
@@ -493,31 +526,35 @@
             </div>
           </div>
           <table>
-            <thead><tr><th>Município</th><th>Diagnóstico</th><th>Propostos</th><th>Aprovados</th><th>Execução</th><th>Prest. contas</th><th></th></tr></thead>
-            <tbody>
-              <tr onclick="openMunicipio('Vila Serrana — PB')">
-                <td class="name-cell"><strong>Vila Serrana</strong><span>PB · 18.400 hab.</span></td>
-                <td><span class="status-pill execucao">86% completo</span></td>
+            <thead><tr><th>Município</th><th>Diagnóstico</th><th>Propostos</th><th>Aprovados</th><th>Execução</th><th>Prest. contas</th><th></th><th></th></tr></thead>
+            <tbody id="municipios-tbody">
+              <tr>
+                <td class="name-cell" onclick="openMunicipio('Vila Serrana — PB')" style="cursor:pointer;"><strong>Vila Serrana</strong><span>PB · 18.400 hab.</span></td>
+                <td onclick="openMunicipio('Vila Serrana — PB')" style="cursor:pointer;"><span class="status-pill execucao">86% completo</span></td>
                 <td class="mini-count">3</td><td class="mini-count">2</td><td class="mini-count">1</td><td class="mini-count">1</td>
-                <td><button class="row-link">Ver detalhes →</button></td>
+                <td><button class="row-link" onclick="openMunicipio('Vila Serrana — PB')">Ver detalhes →</button></td>
+                <td><button class="row-delete" title="Excluir ou limpar dados" onclick="event.stopPropagation(); openDeleteModal('Vila Serrana — PB', 'município', this)">🗑</button></td>
               </tr>
-              <tr onclick="openMunicipio('Serra Alta — MG')">
-                <td class="name-cell"><strong>Serra Alta</strong><span>MG · 31.200 hab.</span></td>
-                <td><span class="status-pill aprovado">100% completo</span></td>
+              <tr>
+                <td class="name-cell" onclick="openMunicipio('Serra Alta — MG')" style="cursor:pointer;"><strong>Serra Alta</strong><span>MG · 31.200 hab.</span></td>
+                <td onclick="openMunicipio('Serra Alta — MG')" style="cursor:pointer;"><span class="status-pill aprovado">100% completo</span></td>
                 <td class="mini-count">5</td><td class="mini-count">4</td><td class="mini-count">2</td><td class="mini-count">0</td>
-                <td><button class="row-link">Ver detalhes →</button></td>
+                <td><button class="row-link" onclick="openMunicipio('Serra Alta — MG')">Ver detalhes →</button></td>
+                <td><button class="row-delete" title="Excluir ou limpar dados" onclick="event.stopPropagation(); openDeleteModal('Serra Alta — MG', 'município', this)">🗑</button></td>
               </tr>
-              <tr onclick="openMunicipio('Ribeirão do Meio — GO')">
-                <td class="name-cell"><strong>Ribeirão do Meio</strong><span>GO · 9.800 hab.</span></td>
-                <td><span class="status-pill proposto">42% completo</span></td>
+              <tr>
+                <td class="name-cell" onclick="openMunicipio('Ribeirão do Meio — GO')" style="cursor:pointer;"><strong>Ribeirão do Meio</strong><span>GO · 9.800 hab.</span></td>
+                <td onclick="openMunicipio('Ribeirão do Meio — GO')" style="cursor:pointer;"><span class="status-pill proposto">42% completo</span></td>
                 <td class="mini-count">1</td><td class="mini-count">0</td><td class="mini-count">0</td><td class="mini-count">0</td>
-                <td><button class="row-link">Ver detalhes →</button></td>
+                <td><button class="row-link" onclick="openMunicipio('Ribeirão do Meio — GO')">Ver detalhes →</button></td>
+                <td><button class="row-delete" title="Excluir ou limpar dados" onclick="event.stopPropagation(); openDeleteModal('Ribeirão do Meio — GO', 'município', this)">🗑</button></td>
               </tr>
-              <tr onclick="openMunicipio('Boa Vista do Norte — CE')">
-                <td class="name-cell"><strong>Boa Vista do Norte</strong><span>CE · 24.600 hab.</span></td>
-                <td><span class="status-pill execucao">91% completo</span></td>
+              <tr>
+                <td class="name-cell" onclick="openMunicipio('Boa Vista do Norte — CE')" style="cursor:pointer;"><strong>Boa Vista do Norte</strong><span>CE · 24.600 hab.</span></td>
+                <td onclick="openMunicipio('Boa Vista do Norte — CE')" style="cursor:pointer;"><span class="status-pill execucao">91% completo</span></td>
                 <td class="mini-count">4</td><td class="mini-count">3</td><td class="mini-count">3</td><td class="mini-count">2</td>
-                <td><button class="row-link">Ver detalhes →</button></td>
+                <td><button class="row-link" onclick="openMunicipio('Boa Vista do Norte — CE')">Ver detalhes →</button></td>
+                <td><button class="row-delete" title="Excluir ou limpar dados" onclick="event.stopPropagation(); openDeleteModal('Boa Vista do Norte — CE', 'município', this)">🗑</button></td>
               </tr>
             </tbody>
           </table>
@@ -577,6 +614,18 @@
             <div class="fact-card"><div class="k">Etapa pendente</div><div class="v">Cultura/Esporte</div></div>
           </div>
         </div>
+
+        <div class="panel danger-zone">
+          <div class="panel-head"><h2>Zona de risco</h2></div>
+          <div class="danger-row">
+            <div><strong>Limpar dados preenchidos</strong><span>Apaga o diagnóstico e os dados inseridos manualmente. O cadastro, o login e o histórico de projetos continuam ativos. Recomendado para reiniciar testes.</span></div>
+            <button class="btn-ghost" onclick="openDeleteModal(document.getElementById('municipio-detail-title').textContent, 'cadastro', this, 'limpar')">Limpar dados</button>
+          </div>
+          <div class="danger-row">
+            <div><strong>Excluir cadastro completo</strong><span>Remove o município/OSC, o acesso ao painel e todo o histórico. Ação irreversível — use só em cadastros duplicados ou criados por engano.</span></div>
+            <button class="btn-danger" onclick="openDeleteModal(document.getElementById('municipio-detail-title').textContent, 'cadastro', this, 'excluir')">Excluir cadastro</button>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -594,25 +643,28 @@
             </div>
           </div>
           <table>
-            <thead><tr><th>Organização</th><th>Área</th><th>Propostos</th><th>Aprovados</th><th>Execução</th><th>Prest. contas</th><th></th></tr></thead>
+            <thead><tr><th>Organização</th><th>Área</th><th>Propostos</th><th>Aprovados</th><th>Execução</th><th>Prest. contas</th><th></th><th></th></tr></thead>
             <tbody>
-              <tr onclick="openMunicipio('Instituto Semear — Educação')">
-                <td class="name-cell"><strong>Instituto Semear</strong><span>Vila Serrana — PB</span></td>
-                <td><span class="status-pill execucao">Educação</span></td>
+              <tr>
+                <td class="name-cell" onclick="openMunicipio('Instituto Semear — Educação')" style="cursor:pointer;"><strong>Instituto Semear</strong><span>Vila Serrana — PB</span></td>
+                <td onclick="openMunicipio('Instituto Semear — Educação')" style="cursor:pointer;"><span class="status-pill execucao">Educação</span></td>
                 <td class="mini-count">2</td><td class="mini-count">2</td><td class="mini-count">1</td><td class="mini-count">0</td>
-                <td><button class="row-link">Ver detalhes →</button></td>
+                <td><button class="row-link" onclick="openMunicipio('Instituto Semear — Educação')">Ver detalhes →</button></td>
+                <td><button class="row-delete" title="Excluir ou limpar dados" onclick="event.stopPropagation(); openDeleteModal('Instituto Semear', 'OSC', this)">🗑</button></td>
               </tr>
-              <tr onclick="openMunicipio('Coletivo Raízes — Cultura')">
-                <td class="name-cell"><strong>Coletivo Raízes</strong><span>Serra Alta — MG</span></td>
-                <td><span class="status-pill aprovado">Cultura</span></td>
+              <tr>
+                <td class="name-cell" onclick="openMunicipio('Coletivo Raízes — Cultura')" style="cursor:pointer;"><strong>Coletivo Raízes</strong><span>Serra Alta — MG</span></td>
+                <td onclick="openMunicipio('Coletivo Raízes — Cultura')" style="cursor:pointer;"><span class="status-pill aprovado">Cultura</span></td>
                 <td class="mini-count">1</td><td class="mini-count">1</td><td class="mini-count">0</td><td class="mini-count">0</td>
-                <td><button class="row-link">Ver detalhes →</button></td>
+                <td><button class="row-link" onclick="openMunicipio('Coletivo Raízes — Cultura')">Ver detalhes →</button></td>
+                <td><button class="row-delete" title="Excluir ou limpar dados" onclick="event.stopPropagation(); openDeleteModal('Coletivo Raízes', 'OSC', this)">🗑</button></td>
               </tr>
-              <tr onclick="openMunicipio('Rede Verde Viva — Meio ambiente')">
-                <td class="name-cell"><strong>Rede Verde Viva</strong><span>Boa Vista do Norte — CE</span></td>
-                <td><span class="status-pill proposto">Meio ambiente</span></td>
+              <tr>
+                <td class="name-cell" onclick="openMunicipio('Rede Verde Viva — Meio ambiente')" style="cursor:pointer;"><strong>Rede Verde Viva</strong><span>Boa Vista do Norte — CE</span></td>
+                <td onclick="openMunicipio('Rede Verde Viva — Meio ambiente')" style="cursor:pointer;"><span class="status-pill proposto">Meio ambiente</span></td>
                 <td class="mini-count">1</td><td class="mini-count">0</td><td class="mini-count">0</td><td class="mini-count">0</td>
-                <td><button class="row-link">Ver detalhes →</button></td>
+                <td><button class="row-link" onclick="openMunicipio('Rede Verde Viva — Meio ambiente')">Ver detalhes →</button></td>
+                <td><button class="row-delete" title="Excluir ou limpar dados" onclick="event.stopPropagation(); openDeleteModal('Rede Verde Viva', 'OSC', this)">🗑</button></td>
               </tr>
             </tbody>
           </table>
@@ -1314,6 +1366,84 @@
     setView('admin-municipio-detail');
   }
 
+  // ===== Excluir cadastro / Limpar dados preenchidos =====
+  let deleteTarget = { name: '', shortName: '', type: '', selectedOpt: null, sourceRow: null, fromDetail: false };
+
+  function openDeleteModal(name, type, sourceEl, presetOpt){
+    deleteTarget.name = name;
+    deleteTarget.shortName = name.split(' — ')[0].trim();
+    deleteTarget.type = type;
+    deleteTarget.sourceRow = sourceEl ? sourceEl.closest('tr') : null;
+    deleteTarget.fromDetail = !deleteTarget.sourceRow;
+    deleteTarget.selectedOpt = null;
+
+    document.getElementById('delete-modal-title').textContent = 'O que fazer com "' + deleteTarget.shortName + '"?';
+    document.getElementById('delete-modal-sub').textContent = 'Escolha a ação mais adequada para esta fase de testes.';
+    document.getElementById('delete-confirm-input').value = '';
+    document.getElementById('delete-confirm-input').placeholder = 'Digite: ' + deleteTarget.shortName;
+    document.getElementById('opt-limpar').classList.remove('selected');
+    document.getElementById('opt-excluir').classList.remove('selected');
+    document.getElementById('delete-confirm-wrap').classList.remove('show');
+    const btn = document.getElementById('delete-modal-confirm-btn');
+    btn.disabled = true;
+    btn.textContent = 'Selecione uma opção';
+
+    document.getElementById('delete-modal-overlay').classList.add('open');
+    if (presetOpt) selectDeleteOpt(presetOpt);
+  }
+
+  function closeDeleteModal(){
+    document.getElementById('delete-modal-overlay').classList.remove('open');
+  }
+
+  function selectDeleteOpt(opt){
+    deleteTarget.selectedOpt = opt;
+    document.getElementById('opt-limpar').classList.toggle('selected', opt === 'limpar');
+    document.getElementById('opt-excluir').classList.toggle('selected', opt === 'excluir');
+    const confirmWrap = document.getElementById('delete-confirm-wrap');
+    const btn = document.getElementById('delete-modal-confirm-btn');
+    if (opt === 'limpar') {
+      confirmWrap.classList.remove('show');
+      btn.disabled = false;
+      btn.textContent = 'Limpar dados';
+    } else {
+      confirmWrap.classList.add('show');
+      btn.textContent = 'Excluir cadastro';
+      checkDeleteConfirm();
+    }
+  }
+
+  function checkDeleteConfirm(){
+    const typed = document.getElementById('delete-confirm-input').value.trim().toLowerCase();
+    const btn = document.getElementById('delete-modal-confirm-btn');
+    btn.disabled = !(deleteTarget.selectedOpt === 'excluir' && typed === deleteTarget.shortName.toLowerCase());
+  }
+
+  function removeRowsByName(shortName){
+    document.querySelectorAll('table tbody tr').forEach(tr => {
+      const strong = tr.querySelector('.name-cell strong');
+      if (strong && strong.textContent.trim() === shortName) tr.remove();
+    });
+  }
+
+  function confirmDeleteAction(){
+    const { shortName, selectedOpt, fromDetail } = deleteTarget;
+    closeDeleteModal();
+
+    if (selectedOpt === 'limpar') {
+      if (fromDetail) {
+        document.querySelectorAll('#admin-municipio-detail .fact-grid .fact-card').forEach(card => {
+          if (card.querySelector('.k').textContent.includes('Diagnóstico')) card.querySelector('.v').textContent = '0% completo';
+        });
+      }
+      alert('Dados de "' + shortName + '" foram limpos. O cadastro e o acesso ao painel continuam ativos — nada precisa ser recriado.');
+    } else if (selectedOpt === 'excluir') {
+      removeRowsByName(shortName);
+      alert('Cadastro de "' + shortName + '" excluído com sucesso.');
+      if (fromDetail) setView('admin-municipios');
+    }
+  }
+
   function toggleNewUser(){
     const el = document.getElementById('new-user-form');
     el.style.display = el.style.display === 'none' ? 'block' : 'none';
@@ -1403,6 +1533,33 @@
       <a class="source-card" href="https://cecad.cidadania.gov.br" target="_blank" rel="noopener"><strong>Censo SUAS / CadÚnico</strong><span>CRAS, CREAS e famílias cadastradas na assistência social</span></a>
       <a class="source-card" href="https://www.gov.br/cultura/pt-br" target="_blank" rel="noopener"><strong>Sist. Nac. Bibliotecas Públicas</strong><span>Bibliotecas públicas cadastradas no município</span></a>
       <a class="source-card" href="http://portal.iphan.gov.br" target="_blank" rel="noopener"><strong>IPHAN</strong><span>Bens tombados e patrimônio histórico municipal</span></a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: EXCLUIR / LIMPAR DADOS ===== -->
+<div id="delete-modal-overlay" class="delete-modal-overlay" onclick="if(event.target===this) closeDeleteModal()">
+  <div class="delete-modal">
+    <h2 id="delete-modal-title">O que fazer com este cadastro?</h2>
+    <div class="sub" id="delete-modal-sub">Escolha a ação mais adequada para esta fase de testes.</div>
+
+    <div class="delete-opt" id="opt-limpar" onclick="selectDeleteOpt('limpar')">
+      <div class="row1"><strong>Limpar dados preenchidos</strong><span class="rec-badge">Recomendado em testes</span></div>
+      <p>Apaga o diagnóstico e as informações inseridas manualmente (respostas, ideias geradas). O cadastro, o login e o histórico de projetos continuam ativos — você não precisa recriar o município/OSC depois.</p>
+    </div>
+
+    <div class="delete-opt danger" id="opt-excluir" onclick="selectDeleteOpt('excluir')">
+      <div class="row1"><strong>Excluir cadastro completo</strong></div>
+      <p>Remove o município/OSC, o acesso ao painel do usuário e todo o histórico de projetos. Ação irreversível — use só para cadastros duplicados ou criados por engano.</p>
+      <div class="delete-confirm-input" id="delete-confirm-wrap">
+        <label>Digite o nome exato para confirmar a exclusão:</label>
+        <input type="text" id="delete-confirm-input" placeholder="" oninput="checkDeleteConfirm()">
+      </div>
+    </div>
+
+    <div class="delete-modal-actions">
+      <button class="btn-ghost" onclick="closeDeleteModal()">Cancelar</button>
+      <button class="btn-primary" id="delete-modal-confirm-btn" disabled onclick="confirmDeleteAction()">Selecione uma opção</button>
     </div>
   </div>
 </div>

@@ -34,7 +34,7 @@
   /* ===================== SHARED TOPBAR ===================== */
   .topbar{ background:var(--primary); color:#fff; padding:14px 28px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
   .brand{ display:flex; align-items:center; gap:10px; font-family:'Arial Rounded MT Bold','Baloo 2', Arial, sans-serif; font-weight:700; font-size:19px; cursor:pointer; border:none; background:none; color:#fff; }
-  .brand-mark{ width:30px; height:30px; border-radius:19%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-family:'Arial Rounded MT Bold','Baloo 2', Arial, sans-serif; font-size:14px; color:var(--gold); font-weight:700; }
+  .brand-mark{ width:38px; height:38px; border-radius:19%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-family:'Arial Rounded MT Bold','Baloo 2', Arial, sans-serif; font-size:14px; color:var(--gold); font-weight:700; }
   .brand small{ display:block; font-family:'IBM Plex Sans', sans-serif; font-weight:400; font-size:11px; color:#C9DAD9; text-align:left; }
   .top-actions{ display:flex; align-items:center; gap:18px; font-size:13.5px; }
   .top-actions .muted{ color:#B9D0CE; }
@@ -185,7 +185,7 @@
   .login-field label{ font-size:12.5px; font-weight:600; }
   .login-field input{ border:1px solid var(--border); border-radius:7px; padding:11px 12px; font-size:14px; font-family:'IBM Plex Sans', sans-serif; }
   .login-tabs{ display:flex; gap:6px; background:var(--bg); border-radius:8px; padding:4px; margin-bottom:22px; }
-  .login-tab{ flex:1; text-align:center; padding:8px; border-radius:6px; font-size:12.5px; font-weight:600; border:none; background:none; color:var(--ink-soft); }
+  .login-tab{ flex:1; text-align:center; padding:8px 4px; border-radius:6px; font-size:11.5px; font-weight:600; border:none; background:none; color:var(--ink-soft); }
   .login-tab.active{ background:var(--primary); color:#fff; }
   .login-submit{ width:100%; margin-top:6px; padding:12px; font-size:14px; }
   .login-foot{ text-align:center; font-size:12px; color:var(--ink-soft); margin-top:18px; }
@@ -848,12 +848,13 @@
   </div>
   <div class="login-wrap">
     <div class="login-card">
-      <div class="brand-mark" style="width:40px;height:40px;font-size:16px;"><svg viewBox="0 0 64 64" style="width:60%;height:60%;overflow:visible;" aria-hidden="true"><path d="M15,44 L15,20 L24,34 L33,20 L33,44 M41,44 L41,20 L51,20 M41,31 L49,31" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="brand-mark" style="width:56px;height:56px;font-size:16px;"><svg viewBox="0 0 64 64" style="width:60%;height:60%;overflow:visible;" aria-hidden="true"><path d="M15,44 L15,20 L24,34 L33,20 L33,44 M41,44 L41,20 L51,20 M41,31 L49,31" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <h2>Acessar minha conta</h2>
       <p class="sub">Prefeituras e OSCs em um só lugar</p>
       <div class="login-tabs">
-        <button class="login-tab active">Município</button>
-        <button class="login-tab">OSC</button>
+        <button class="login-tab active" data-role="municipio">Município</button>
+        <button class="login-tab" data-role="osc">OSC</button>
+        <button class="login-tab" data-role="admin">Administrador</button>
       </div>
       <div class="login-field">
         <label>E-mail institucional</label>
@@ -863,8 +864,8 @@
         <label>Senha</label>
         <input type="text" placeholder="••••••••">
       </div>
-      <button class="btn-primary login-submit" onclick="goTo('screen-search')">Entrar</button>
-      <div class="login-foot">Ainda não tem conta? <a onclick="goTo('screen-diag-1')">Cadastre seu município ou OSC</a></div>
+      <button class="btn-primary login-submit" onclick="doLogin()">Entrar</button>
+      <div class="login-foot">Esqueceu a senha? <a onclick="alert('No produto final, aqui abriria a recuperação de senha por e-mail.')">Recuperar acesso</a></div>
     </div>
   </div>
 </section>
@@ -1529,7 +1530,25 @@
   document.querySelectorAll('.login-tab').forEach(tab => tab.addEventListener('click', () => {
     document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
+    const role = tab.dataset.role;
+    const emailInput = document.querySelector('#screen-login .login-field input[type="text"]');
+    const placeholders = {
+      municipio: 'prefeito@vilaserrana.pb.gov.br',
+      osc: 'contato@institutosemear.org.br',
+      admin: 'equipe@muniforte.com.br'
+    };
+    if (emailInput) emailInput.placeholder = placeholders[role] || '';
   }));
+
+  function doLogin(){
+    const activeTab = document.querySelector('#screen-login .login-tab.active');
+    const role = activeTab ? activeTab.dataset.role : 'municipio';
+    if (role === 'admin') {
+      window.location.href = 'admin-painel.html';
+    } else {
+      window.location.href = 'painel-usuario.html?tipo=' + role;
+    }
+  }
 
   // banco de referências do Transferegov — filtro por área
   const refChips = document.querySelectorAll('#ref-area-chips .chip');

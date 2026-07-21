@@ -28,7 +28,7 @@
 
   .sidebar{ width:var(--sidebar-w); flex-shrink:0; background:var(--primary); color:#fff; display:flex; flex-direction:column; position:sticky; top:0; height:100vh; }
   .sidebar-brand{ display:flex; align-items:center; gap:10px; padding:20px 18px; border-bottom:1px solid rgba(255,255,255,0.12); }
-  .brand-mark{ width:30px; height:30px; border-radius:19%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-family:'Arial Rounded MT Bold','Baloo 2', Arial, sans-serif; font-size:14px; color:var(--gold); font-weight:700; flex-shrink:0; }
+  .brand-mark{ width:38px; height:38px; border-radius:19%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-family:'Arial Rounded MT Bold','Baloo 2', Arial, sans-serif; font-size:14px; color:var(--gold); font-weight:700; flex-shrink:0; }
   .sidebar-brand div{ font-family:'Arial Rounded MT Bold','Baloo 2', Arial, sans-serif; font-weight:700; font-size:15.5px; line-height:1.3; }
   .sidebar-brand small{ display:block; font-family:'IBM Plex Sans', sans-serif; font-weight:400; font-size:10.5px; color:#B9D0CE; }
   .tenant-tag{ margin:14px 18px 6px; font-family:'IBM Plex Mono', monospace; font-size:10px; letter-spacing:0.4px; text-transform:uppercase; color:#8FB0AE; }
@@ -244,6 +244,7 @@
     <div class="sidebar-foot">
       <div class="avatar">PM</div>
       <div class="who"><strong>Paulo Marreiro</strong><span>Prefeito — Vila Serrana/PB</span></div>
+      <a href="index.html" style="margin-left:auto; color:#9DBAB8; font-size:11px; text-decoration:none;" title="Sair">↩ Sair</a>
     </div>
   </aside>
 
@@ -949,6 +950,15 @@
   document.querySelectorAll('#usr-ideias .idea-card').forEach(card => {
     card.style.display = (card.dataset.entity === currentEntity) ? '' : 'none';
   });
+
+  // tipo de conta definido no login (?tipo=municipio|osc) — no produto final isso viria da sessão autenticada, não da URL
+  (function(){
+    const params = new URLSearchParams(window.location.search);
+    const tipo = params.get('tipo');
+    if (tipo === 'osc' || tipo === 'municipio') {
+      applyEntity(tipo);
+    }
+  })();
 </script>
 
 <!-- ===== MODAL: FONTES DE DADOS OFICIAIS ===== -->
