@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="color-scheme" content="light">
 <title>Painel do Administrador — MuniForte</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js" defer></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2316424A'/%3E%3Cpath d='M15,44 L15,20 L24,34 L33,20 L33,44 M41,44 L41,20 L51,20 M41,31 L49,31' fill='none' stroke='%23B8842C' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
@@ -719,7 +721,7 @@
             <div class="chip-row"><span class="chip active">Todos</span><span class="chip">Prefeitos</span><span class="chip">OSCs</span></div>
           </div>
           <table>
-            <thead><tr><th>Nome</th><th>Tipo</th><th>Vínculo</th><th>Último acesso</th><th></th></tr></thead>
+            <thead><tr><th>Nome</th><th>Tipo</th><th>Vínculo</th><th>Último acesso</th><th></th><th></th></tr></thead>
             <tbody>
               <tr>
                 <td class="name-cell"><strong>João Marreiro</strong><span>joao@vilaserrana.pb.gov.br</span></td>
@@ -727,6 +729,7 @@
                 <td>Vila Serrana — PB</td>
                 <td class="mini-count">Hoje, 09:12</td>
                 <td><button class="row-link">Gerenciar</button></td>
+                <td><button class="row-delete" title="Remover usuário" onclick="deleteUser(this)">🗑</button></td>
               </tr>
               <tr>
                 <td class="name-cell"><strong>Ana Beatriz Lopes</strong><span>ana@institutosemear.org.br</span></td>
@@ -734,6 +737,7 @@
                 <td>Instituto Semear</td>
                 <td class="mini-count">Ontem, 17:40</td>
                 <td><button class="row-link">Gerenciar</button></td>
+                <td><button class="row-delete" title="Remover usuário" onclick="deleteUser(this)">🗑</button></td>
               </tr>
               <tr>
                 <td class="name-cell"><strong>Carlos Eduardo Reis</strong><span>carlos@serraalta.mg.gov.br</span></td>
@@ -741,6 +745,7 @@
                 <td>Serra Alta — MG</td>
                 <td class="mini-count">3 dias atrás</td>
                 <td><button class="row-link">Gerenciar</button></td>
+                <td><button class="row-delete" title="Remover usuário" onclick="deleteUser(this)">🗑</button></td>
               </tr>
             </tbody>
           </table>
@@ -1053,7 +1058,7 @@
     <section id="admin-prazos" class="view">
       <div class="topbar">
         <div><h1>Controle de prazos</h1><div class="sub">Todos os prazos em aberto de municípios e OSCs, em um só lugar</div></div>
-        <div class="topbar-actions"><button class="btn-ghost">Exportar lista</button><button class="btn-primary">Configurar notificações</button><button class="btn-logout" onclick="logout()">⏻ Sair</button></div>
+        <div class="topbar-actions"><button class="btn-ghost" onclick="exportPrazosList()">Exportar lista</button><button class="btn-primary" onclick="alert('Preferências de notificação salvas.')">Configurar notificações</button><button class="btn-logout" onclick="logout()">⏻ Sair</button></div>
       </div>
       <div class="content">
 
@@ -1246,7 +1251,7 @@
 
             <div class="elab-footer">
               <span class="note" style="font-size:11.5px; color:var(--ink-soft); font-family:'IBM Plex Mono', monospace;">rascunho salvo automaticamente às 14:02</span>
-              <div style="display:flex; gap:10px;"><button class="btn-ghost">← Etapa anterior</button><button class="btn-primary">Próxima etapa →</button></div>
+              <div style="display:flex; gap:10px;"><button class="btn-ghost" onclick="goElabStep(-1)">← Etapa anterior</button><button class="btn-primary" onclick="goElabStep(1)">Próxima etapa →</button></div>
             </div>
           </div>
         </div>
@@ -1277,8 +1282,8 @@
         <div id="cms-cabecalho" class="cms-section active panel">
           <div class="panel-head"><h2>Cabeçalho</h2></div>
           <div class="field-row2">
-            <div class="form-field"><label>Nome da marca</label><input type="text" value="MuniForte"></div>
-            <div class="form-field"><label>Assinatura (abaixo do nome)</label><input type="text" value="CONSULTORIA EM GESTÃO PÚBLICA"></div>
+            <div class="form-field"><label>Nome da marca</label><input type="text" id="cms-f-brand-nome" value="MuniForte"></div>
+            <div class="form-field"><label>Assinatura (abaixo do nome)</label><input type="text" id="cms-f-brand-tag" value="CONSULTORIA EM GESTÃO PÚBLICA"></div>
           </div>
           <div class="form-field">
             <label>Logotipo</label>
@@ -1298,11 +1303,11 @@
         <!-- HERO -->
         <div id="cms-hero" class="cms-section panel">
           <div class="panel-head"><h2>Seção principal (Hero)</h2></div>
-          <div class="form-field"><label>Texto de destaque (eyebrow)</label><input type="text" value="Captação de recursos federais, sem adivinhação"></div>
-          <div class="form-field"><label>Título principal</label><textarea style="min-height:70px;">Descubra quais programas federais sua cidade ou OSC pode acessar — e receba ideias de projeto prontas para começar.</textarea></div>
-          <div class="form-field"><label>Subtítulo</label><textarea style="min-height:70px;">Cruzamos os dados oficiais do Transferegov com o diagnóstico do seu município para indicar, com precisão, onde vale a pena investir tempo de captação.</textarea></div>
+          <div class="form-field"><label>Texto de destaque (eyebrow)</label><input type="text" id="cms-f-hero-eyebrow" value="Captação de recursos federais, sem adivinhação"></div>
+          <div class="form-field"><label>Título principal</label><textarea id="cms-f-hero-titulo" style="min-height:70px;">Descubra quais programas federais sua cidade ou OSC pode acessar — e receba ideias de projeto prontas para começar.</textarea></div>
+          <div class="form-field"><label>Subtítulo</label><textarea id="cms-f-hero-subtitulo" style="min-height:70px;">Cruzamos os dados oficiais do Transferegov com o diagnóstico do seu município para indicar, com precisão, onde vale a pena investir tempo de captação.</textarea></div>
           <div class="field-row2">
-            <div class="form-field"><label>Texto do botão secundário</label><input type="text" value="Ver vídeo explicativo"></div>
+            <div class="form-field"><label>Texto do botão secundário</label><input type="text" id="cms-f-hero-btn2" value="Ver vídeo explicativo"></div>
             <div class="form-field"><label>Vídeo explicativo (link do YouTube/Vimeo ou upload)</label><input type="text" placeholder="https://..."></div>
           </div>
         </div>
@@ -1311,11 +1316,11 @@
         <div id="cms-whatsapp" class="cms-section panel">
           <div class="panel-head"><h2>Bloco de WhatsApp</h2></div>
           <div class="field-row2">
-            <div class="form-field"><label>Número do WhatsApp</label><input type="text" value="(93) 99115-4436"></div>
-            <div class="form-field"><label>Horário de atendimento</label><input type="text" value="seg. a sex., 9h às 18h"></div>
+            <div class="form-field"><label>Número do WhatsApp</label><input type="text" id="cms-f-wa-numero" value="(93) 99115-4436"></div>
+            <div class="form-field"><label>Horário de atendimento</label><input type="text" id="cms-f-wa-horario" value="seg. a sex., 9h às 18h"></div>
           </div>
-          <div class="form-field"><label>Título do bloco</label><input type="text" value="Fale agora com nossa equipe"></div>
-          <div class="form-field"><label>Texto de apoio</label><textarea style="min-height:70px;">Tire dúvidas, agende uma apresentação para sua prefeitura ou OSC, ou peça a análise financeira do seu município — direto pelo WhatsApp.</textarea></div>
+          <div class="form-field"><label>Título do bloco</label><input type="text" id="cms-f-wa-titulo" value="Fale agora com nossa equipe"></div>
+          <div class="form-field"><label>Texto de apoio</label><textarea id="cms-f-wa-texto" style="min-height:70px;">Tire dúvidas, agende uma apresentação para sua prefeitura ou OSC, ou peça a análise financeira do seu município — direto pelo WhatsApp.</textarea></div>
         </div>
 
         <!-- DEPOIMENTOS -->
@@ -1346,24 +1351,24 @@
         <!-- SOBRE NÓS -->
         <div id="cms-sobre" class="cms-section panel">
           <div class="panel-head"><h2>Página "Sobre nós"</h2></div>
-          <div class="form-field"><label>Título</label><input type="text" value="Especialistas em captação de recursos federais, agora com tecnologia própria"></div>
-          <div class="form-field"><label>Texto de missão</label><textarea style="min-height:80px;">Traduzir a complexidade dos programas federais de repasse em decisões simples para quem gere um município ou uma organização social.</textarea></div>
+          <div class="form-field"><label>Título</label><input type="text" id="cms-f-sobre-titulo" value="Especialistas em captação de recursos federais, agora com tecnologia própria"></div>
+          <div class="form-field"><label>Texto de missão</label><textarea id="cms-f-sobre-missao" style="min-height:80px;">Traduzir a complexidade dos programas federais de repasse em decisões simples para quem gere um município ou uma organização social.</textarea></div>
           <div class="field-row2">
-            <div class="form-field"><label>Municípios atendidos</label><input type="text" value="18"></div>
-            <div class="form-field"><label>OSCs atendidas</label><input type="text" value="27"></div>
+            <div class="form-field"><label>Municípios atendidos</label><input type="text" id="cms-f-sobre-municipios" value="18"></div>
+            <div class="form-field"><label>OSCs atendidas</label><input type="text" id="cms-f-sobre-oscs" value="27"></div>
           </div>
         </div>
 
         <!-- RODAPÉ -->
         <div id="cms-rodape" class="cms-section panel">
           <div class="panel-head"><h2>Rodapé</h2></div>
-          <div class="form-field"><label>Razão social</label><input type="text" value="MuniForte Consultoria em Gestão Pública LTDA"></div>
+          <div class="form-field"><label>Razão social</label><input type="text" id="cms-f-rodape-razao" value="MuniForte Consultoria em Gestão Pública LTDA"></div>
           <div class="field-row2">
-            <div class="form-field"><label>CNPJ</label><input type="text" placeholder="00.000.000/0001-00"></div>
-            <div class="form-field"><label>Telefone / WhatsApp</label><input type="text" value="(93) 99115-4436"></div>
+            <div class="form-field"><label>CNPJ</label><input type="text" id="cms-f-rodape-cnpj" placeholder="00.000.000/0001-00"></div>
+            <div class="form-field"><label>Telefone / WhatsApp</label><input type="text" id="cms-f-rodape-telefone" value="(93) 99115-4436"></div>
           </div>
-          <div class="form-field"><label>Endereço</label><input type="text" value="Rua Trinta e Um de Março, 24, Independente II, Altamira-PA"></div>
-          <div class="form-field"><label>E-mail de contato</label><input type="text" value="contato@muniforte.com.br"></div>
+          <div class="form-field"><label>Endereço</label><input type="text" id="cms-f-rodape-endereco" value="Rua Trinta e Um de Março, 24, Independente II, Altamira-PA"></div>
+          <div class="form-field"><label>E-mail de contato</label><input type="text" id="cms-f-rodape-email" value="contato@muniforte.com.br"></div>
         </div>
 
       </div>
@@ -1382,6 +1387,39 @@
   document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', () => setView(item.dataset.view));
   });
+
+  function exportPrazosList(){
+    const rows = document.querySelectorAll('#admin-prazos .deadline-row');
+    if (!rows.length){ alert('Não há prazos para exportar.'); return; }
+    let csv = 'Item;Município ou OSC / Programa;Dias restantes;Data;\n';
+    rows.forEach(row => {
+      if (row.style.display === 'none') return;
+      const title = row.querySelector('.deadline-main strong')?.textContent.trim() || '';
+      const subtitle = row.querySelector('.deadline-main span')?.textContent.trim() || '';
+      const dias = row.querySelector('.deadline-days .n')?.textContent.trim() || '';
+      const data = row.querySelector('.deadline-date')?.textContent.trim() || '';
+      const esc = (v) => '"' + String(v).replace(/"/g,'""') + '"';
+      csv += [esc(title), esc(subtitle), esc(dias), esc(data)].join(';') + '\n';
+    });
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'muniforte-prazos-' + new Date().toISOString().slice(0,10) + '.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  function deleteUser(btn){
+    const row = btn.closest('tr');
+    const name = row.querySelector('.name-cell strong').textContent.trim();
+    if (confirm('Remover o acesso de "' + name + '"? Esta ação não pode ser desfeita — a pessoa perde o acesso ao painel imediatamente.')) {
+      row.remove();
+      alert('Usuário "' + name + '" removido.');
+    }
+  }
 
   function openMunicipio(name){
     document.getElementById('municipio-detail-title').textContent = name;
@@ -1476,13 +1514,25 @@
   }
 
   document.querySelectorAll('.elab-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.elab-tab').forEach(t => t.classList.remove('active'));
-      tab.classList.add('active');
-      document.querySelectorAll('.etab-panel').forEach(p => p.style.display = 'none');
-      document.getElementById(tab.dataset.etab).style.display = 'block';
-    });
+    tab.addEventListener('click', () => activateElabTab(tab));
   });
+
+  function activateElabTab(tab){
+    document.querySelectorAll('.elab-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    document.querySelectorAll('.etab-panel').forEach(p => p.style.display = 'none');
+    document.getElementById(tab.dataset.etab).style.display = 'block';
+    tab.scrollIntoView({block:'nearest', inline:'nearest'});
+  }
+
+  function goElabStep(delta){
+    const tabs = Array.from(document.querySelectorAll('.elab-tab'));
+    const currentIndex = tabs.findIndex(t => t.classList.contains('active'));
+    const nextIndex = currentIndex + delta;
+    if (nextIndex < 0 || nextIndex >= tabs.length) return;
+    if (delta > 0) tabs[currentIndex].classList.add('done');
+    activateElabTab(tabs[nextIndex]);
+  }
 
   document.querySelectorAll('.source-chip').forEach(chip => {
     chip.addEventListener('click', () => {
@@ -1519,10 +1569,167 @@
     document.getElementById('fin-municipio').style.display = kind === 'municipio' ? 'block' : 'none';
     document.getElementById('fin-osc').style.display = kind === 'osc' ? 'block' : 'none';
   }
+  function collectFinData(){
+    const isMunicipio = document.getElementById('fin-municipio').style.display !== 'none';
+    const container = isMunicipio ? document.getElementById('fin-municipio') : document.getElementById('fin-osc');
+    const titulo = container.querySelector('.panel-head h2')?.textContent.trim() || 'Análise financeira';
+    const subtitulo = container.querySelector('.panel-head .note')?.textContent.trim() || '';
+    const statusTitulo = container.querySelector('.status-banner h3')?.textContent.trim() || '';
+    const statusTexto = container.querySelector('.status-banner p')?.textContent.trim() || '';
+
+    const checklist = Array.from(container.querySelectorAll('.checklist-row')).map(row => {
+      const label = row.querySelector('.t strong')?.textContent.trim() || '';
+      const detalhe = row.querySelector('.t span')?.textContent.trim() || '';
+      const ok = row.querySelector('.check-icon')?.classList.contains('bad') ? false : true;
+      return { label, detalhe, ok };
+    });
+
+    const indicadores = Array.from(container.querySelectorAll('.indicator-card')).map(card => {
+      return {
+        k: card.querySelector('.indicator-k')?.textContent.trim() || '',
+        v: card.querySelector('.indicator-v')?.textContent.trim() || '',
+        limite: card.querySelector('.indicator-limit')?.textContent.trim() || '',
+        alerta: card.classList.contains('alert')
+      };
+    });
+
+    const leitura = Array.from(container.querySelectorAll('.invest-box li')).map(li => li.textContent.trim());
+
+    return { titulo, subtitulo, statusTitulo, statusTexto, checklist, indicadores, leitura, isMunicipio };
+  }
+
   function exportFin(kind){
-    alert(kind === 'pptx'
-      ? 'Gerando apresentação em PowerPoint com os dados desta análise…'
-      : 'Gerando relatório completo em PDF com os dados desta análise…');
+    if (typeof window.jspdf === 'undefined' && kind === 'pdf') {
+      alert('A biblioteca de exportação ainda está carregando — aguarde um instante e tente novamente.');
+      return;
+    }
+    if (typeof window.PptxGenJS === 'undefined' && kind === 'pptx') {
+      alert('A biblioteca de exportação ainda está carregando — aguarde um instante e tente novamente.');
+      return;
+    }
+    const data = collectFinData();
+    if (kind === 'pdf') exportFinPDF(data); else exportFinPPTX(data);
+  }
+
+  function exportFinPDF(data){
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const marginX = 48;
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const maxW = pageW - marginX * 2;
+    let y = 56;
+
+    function ensureSpace(h){
+      if (y + h > pageH - 48) { doc.addPage(); y = 56; }
+    }
+    function heading(text, size, color){
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(size); doc.setTextColor(color || '#16424A');
+      const lines = doc.splitTextToSize(text, maxW);
+      ensureSpace(lines.length * (size + 4));
+      doc.text(lines, marginX, y); y += lines.length * (size + 4) + 4;
+    }
+    function body(text, size){
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(size || 10.5); doc.setTextColor('#1C2B2E');
+      const lines = doc.splitTextToSize(text, maxW);
+      ensureSpace(lines.length * (size ? size + 3 : 13.5));
+      doc.text(lines, marginX, y); y += lines.length * (size ? size + 3 : 13.5) + 2;
+    }
+
+    doc.setFillColor('#16424A'); doc.rect(0, 0, pageW, 70, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor('#FFFFFF');
+    doc.text('MuniForte — Análise financeira', marginX, 32);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor('#DCEAE9');
+    doc.text('Gerado em ' + new Date().toLocaleDateString('pt-BR') + ' · fonte: SICONFI / CAUC / Transferegov', marginX, 50);
+    y = 100;
+
+    heading(data.titulo, 15);
+    if (data.subtitulo) body(data.subtitulo, 10);
+    y += 6;
+    if (data.statusTitulo){ heading(data.statusTitulo, 12, '#B8842C'); body(data.statusTexto); y += 6; }
+
+    if (data.checklist.length){
+      heading('Verificação de regularidade e indicadores', 13);
+      data.checklist.forEach((item) => {
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5);
+        doc.setTextColor(item.ok ? '#3A7A5D' : '#B4472A');
+        ensureSpace(14);
+        doc.text((item.ok ? '✓ ' : '! '), marginX, y);
+        doc.setTextColor('#1C2B2E');
+        const lines = doc.splitTextToSize(item.label, maxW - 16);
+        doc.text(lines, marginX + 16, y); y += lines.length * 13;
+        if (item.detalhe){ body(item.detalhe, 9.5); }
+        y += 4;
+      });
+      y += 6;
+    }
+
+    if (data.indicadores.length){
+      heading('Indicadores e limites', 13);
+      data.indicadores.forEach(ind => {
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(ind.alerta ? '#B4472A' : '#1C2B2E');
+        ensureSpace(14);
+        doc.text(ind.k + ': ' + ind.v, marginX, y); y += 13;
+        if (ind.limite) body(ind.limite, 9.5);
+        y += 3;
+      });
+      y += 6;
+    }
+
+    if (data.leitura.length){
+      heading('Leitura e recomendações', 13);
+      data.leitura.forEach(txt => body('• ' + txt, 10));
+    }
+
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++){
+      doc.setPage(i);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor('#8A8577');
+      doc.text('MuniForte · Consultoria em Gestão Pública · página ' + i + ' de ' + pageCount, marginX, pageH - 24);
+    }
+
+    doc.save('muniforte-analise-financeira-' + new Date().toISOString().slice(0,10) + '.pdf');
+  }
+
+  function exportFinPPTX(data){
+    const pptx = new PptxGenJS();
+
+    const slide1 = pptx.addSlide();
+    slide1.background = { color: '16424A' };
+    slide1.addText('Análise financeira', { x: 0.6, y: 1.7, w: 9, h: 0.7, fontSize: 30, bold: true, color: 'FFFFFF', fontFace: 'Georgia' });
+    slide1.addText(data.titulo, { x: 0.6, y: 2.4, w: 9, h: 0.5, fontSize: 18, color: 'B8842C', bold: true });
+    slide1.addText(data.subtitulo || '', { x: 0.6, y: 2.9, w: 9, h: 0.5, fontSize: 12, color: 'BFD6D4' });
+    slide1.addText('Gerado em ' + new Date().toLocaleDateString('pt-BR') + ' · MuniForte Consultoria em Gestão Pública', { x: 0.6, y: 6.7, w: 9, h: 0.4, fontSize: 10, color: '9DBAB8' });
+
+    if (data.checklist.length){
+      const slide2 = pptx.addSlide();
+      slide2.addText('Verificação de regularidade e indicadores', { x: 0.5, y: 0.35, w: 9, h: 0.5, fontSize: 20, bold: true, color: '16424A' });
+      const rows = data.checklist.slice(0, 8).map(item => ([
+        { text: item.ok ? '✓' : '!', options: { color: item.ok ? '3A7A5D' : 'B4472A', bold: true, align: 'center' } },
+        { text: item.label, options: { bold: true, color: '1C2B2E' } },
+        { text: item.detalhe, options: { color: '566063', fontSize: 10 } },
+      ]));
+      slide2.addTable(rows, { x: 0.5, y: 1.0, w: 9, colW: [0.5, 3, 5.5], fontSize: 11, border: { type: 'solid', color: 'E0DCCF', pt: 0.5 }, autoPage: true });
+    }
+
+    if (data.indicadores.length){
+      const slide3 = pptx.addSlide();
+      slide3.addText('Indicadores e limites', { x: 0.5, y: 0.35, w: 9, h: 0.5, fontSize: 20, bold: true, color: '16424A' });
+      const rows3 = data.indicadores.map(ind => ([
+        { text: ind.k, options: { bold: true, color: '1C2B2E' } },
+        { text: ind.v, options: { bold: true, color: ind.alerta ? 'B4472A' : '3A7A5D' } },
+        { text: ind.limite, options: { color: '566063', fontSize: 10 } },
+      ]));
+      slide3.addTable(rows3, { x: 0.5, y: 1.0, w: 9, colW: [3.5, 1.5, 4], fontSize: 11, border: { type: 'solid', color: 'E0DCCF', pt: 0.5 } });
+    }
+
+    if (data.leitura.length){
+      const slide4 = pptx.addSlide();
+      slide4.addText('Leitura e recomendações', { x: 0.5, y: 0.35, w: 9, h: 0.5, fontSize: 20, bold: true, color: '16424A' });
+      slide4.addText(data.leitura.map(t => ({ text: t, options: { bullet: true, breakLine: true, color: '1C2B2E', fontSize: 13 } })), { x: 0.5, y: 1.1, w: 9, h: 5 });
+    }
+
+    pptx.writeFile({ fileName: 'muniforte-analise-financeira-' + new Date().toISOString().slice(0,10) + '.pptx' });
   }
 
   // ===== CMS: abas de personalização do site =====
