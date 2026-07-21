@@ -24,7 +24,7 @@
   @media (prefers-reduced-motion: reduce){ *{animation:none !important; transition:none !important;} }
 
   /* ===================== SCREEN SWITCHING ===================== */
-  .screen{ display:none; padding-top:80px; }
+  .screen{ display:none; }
   .screen.active{ display:block; animation:screenIn .38s ease both; }
   @keyframes screenIn{
     from{ opacity:0; transform:translateY(10px); }
@@ -32,7 +32,7 @@
   }
 
   /* ===================== SHARED TOPBAR ===================== */
-  .topbar{ background:var(--primary); color:#fff; padding:14px 28px; display:flex; align-items:center; justify-content:space-between; gap:20px; position:fixed; top:0; left:0; right:0; z-index:600; }
+  .topbar{ background:var(--primary); color:#fff; padding:14px 28px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
   .brand{ display:flex; align-items:center; gap:10px; font-family:'Arial Rounded MT Bold','Baloo 2', Arial, sans-serif; font-weight:700; font-size:21px; cursor:pointer; border:none; background:none; color:#fff; }
   .brand-mark{ width:48px; height:48px; border-radius:19%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-family:'Arial Rounded MT Bold','Baloo 2', Arial, sans-serif; font-size:14px; color:var(--gold); font-weight:700; }
   .brand small{ display:block; font-family:'IBM Plex Sans', sans-serif; font-weight:400; font-size:11px; color:#C9DAD9; text-align:left; }
