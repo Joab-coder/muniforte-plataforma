@@ -47,10 +47,9 @@
   .nav-item .ic{ width:16px; text-align:center; font-size:14px; }
   .nav-item:hover{ background:rgba(255,255,255,0.06); color:#fff; }
   .nav-item.active{ background:rgba(255,255,255,0.14); color:#fff; font-weight:600; }
-  .sidebar-foot-wrap{ margin-top:auto; border-top:1px solid rgba(255,255,255,0.12); padding:12px 18px 16px; }
-  .sidebar-foot{ display:flex; align-items:center; gap:10px; padding-bottom:10px; }
-  .btn-logout{ width:100%; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.18); color:#DCEAE9; border-radius:7px; padding:9px 12px; font-size:12.5px; font-weight:600; display:flex; align-items:center; justify-content:center; gap:6px; }
-  .btn-logout:hover{ background:rgba(255,255,255,0.16); color:#fff; }
+  .sidebar-foot{ margin-top:auto; padding:16px 18px; border-top:1px solid rgba(255,255,255,0.12); display:flex; align-items:center; gap:10px; }
+  .btn-logout{ background:var(--gold); border:none; color:#fff; border-radius:7px; padding:9px 16px; font-size:12.5px; font-weight:700; display:flex; align-items:center; gap:6px; }
+  .btn-logout:hover{ background:#A2751F; }
   .avatar{ width:32px; height:32px; border-radius:50%; background:var(--primary-light); display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono', monospace; font-size:12px; border:1px solid rgba(255,255,255,0.25); flex-shrink:0; }
   .sidebar-foot .who{ font-size:12.5px; line-height:1.35; }
   .sidebar-foot .who strong{ display:block; font-weight:600; }
@@ -355,10 +354,9 @@
     .sidebar-brand, .tenant-tag, .tenant-name, .nav-label{ display:none; }
     .nav-group{ display:flex; padding:10px; }
     .nav-item{ white-space:nowrap; }
-    .sidebar-foot-wrap{ margin-top:0; margin-left:auto; border-top:none; padding:8px 14px; flex-shrink:0; display:flex; align-items:center; gap:8px; }
-    .sidebar-foot{ padding-bottom:0; }
+    .sidebar-foot{ margin-left:auto; padding:8px 14px; }
     .sidebar-foot .who{ display:none; }
-    .btn-logout{ width:auto; white-space:nowrap; padding:8px 14px; }
+    .btn-logout{ padding:8px 12px; font-size:12px; }
     .elab-layout{ grid-template-columns:1fr; }
     .kpi-row{ grid-template-columns:1fr 1fr; }
     .fact-grid{ grid-template-columns:1fr 1fr; }
@@ -446,12 +444,9 @@
 
     <button class="btn-sources" style="margin:6px 18px 14px; justify-content:center;" onclick="openSourcesModal()">🔗 Fontes de dados oficiais</button>
 
-    <div class="sidebar-foot-wrap">
-      <div class="sidebar-foot">
-        <div class="avatar">RC</div>
-        <div class="who"><strong>Renata Campos</strong><span>Administradora</span></div>
-      </div>
-      <button class="btn-logout" onclick="logout()">⏻ Sair</button>
+    <div class="sidebar-foot">
+      <div class="avatar">RC</div>
+      <div class="who"><strong>Renata Campos</strong><span>Administradora</span></div>
     </div>
   </aside>
 
@@ -460,7 +455,7 @@
     <section id="admin-dashboard" class="view active">
       <div class="topbar">
         <div><h1>Dashboard</h1><div class="sub">Visão consolidada de todos os municípios e OSCs sob sua gestão</div></div>
-        <div class="topbar-actions"><button class="btn-ghost">Exportar relatório</button><button class="btn-primary" onclick="setView('admin-usuarios')">+ Novo cadastro</button></div>
+        <div class="topbar-actions"><button class="btn-ghost">Exportar relatório</button><button class="btn-primary" onclick="setView('admin-usuarios')">+ Novo cadastro</button><button class="btn-logout" onclick="logout()">⏻ Sair</button></div>
       </div>
       <div class="content">
 
@@ -525,7 +520,7 @@
     <section id="admin-municipios" class="view">
       <div class="topbar">
         <div><h1>Municípios</h1><div class="sub">18 municípios cadastrados</div></div>
-        <div class="topbar-actions"><button class="btn-primary" onclick="setView('admin-usuarios')">+ Cadastrar prefeitura</button></div>
+        <div class="topbar-actions"><button class="btn-primary" onclick="setView('admin-usuarios')">+ Cadastrar prefeitura</button><button class="btn-logout" onclick="logout()">⏻ Sair</button></div>
       </div>
       <div class="content">
         <div class="panel">
@@ -575,7 +570,7 @@
     <section id="admin-municipio-detail" class="view">
       <div class="topbar">
         <div><h1 id="municipio-detail-title">Vila Serrana — PB</h1><div class="sub">Diagnóstico, projetos e histórico de captação</div></div>
-        <div class="topbar-actions"><button class="btn-ghost" onclick="setView('admin-municipios')">← Voltar à lista</button><button class="btn-gold" onclick="setView('admin-elaboracao')">+ Elaborar novo projeto</button></div>
+        <div class="topbar-actions"><button class="btn-ghost" onclick="setView('admin-municipios')">← Voltar à lista</button><button class="btn-gold" onclick="setView('admin-elaboracao')">+ Elaborar novo projeto</button><button class="btn-logout" onclick="logout()">⏻ Sair</button></div>
       </div>
       <div class="content">
         <div class="fact-grid">
@@ -642,7 +637,7 @@
     <section id="admin-oscs" class="view">
       <div class="topbar">
         <div><h1>Organizações da Sociedade Civil</h1><div class="sub">27 OSCs cadastradas</div></div>
-        <div class="topbar-actions"><button class="btn-primary" onclick="setView('admin-usuarios')">+ Cadastrar OSC</button></div>
+        <div class="topbar-actions"><button class="btn-primary" onclick="setView('admin-usuarios')">+ Cadastrar OSC</button><button class="btn-logout" onclick="logout()">⏻ Sair</button></div>
       </div>
       <div class="content">
         <div class="panel">
@@ -685,7 +680,7 @@
     <section id="admin-usuarios" class="view">
       <div class="topbar">
         <div><h1>Usuários</h1><div class="sub">Prefeitos, servidores indicados e diretores de OSC</div></div>
-        <div class="topbar-actions"><button class="btn-primary" onclick="toggleNewUser()">+ Novo usuário</button></div>
+        <div class="topbar-actions"><button class="btn-primary" onclick="toggleNewUser()">+ Novo usuário</button><button class="btn-logout" onclick="logout()">⏻ Sair</button></div>
       </div>
       <div class="content">
 
@@ -743,7 +738,7 @@
     <section id="admin-busca-privada" class="view">
       <div class="topbar">
         <div><h1>Editais privados (IA)</h1><div class="sub">Pesquise oportunidades de financiamento privado sem sair da plataforma</div></div>
-        <div class="topbar-actions"><span class="mini-count">6 editais adicionados este mês</span></div>
+        <div class="topbar-actions"><span class="mini-count">6 editais adicionados este mês</span><button class="btn-logout" onclick="logout()">⏻ Sair</button></div>
       </div>
       <div class="content">
 
@@ -832,7 +827,7 @@
     <section id="admin-financeiro" class="view">
       <div class="topbar">
         <div><h1>Análise financeira e de pendências</h1><div class="sub">Verificação de regularidade para recebimento de transferências voluntárias</div></div>
-        <div class="topbar-actions"><span class="mini-count">fonte: SICONFI · CAUC</span><button class="btn-sources" onclick="openSourcesModal()">🔗 Fontes de dados</button></div>
+        <div class="topbar-actions"><span class="mini-count">fonte: SICONFI · CAUC</span><button class="btn-sources" onclick="openSourcesModal()">🔗 Fontes de dados</button><button class="btn-logout" onclick="logout()">⏻ Sair</button></div>
       </div>
       <div class="content">
 
@@ -1045,7 +1040,7 @@
     <section id="admin-prazos" class="view">
       <div class="topbar">
         <div><h1>Controle de prazos</h1><div class="sub">Todos os prazos em aberto de municípios e OSCs, em um só lugar</div></div>
-        <div class="topbar-actions"><button class="btn-ghost">Exportar lista</button><button class="btn-primary">Configurar notificações</button></div>
+        <div class="topbar-actions"><button class="btn-ghost">Exportar lista</button><button class="btn-primary">Configurar notificações</button><button class="btn-logout" onclick="logout()">⏻ Sair</button></div>
       </div>
       <div class="content">
 
@@ -1148,7 +1143,7 @@
     <section id="admin-elaboracao" class="view">
       <div class="topbar">
         <div><h1>Elaboração de projeto</h1><div class="sub">Vila Serrana — PB · Reforma da UBS Central · Novo PAC Saúde</div></div>
-        <div class="topbar-actions"><button class="btn-ghost">Salvar rascunho</button><button class="btn-gold">Enviar ao Transferegov</button></div>
+        <div class="topbar-actions"><button class="btn-ghost">Salvar rascunho</button><button class="btn-gold">Enviar ao Transferegov</button><button class="btn-logout" onclick="logout()">⏻ Sair</button></div>
       </div>
       <div class="content">
         <div class="elab-layout">
@@ -1250,7 +1245,7 @@
     <section id="admin-site" class="view">
       <div class="topbar">
         <div><h1>Personalizar página inicial</h1><div class="sub">Edite todo o conteúdo do site institucional, do cabeçalho ao rodapé — sem precisar mexer em código</div></div>
-        <div class="topbar-actions"><button class="btn-ghost">Ver site publicado</button><button class="btn-primary">Salvar e publicar</button></div>
+        <div class="topbar-actions"><button class="btn-ghost">Ver site publicado</button><button class="btn-primary">Salvar e publicar</button><button class="btn-logout" onclick="logout()">⏻ Sair</button></div>
       </div>
       <div class="content">
 
