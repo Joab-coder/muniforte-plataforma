@@ -32,9 +32,9 @@
   }
 
   /* ===================== SHARED TOPBAR ===================== */
-  .topbar{ background:var(--primary); color:#fff; padding:14px 28px; display:flex; align-items:center; justify-content:space-between; gap:20px; }
-  .brand{ display:flex; align-items:center; gap:10px; font-family:'Arial Rounded MT Bold','Baloo 2', Arial, sans-serif; font-weight:700; font-size:19px; cursor:pointer; border:none; background:none; color:#fff; }
-  .brand-mark{ width:38px; height:38px; border-radius:19%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-family:'Arial Rounded MT Bold','Baloo 2', Arial, sans-serif; font-size:14px; color:var(--gold); font-weight:700; }
+  .topbar{ background:var(--primary); color:#fff; padding:14px 28px; display:flex; align-items:center; justify-content:space-between; gap:20px; position:sticky; top:0; z-index:600; }
+  .brand{ display:flex; align-items:center; gap:10px; font-family:'Arial Rounded MT Bold','Baloo 2', Arial, sans-serif; font-weight:700; font-size:21px; cursor:pointer; border:none; background:none; color:#fff; }
+  .brand-mark{ width:48px; height:48px; border-radius:19%; background:var(--primary); display:flex; align-items:center; justify-content:center; font-family:'Arial Rounded MT Bold','Baloo 2', Arial, sans-serif; font-size:14px; color:var(--gold); font-weight:700; }
   .brand small{ display:block; font-family:'IBM Plex Sans', sans-serif; font-weight:400; font-size:11px; color:#C9DAD9; text-align:left; }
   .top-actions{ display:flex; align-items:center; gap:18px; font-size:13.5px; }
   .top-actions .muted{ color:#B9D0CE; }
@@ -848,17 +848,17 @@
   </div>
   <div class="login-wrap">
     <div class="login-card">
-      <div class="brand-mark" style="width:56px;height:56px;font-size:16px;"><svg viewBox="0 0 64 64" style="width:60%;height:60%;overflow:visible;" aria-hidden="true"><path d="M15,44 L15,20 L24,34 L33,20 L33,44 M41,44 L41,20 L51,20 M41,31 L49,31" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="brand-mark" style="width:68px;height:68px;font-size:16px;"><svg viewBox="0 0 64 64" style="width:60%;height:60%;overflow:visible;" aria-hidden="true"><path d="M15,44 L15,20 L24,34 L33,20 L33,44 M41,44 L41,20 L51,20 M41,31 L49,31" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
       <h2>Acessar minha conta</h2>
       <p class="sub">Prefeituras e OSCs em um só lugar</p>
       <div class="login-tabs">
-        <button class="login-tab active" data-role="municipio">Município</button>
+        <button class="login-tab active" data-role="admin">Administrador</button>
+        <button class="login-tab" data-role="municipio">Prefeitura</button>
         <button class="login-tab" data-role="osc">OSC</button>
-        <button class="login-tab" data-role="admin">Administrador</button>
       </div>
       <div class="login-field">
         <label>E-mail institucional</label>
-        <input type="text" placeholder="prefeito@vilaserrana.pb.gov.br">
+        <input type="text" placeholder="equipe@muniforte.com.br">
       </div>
       <div class="login-field">
         <label>Senha</label>
@@ -1626,6 +1626,11 @@
   window.addEventListener('DOMContentLoaded', () => setTimeout(showCookieBannerIfNeeded, 600));
   function openSourcesModal(){ document.getElementById('sources-modal-overlay').classList.add('open'); }
   function closeSourcesModal(){ document.getElementById('sources-modal-overlay').classList.remove('open'); }
+
+  // abre direto na tela de login quando vem de um "Sair" (index.html#login)
+  if (window.location.hash === '#login') {
+    goTo('screen-login');
+  }
 </script>
 
 <!-- ===== MODAL: FONTES DE DADOS OFICIAIS ===== -->
