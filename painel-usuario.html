@@ -755,7 +755,7 @@
         <div class="panel">
           <div class="panel-head"><h2>Ideias sugeridas para o seu perfil</h2><span class="note">geradas a partir do edital + modelos aprovados no Transferegov + seu diagnóstico</span></div>
 
-          <div class="idea-card" data-entity="municipio">
+          <div class="idea-card" data-entity="municipio" data-tipo-captacao="publico">
             <span class="fit-badge">Alta aderência</span>
             <h3>Reforma e ampliação da UBS Central com sala de telessaúde</h3>
             <p class="desc">Sua UBS Central está há 11 anos sem reforma e o programa financia readequação de estrutura física e telediagnóstico.</p>
@@ -771,7 +771,7 @@
             </div>
           </div>
 
-          <div class="idea-card" data-entity="municipio">
+          <div class="idea-card" data-entity="municipio" data-tipo-captacao="publico">
             <span class="fit-badge">Alta aderência</span>
             <h3>Climatização e acessibilidade das 4 UBS da zona rural</h3>
             <p class="desc">O edital prevê recursos para acessibilidade e conforto térmico — as UBS rurais ainda não têm rampas nem climatização.</p>
@@ -787,7 +787,7 @@
             </div>
           </div>
 
-          <div class="idea-card" data-entity="osc" style="display:none;">
+          <div class="idea-card" data-entity="osc" data-tipo-captacao="publico" style="display:none;">
             <span class="fit-badge">Alta aderência</span>
             <h3>Ampliação do atendimento socioeducativo com novo Termo de Fomento</h3>
             <p class="desc">Seu público atendido cresceu 30% no último ano — este edital financia ampliação de vagas e material didático para OSCs de assistência social.</p>
@@ -803,7 +803,7 @@
             </div>
           </div>
 
-          <div class="idea-card" data-entity="osc" style="display:none;">
+          <div class="idea-card" data-entity="osc" data-tipo-captacao="publico" style="display:none;">
             <span class="fit-badge">Aderência média</span>
             <h3>Edital de fomento cultural — oficinas itinerantes</h3>
             <p class="desc">Seu histórico de eventos culturais (24/ano) se encaixa no perfil deste edital, voltado a coletivos e OSCs sem espaço físico próprio.</p>
@@ -927,7 +927,7 @@
     } else {
       btn.classList.add('ativo');
       btn.innerHTML = '★ Interesse sinalizado';
-      registrarNotificacaoInteresse(titulo);
+      registrarNotificacaoInteresse(titulo, card);
       alert('Interesse sinalizado! A equipe MuniForte foi notificada e entrará em contato, mesmo que você não fale pelo WhatsApp.');
     }
   }
@@ -939,11 +939,14 @@
   function salvarNotificacoesInteresse(lista){
     try { localStorage.setItem('muniforte_notificacoes_interesse', JSON.stringify(lista)); } catch(e){}
   }
-  function registrarNotificacaoInteresse(tituloIdeia){
+  function registrarNotificacaoInteresse(tituloIdeia, card){
     const quemEl = document.querySelector('.sidebar-foot .who');
     const nome = quemEl?.querySelector('strong')?.textContent.trim() || 'Usuário';
     const papelEntidade = quemEl?.querySelector('span')?.textContent.trim() || '';
-    const tipoProjeto = currentEntity === 'osc' ? 'privado' : 'publico';
+    // O tipo de captação vem da própria ideia (data-tipo-captacao no card) — não do tipo de conta.
+    // Município ou OSC podem ambos sinalizar interesse tanto em ideias de captação pública (Transferegov)
+    // quanto, futuramente, em ideias originadas de oportunidades privadas.
+    const tipoProjeto = card?.dataset.tipoCaptacao || 'publico';
     let lista = lerNotificacoesInteresse();
     lista = lista.filter(function(n){ return !(n.titulo === tituloIdeia && n.nome === nome); });
     lista.push({ titulo: tituloIdeia, nome: nome, papelEntidade: papelEntidade, tipoProjeto: tipoProjeto, data: new Date().toISOString(), atendido: false });

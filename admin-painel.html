@@ -9,6 +9,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.js" defer></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2316424A'/%3E%3Cpath d='M15,44 L15,20 L24,34 L33,20 L33,44 M41,44 L41,20 L51,20 M41,31 L49,31' fill='none' stroke='%23B8842C' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
@@ -1606,6 +1607,10 @@
                   <tr><td>Mobiliário</td><td>Material permanente</td><td><input type="text" value="1"></td><td><input type="text" value="R$ 70.000,00"></td><td><input type="text" value="R$ 70.000,00"></td></tr>
                 </tbody>
               </table>
+              <div style="display:flex; gap:10px; margin-top:20px; padding-top:16px; border-top:1px solid var(--border);">
+                <button class="btn-gold" onclick="exportarProjetoElaboracaoPDF()">▤ Exportar projeto em PDF</button>
+                <button class="btn-gold" onclick="exportarProjetoElaboracaoDOCX()">▤ Exportar projeto em DOCX (Word)</button>
+              </div>
             </div>
 
             <div class="elab-footer">
@@ -1785,6 +1790,7 @@
           '<div style="display:flex; gap:8px; flex-wrap:wrap;">' +
             (n.atendido ? '' : '<button class="btn-gold" onclick="elaborarProjetoDaNotificacao(' + i + ')">Elaborar projeto</button>') +
             '<button class="btn-ghost" onclick="marcarNotificacaoAtendida(' + i + ')">' + (n.atendido ? 'Reabrir' : 'Marcar como atendido') + '</button>' +
+            '<button class="row-delete" title="Excluir notificação" onclick="excluirNotificacao(' + i + ')">🗑</button>' +
           '</div>' +
         '</div>' +
       '</div>';
@@ -1794,6 +1800,15 @@
     const lista = lerNotificacoesAdmin();
     if (!lista[i]) return;
     lista[i].atendido = !lista[i].atendido;
+    salvarNotificacoesAdmin(lista);
+    renderNotificacoes();
+  }
+  function excluirNotificacao(i){
+    const lista = lerNotificacoesAdmin();
+    const n = lista[i];
+    if (!n) return;
+    if (!confirm('Excluir a notificação "' + n.titulo + '" (' + n.nome + ')? Esta ação não pode ser desfeita.')) return;
+    lista.splice(i, 1);
     salvarNotificacoesAdmin(lista);
     renderNotificacoes();
   }
@@ -2005,6 +2020,168 @@
     if (nextIndex < 0 || nextIndex >= tabs.length) return;
     if (delta > 0) tabs[currentIndex].classList.add('done');
     activateElabTab(tabs[nextIndex]);
+  }
+
+  // ===== Exportação do projeto (Elaboração de projeto — captação pública) =====
+  function coletarDadosElaboracao(){
+    const passos = [];
+    document.querySelectorAll('#admin-elaboracao .etab-panel').forEach(panel => {
+      const titulo = panel.querySelector('.panel-head h2')?.textContent.trim() || '';
+      const campos = [];
+      panel.querySelectorAll('.form-field').forEach(field => {
+        const label = field.querySelector('label')?.textContent.trim() || '';
+        const input = field.querySelector('input, textarea');
+        const valor = input ? input.value.trim() : '';
+        if (label || valor) campos.push({ label, valor });
+      });
+      const tabelas = [];
+      panel.querySelectorAll('table.schedule-table').forEach(table => {
+        const headers = Array.from(table.querySelectorAll('thead th')).map(th => th.textContent.trim());
+        const linhas = Array.from(table.querySelectorAll('tbody tr')).map(tr =>
+          Array.from(tr.querySelectorAll('td')).map(td => {
+            const inp = td.querySelector('input');
+            return inp ? inp.value.trim() : td.textContent.trim();
+          })
+        );
+        tabelas.push({ headers, linhas });
+      });
+      passos.push({ titulo, campos, tabelas });
+    });
+    const cabecalho = document.querySelector('#admin-elaboracao .topbar h1')?.textContent.trim() || 'Elaboração de projeto';
+    const subCabecalho = document.querySelector('#admin-elaboracao .topbar .sub')?.textContent.trim() || '';
+    return { cabecalho, subCabecalho, passos };
+  }
+
+  async function exportarProjetoElaboracaoPDF(){
+    if (typeof window.jspdf === 'undefined'){
+      alert('A biblioteca de exportação ainda está carregando — aguarde um instante e tente novamente.');
+      return;
+    }
+    const dados = coletarDadosElaboracao();
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const marginX = 50;
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const maxW = pageW - marginX * 2;
+    let y = 60;
+
+    doc.setFillColor('#16424A'); doc.rect(0, 0, pageW, 90, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor('#9DBAB8');
+    doc.text('MUNIFORTE · CONSULTORIA EM GESTÃO PÚBLICA', marginX, 32);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor('#FFFFFF');
+    doc.text(pdfSafe(dados.cabecalho), marginX, 55);
+    if (dados.subCabecalho){
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor('#DCEAE9');
+      doc.text(pdfSafe(dados.subCabecalho), marginX, 72);
+    }
+    y = 120;
+
+    function ensureSpace(h){ if (y + h > pageH - 50) { doc.addPage(); y = 60; } }
+
+    dados.passos.forEach((passo, idx) => {
+      ensureSpace(30);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor('#16424A');
+      doc.text((idx + 1) + '. ' + pdfSafe(passo.titulo), marginX, y);
+      y += 20;
+
+      passo.campos.forEach(campo => {
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5); doc.setTextColor('#566063');
+        ensureSpace(14);
+        doc.text(pdfSafe(campo.label), marginX, y); y += 13;
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor('#1C2B2E');
+        const lines = doc.splitTextToSize(pdfSafe(campo.valor) || '—', maxW);
+        lines.forEach(line => {
+          ensureSpace(13);
+          doc.text(line, marginX, y, { align: 'justify', maxWidth: maxW });
+          y += 13;
+        });
+        y += 6;
+      });
+
+      passo.tabelas.forEach(tabela => {
+        ensureSpace(20);
+        doc.autoTable({
+          startY: y,
+          margin: { left: marginX, right: marginX },
+          head: [tabela.headers.map(pdfSafe)],
+          body: tabela.linhas.map(linha => linha.map(pdfSafe)),
+          theme: 'grid',
+          headStyles: { fillColor: '#16424A', textColor: '#FFFFFF', fontSize: 9 },
+          bodyStyles: { fontSize: 9, textColor: '#1C2B2E' },
+          alternateRowStyles: { fillColor: '#F5F4EF' },
+        });
+        y = doc.lastAutoTable.finalY + 16;
+      });
+
+      y += 8;
+    });
+
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++){
+      doc.setPage(i);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor('#8A8577');
+      doc.text('MuniForte · Consultoria em Gestão Pública — projeto para captação de recursos federais', marginX, pageH - 24);
+      doc.text('Página ' + i + ' de ' + pageCount, pageW - marginX, pageH - 24, { align: 'right' });
+    }
+
+    const blob = doc.output('blob');
+    baixarArquivoBlob(blob, 'muniforte-projeto-' + new Date().toISOString().slice(0,10) + '.pdf');
+  }
+
+  async function exportarProjetoElaboracaoDOCX(){
+    if (typeof window.docx === 'undefined'){
+      alert('A biblioteca de exportação em Word ainda está carregando — aguarde um instante e tente novamente.');
+      return;
+    }
+    const dados = coletarDadosElaboracao();
+    const { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType } = window.docx;
+
+    const filhos = [];
+    filhos.push(new Paragraph({ text: dados.cabecalho, heading: HeadingLevel.TITLE }));
+    if (dados.subCabecalho){
+      filhos.push(new Paragraph({ children: [new TextRun({ text: dados.subCabecalho, italics: true, color: '566063' })] }));
+    }
+    filhos.push(new Paragraph({ text: 'MuniForte · Consultoria em Gestão Pública', spacing: { after: 300 } }));
+
+    dados.passos.forEach((passo, idx) => {
+      filhos.push(new Paragraph({ text: (idx + 1) + '. ' + passo.titulo, heading: HeadingLevel.HEADING_1, spacing: { before: 300, after: 150 } }));
+
+      passo.campos.forEach(campo => {
+        filhos.push(new Paragraph({ children: [new TextRun({ text: campo.label, bold: true })], spacing: { before: 100 } }));
+        filhos.push(new Paragraph({ text: campo.valor || '—', spacing: { after: 100 } }));
+      });
+
+      passo.tabelas.forEach(tabela => {
+        const linhaCabecalho = new TableRow({
+          children: tabela.headers.map(h => new TableCell({
+            width: { size: 100 / tabela.headers.length, type: WidthType.PERCENTAGE },
+            shading: { fill: '16424A' },
+            children: [new Paragraph({ children: [new TextRun({ text: h, bold: true, color: 'FFFFFF' })] })],
+          })),
+        });
+        const linhasCorpo = tabela.linhas.map(linha => new TableRow({
+          children: linha.map(celula => new TableCell({
+            width: { size: 100 / tabela.headers.length, type: WidthType.PERCENTAGE },
+            children: [new Paragraph({ text: celula })],
+          })),
+        }));
+        filhos.push(new Table({ rows: [linhaCabecalho, ...linhasCorpo], width: { size: 100, type: WidthType.PERCENTAGE } }));
+        filhos.push(new Paragraph({ text: '', spacing: { after: 200 } }));
+      });
+    });
+
+    const doc = new Document({
+      sections: [{ children: filhos }],
+    });
+
+    try {
+      const blob = await Packer.toBlob(doc);
+      baixarArquivoBlob(blob, 'muniforte-projeto-' + new Date().toISOString().slice(0,10) + '.docx');
+    } catch(e){
+      console.error(e);
+      alert('Erro ao gerar o arquivo Word. Tente novamente em instantes.');
+    }
   }
 
   document.querySelectorAll('.source-chip').forEach(chip => {
