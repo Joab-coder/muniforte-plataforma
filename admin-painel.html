@@ -1758,8 +1758,19 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
     return texto;
   }
 
+  function limparTextoParaXML(str){
+    if (str === null || str === undefined) return str;
+    // Remove caracteres de controle inválidos em XML (podem vir de PDFs com fontes customizadas)
+    // Mantém apenas: tab, LF, CR e os intervalos válidos do XML 1.0
+    return String(str)
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '')
+      .replace(/[\u200B-\u200F\uFEFF]/g, '') // zero-width e marcas invisíveis
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
   function parseCaucPDF(textoOriginal){
-    const texto = textoOriginal.replace(/\s+/g, ' ');
+    const texto = limparTextoParaXML(textoOriginal).replace(/\s+/g, ' ');
 
     const entMatch = texto.match(/Ente Federativo:\s*([\d.\/-]+)\s*-\s*MUNICIPIO DE ([^\/]+)\/([A-Z]{2})/i);
     const dataMatch = texto.match(/Data da Pesquisa:\s*(\d{2}\/\d{2}\/\d{4})/);
@@ -2133,6 +2144,21 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
     return { nomeEntidade, titulo, subtitulo, statusTitulo, statusTexto, checklist, resumo8, caucChecklist, indicadores, leitura, isMunicipio, contextoNacional, fragilidadesBeneficios, rankingReal, rankingRealFonte, convenioChartData };
   }
 
+  function baixarArquivoBlob(blob, nomeArquivo){
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = nomeArquivo;
+    a.rel = 'noopener';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => {
+      if (a.parentNode) a.parentNode.removeChild(a);
+      URL.revokeObjectURL(url);
+    }, 1000);
+  }
+
   async function exportFin(kind){
     if (typeof window.jspdf === 'undefined' && kind === 'pdf') {
       alert('A biblioteca de exportação ainda está carregando — aguarde um instante e tente novamente.');
@@ -2143,7 +2169,7 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
       return;
     }
     const data = collectFinData();
-    if (kind === 'pdf') await exportFinPDF(data); else exportFinPPTX(data);
+    if (kind === 'pdf') await exportFinPDF(data); else await exportFinPPTX(data);
   }
 
   function pdfDot(doc, x, y, r, color){
@@ -2680,10 +2706,11 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
     doc.text('Fale com a equipe MuniForte: (93) 99115-4436 · consultoria em gestão pública', marginX + 18, y + 48);
 
     footer();
-    doc.save('muniforte-analise-financeira-' + new Date().toISOString().slice(0,10) + '.pdf');
+    const pdfBlob = doc.output('blob');
+    baixarArquivoBlob(pdfBlob, 'muniforte-analise-financeira-' + new Date().toISOString().slice(0,10) + '.pdf');
   }
 
-  function exportFinPPTX(data){
+  async function exportFinPPTX(data){
     const pptx = new PptxGenJS();
     pptx.defineLayout({ name: 'MF', width: 10, height: 5.63 });
     pptx.layout = 'MF';
@@ -2762,28 +2789,27 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
         { text: item.label, options: { bold: true, color: '1C2B2E', align: 'justify' } },
         { text: item.detalhe, options: { color: '566063', fontSize: 10.5, align: 'justify' } },
       ])));
-      s5.addTable(rows, { x: 0.4, y: 0.85, w: W - 0.8, colW: [0.5, 3, 5.5], fontSize: 11.5, border: { type: 'solid', color: 'E0DCCF', pt: 0.5 }, autoPage: true });
+      s5.addTable(rows, { x: 0.4, y: 0.85, w: W - 0.8, colW: [0.5, 3, 5.7], fontSize: 11.5, border: { type: 'solid', color: 'E0DCCF', pt: 0.5 }, autoPage: true });
     }
 
     // ===== SLIDE 5A2 — GRÁFICO: COMPOSIÇÃO DOS CONVÊNIOS =====
     if (data.convenioChartData){
-      const s5a2 = pptx.addSlide();
-      pageFrame(s5a2, 'Origem dos recursos de convênio');
-      const cc = data.convenioChartData;
-      const chartDataConv = [{
-        name: 'Valor captado (R$)',
-        labels: ['Convênio federal (Transferegov)', 'Convênio estadual', 'Convênio privado'],
-        values: [cc.convenioFederal, cc.convenioEstadual, cc.convenioPrivado],
-      }];
-      s5a2.addChart(pptx.ChartType.bar, chartDataConv, {
-        x: 0.6, y: 0.9, w: W - 1.2, h: 4.0,
-        barDir: 'col',
-        chartColors: ['16424A', '2C6E76', 'B8842C'],
-        showLegend: false, showTitle: false, showValue: true,
-        dataLabelColor: '1C2B2E', dataLabelFontSize: 10,
-        catAxisLabelColor: '1C2B2E', catAxisLabelFontSize: 10.5,
-        valAxisLabelColor: '566063',
-      });
+      try {
+        const s5a2 = pptx.addSlide();
+        pageFrame(s5a2, 'Origem dos recursos de convênio');
+        const cc = data.convenioChartData;
+        const chartDataConv = [{
+          name: 'Valor captado (R$)',
+          labels: ['Convênio federal', 'Convênio estadual', 'Convênio privado'],
+          values: [Number(cc.convenioFederal) || 0, Number(cc.convenioEstadual) || 0, Number(cc.convenioPrivado) || 0],
+        }];
+        s5a2.addChart(pptx.ChartType.bar, chartDataConv, {
+          x: 0.6, y: 0.9, w: W - 1.2, h: 4.0,
+          barDir: 'col',
+          chartColors: ['16424A', '2C6E76', 'B8842C'],
+          showLegend: false, showTitle: false,
+        });
+      } catch(e){ console.error('Falha ao gerar gráfico de convênios:', e); }
     }
 
     // ===== SLIDE 5B — RESUMO (TÓPICO 8) =====
@@ -2797,23 +2823,30 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
         { text: String(i + 1), options: { bold: true, color: '16424A', align: 'center' } },
         { text: t, options: { color: '1C2B2E', fontSize: 12, align: 'justify' } },
       ])));
-      s5b.addTable(rowsResumo, { x: 0.4, y: 0.85, w: W - 0.8, colW: [0.5, 8.5], fontSize: 12, border: { type: 'solid', color: 'E0DCCF', pt: 0.5 }, autoPage: true });
+      s5b.addTable(rowsResumo, { x: 0.4, y: 0.85, w: W - 0.8, colW: [0.5, 8.7], fontSize: 12, border: { type: 'solid', color: 'E0DCCF', pt: 0.5 }, autoPage: true });
     }
 
     // ===== SLIDE 5C — VERIFICAÇÃO DE REGULARIDADE (CAUC) =====
     if (data.caucChecklist && data.caucChecklist.length){
-      const s5c = pptx.addSlide();
-      pageFrame(s5c, 'Verificação de regularidade — CAUC');
-      const rowsCauc = [[
+      const ITENS_POR_SLIDE_CAUC = 10;
+      const headerCauc = [
         { text: '', options: { bold: true, color: 'FFFFFF', fill: '16424A' } },
         { text: 'Requisito', options: { bold: true, color: 'FFFFFF', fill: '16424A' } },
         { text: 'Situação', options: { bold: true, color: 'FFFFFF', fill: '16424A' } },
-      ]].concat(data.caucChecklist.map(item => ([
-        { text: item.ok ? '✓' : '!', options: { color: item.ok ? '3A7A5D' : 'B4472A', bold: true, align: 'center' } },
-        { text: item.label, options: { bold: true, color: '1C2B2E', align: 'justify' } },
-        { text: item.detalhe, options: { color: '566063', fontSize: 10.5, align: 'justify' } },
-      ])));
-      s5c.addTable(rowsCauc, { x: 0.4, y: 0.85, w: W - 0.8, colW: [0.5, 3.8, 4.7], fontSize: 10.5, border: { type: 'solid', color: 'E0DCCF', pt: 0.5 }, autoPage: true });
+      ];
+      for (let i = 0; i < data.caucChecklist.length; i += ITENS_POR_SLIDE_CAUC){
+        const pagina = data.caucChecklist.slice(i, i + ITENS_POR_SLIDE_CAUC);
+        const s5c = pptx.addSlide();
+        const totalPaginas = Math.ceil(data.caucChecklist.length / ITENS_POR_SLIDE_CAUC);
+        const numPagina = Math.floor(i / ITENS_POR_SLIDE_CAUC) + 1;
+        pageFrame(s5c, 'Verificação de regularidade — CAUC' + (totalPaginas > 1 ? ' (' + numPagina + '/' + totalPaginas + ')' : ''));
+        const rowsCauc = [headerCauc].concat(pagina.map(item => ([
+          { text: item.ok ? '✓' : '!', options: { color: item.ok ? '3A7A5D' : 'B4472A', bold: true, align: 'center' } },
+          { text: item.label, options: { bold: true, color: '1C2B2E', align: 'justify' } },
+          { text: item.detalhe, options: { color: '566063', fontSize: 10.5, align: 'justify' } },
+        ])));
+        s5c.addTable(rowsCauc, { x: 0.4, y: 0.85, w: W - 0.8, colW: [0.5, 3.8, 4.9], fontSize: 10.5, border: { type: 'solid', color: 'E0DCCF', pt: 0.5 } });
+      }
     }
 
     // ===== SLIDE 6 — INDICADORES =====
@@ -2835,23 +2868,22 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
     // ===== SLIDE 6B — GRÁFICO: INDICADORES VS. LIMITES =====
     const indicatorRows = computeIndicatorRows(data.indicadores);
     if (indicatorRows.length){
-      const s6b = pptx.addSlide();
-      pageFrame(s6b, '% já utilizado do limite legal (ou do mínimo exigido)');
-      const chartData = [{
-        name: '% do limite/mínimo utilizado',
-        labels: indicatorRows.map(r => r.label),
-        values: indicatorRows.map(r => r.ratioPct),
-      }];
-      s6b.addChart(pptx.ChartType.bar, chartData, {
-        x: 0.4, y: 0.9, w: W - 0.8, h: 3.9,
-        barDir: 'bar',
-        chartColors: indicatorRows.map(r => r.favoravel ? '3A7A5D' : 'B4472A'),
-        showLegend: false, showTitle: false,
-        showValue: true, dataLabelColor: '1C2B2E', dataLabelFontSize: 10, dataLabelFormatCode: '0"%"',
-        catAxisLabelColor: '1C2B2E', catAxisLabelFontSize: 10,
-        valAxisLabelColor: '566063', valAxisTitle: '% do limite/mínimo (100% = limite legal)',
-      });
-      s6b.addText('Verde = dentro do limite / acima do mínimo exigido · Vermelho = fora do limite / abaixo do mínimo', { x: 0.4, y: H - 0.45, w: W - 0.8, h: 0.3, fontSize: 8.5, italic: true, color: '8A8577' });
+      try {
+        const s6b = pptx.addSlide();
+        pageFrame(s6b, '% já utilizado do limite legal (ou do mínimo exigido)');
+        const chartData = [{
+          name: '% do limite/mínimo utilizado',
+          labels: indicatorRows.map(r => r.label),
+          values: indicatorRows.map(r => r.ratioPct),
+        }];
+        s6b.addChart(pptx.ChartType.bar, chartData, {
+          x: 0.4, y: 0.9, w: W - 0.8, h: 3.9,
+          barDir: 'bar',
+          chartColors: ['16424A'],
+          showLegend: false, showTitle: false,
+        });
+        s6b.addText('Verde = dentro do limite / acima do mínimo exigido · Vermelho = fora do limite / abaixo do mínimo', { x: 0.4, y: H - 0.45, w: W - 0.8, h: 0.3, fontSize: 8.5, italic: true, color: '8A8577' });
+      } catch(e){ console.error('Falha ao gerar gráfico de indicadores:', e); }
     }
 
     // ===== SLIDE 6C — RANKING ESTADUAL REAL (captação federal, SICONFI) =====
@@ -2867,27 +2899,27 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
         Object.assign({ text: r.nome, options: Object.assign({ bold: !!r.destaque }, r.destaque ? { fill: 'F3E8D2' } : {}) } ),
         Object.assign({ text: r.valor, options: Object.assign({ bold: !!r.destaque }, r.destaque ? { fill: 'F3E8D2' } : {}) } ),
       ])));
-      s6c.addTable(rowsR, { x: 0.4, y: 0.85, w: W - 0.8, colW: [1.1, 4.5, 3.4], fontSize: 11, border: { type: 'solid', color: 'E0DCCF', pt: 0.5 }, autoPage: true });
+      s6c.addTable(rowsR, { x: 0.4, y: 0.85, w: W - 0.8, colW: [1.1, 4.5, 3.6], fontSize: 11, border: { type: 'solid', color: 'E0DCCF', pt: 0.5 } });
       footerNote(s6c, 'Fonte: ' + data.rankingRealFonte);
     }
 
     // ===== SLIDE 6D — GRÁFICO DE RANKING =====
     if (data.rankingReal && data.rankingReal.length){
-      const s6d = pptx.addSlide();
-      pageFrame(s6d, 'Comparativo visual — ranking de captação federal');
-      const chartRanking = [{
-        name: 'Valor captado (R$)',
-        labels: data.rankingReal.map(r => r.pos + ' ' + r.nome.split(' — ')[0]),
-        values: data.rankingReal.map(r => parseFloat(String(r.valor).replace(/[^\d,]/g,'').replace(',','.')) || 0),
-      }];
-      s6d.addChart(pptx.ChartType.bar, chartRanking, {
-        x: 0.4, y: 0.85, w: W - 0.8, h: 4.3,
-        barDir: 'bar',
-        chartColors: data.rankingReal.map(r => r.destaque ? 'B8842C' : '16424A'),
-        showLegend: false, showTitle: false,
-        catAxisLabelColor: '1C2B2E', catAxisLabelFontSize: 9,
-        valAxisLabelColor: '566063',
-      });
+      try {
+        const s6d = pptx.addSlide();
+        pageFrame(s6d, 'Comparativo visual — ranking de captação federal');
+        const chartRanking = [{
+          name: 'Valor captado (R$)',
+          labels: data.rankingReal.map(r => String(r.pos) + ' ' + String(r.nome).split(' — ')[0]),
+          values: data.rankingReal.map(r => parseFloat(String(r.valor).replace(/[^\d,]/g,'').replace(',','.')) || 0),
+        }];
+        s6d.addChart(pptx.ChartType.bar, chartRanking, {
+          x: 0.4, y: 0.85, w: W - 0.8, h: 4.3,
+          barDir: 'bar',
+          chartColors: ['16424A'],
+          showLegend: false, showTitle: false,
+        });
+      } catch(e){ console.error('Falha ao gerar gráfico de ranking:', e); }
     }
 
     // ===== SLIDE 7 — FRAGILIDADES x BENEFÍCIOS =====
@@ -2914,7 +2946,8 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
     s8.addText('Quer transformar esse diagnóstico em recursos captados de verdade?', { x: 0.65, y: H - 1.3, w: W - 1.3, h: 0.45, fontSize: 13, bold: true, color: 'FFFFFF' });
     s8.addText('Fale com a equipe MuniForte: (93) 99115-4436 · consultoria em gestão pública', { x: 0.65, y: H - 0.8, w: W - 1.3, h: 0.35, fontSize: 11, color: 'DCEAE9' });
 
-    pptx.writeFile({ fileName: 'muniforte-analise-financeira-' + new Date().toISOString().slice(0,10) + '.pptx' });
+    const pptxBlob = await pptx.write({ outputType: 'blob' });
+    baixarArquivoBlob(pptxBlob, 'muniforte-analise-financeira-' + new Date().toISOString().slice(0,10) + '.pptx');
   }
 
   // ===== CMS: abas de personalização do site =====
