@@ -426,6 +426,33 @@
   .delete-confirm-input label{ font-size:11.5px; color:var(--warning); font-weight:600; display:block; margin-bottom:5px; }
   .delete-confirm-input input{ width:100%; border:1px solid var(--warning); border-radius:7px; padding:8px 10px; font-size:13px; }
   .delete-modal-actions{ display:flex; justify-content:flex-end; gap:10px; margin-top:20px; }
+  /* ===== diagnóstico espelhado (somente leitura, visão do administrador) ===== */
+  .progress-track{ height:8px; background:var(--border); border-radius:4px; overflow:hidden; margin:10px 0 6px; }
+  .progress-fill{ height:100%; background:var(--gold); border-radius:4px; transition:width .3s ease; }
+  .accordion-item{ border:1px solid var(--border); border-radius:10px; margin-bottom:12px; overflow:hidden; }
+  .accordion-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:15px 18px; background:var(--surface); cursor:pointer; }
+  .accordion-head:hover{ background:var(--bg); }
+  .accordion-num{ width:26px; height:26px; border-radius:50%; background:var(--primary-wash); color:var(--primary); display:flex; align-items:center; justify-content:center; font-family:'IBM Plex Mono', monospace; font-size:12px; font-weight:700; flex-shrink:0; }
+  .accordion-item.done .accordion-num{ background:var(--success); color:#fff; }
+  .accordion-title{ flex:1; }
+  .accordion-title strong{ display:block; font-size:14px; }
+  .accordion-title span{ font-size:11.5px; color:var(--ink-soft); }
+  .accordion-chev{ font-size:13px; color:var(--ink-soft); transition:transform .2s ease; }
+  .accordion-item.open .accordion-chev{ transform:rotate(180deg); }
+  .accordion-body{ display:none; padding:4px 18px 20px; border-top:1px solid var(--border); }
+  .accordion-item.open .accordion-body{ display:block; }
+  .field-group{ margin-bottom:16px; }
+  .field-group-title{ font-size:11.5px; font-weight:700; text-transform:uppercase; letter-spacing:.3px; color:var(--ink-soft); margin:16px 0 10px; display:flex; align-items:center; gap:8px; }
+  .badge-count{ font-family:'IBM Plex Mono', monospace; font-weight:400; text-transform:none; letter-spacing:0; font-size:11px; color:#8A8577; }
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:12px; }
+  .field-row.three{ grid-template-columns:1fr 1fr 1fr; }
+  @media (max-width:760px){ .field-row, .field-row.three{ grid-template-columns:1fr; } }
+  .field label{ display:flex; justify-content:space-between; align-items:center; font-size:12.5px; font-weight:600; margin-bottom:6px; }
+  .field input, .field select, .field textarea{ width:100%; border:1px solid var(--border); border-radius:7px; padding:9px 11px; font-size:13px; font-family:'IBM Plex Sans', sans-serif; background:#fff; }
+  .field input:disabled, .field select:disabled, .field textarea:disabled{ background:var(--bg); color:var(--ink-soft); }
+  .src-tag{ font-family:'IBM Plex Mono', monospace; font-size:9.5px; font-weight:600; padding:2px 7px; border-radius:20px; background:var(--bg); color:var(--ink-soft); text-transform:uppercase; }
+  .src-tag.auto{ background:var(--success-soft); color:var(--success); }
+  .skip-note{ font-size:11.5px; color:var(--ink-soft); }
 </style>
 </head>
 <body>
@@ -450,6 +477,7 @@
       <button class="nav-item" data-view="admin-usuarios"><span class="ic">◍</span> Usuários</button>
 
       <div class="nav-label">Operação</div>
+      <button class="nav-item" data-view="admin-notificacoes"><span class="ic">🔔</span> Notificações <span class="nav-alert-dot" id="notif-dot" style="display:none;"></span></button>
       <button class="nav-item" data-view="admin-elaboracao"><span class="ic">✎</span> Elaboração de projetos</button>
       <button class="nav-item" data-view="admin-busca-privada"><span class="ic">⌕</span> Editais privados (IA)</button>
       <button class="nav-item" data-view="admin-financeiro"><span class="ic">$</span> Análise financeira</button>
@@ -637,6 +665,287 @@
           </div>
         </div>
 
+
+        <div class="panel">
+          <div class="panel-head"><h2>Diagnóstico completo — visão do administrador</h2><span class="note" id="admin-diag-note">o que o prefeito já preencheu (somente leitura)</span></div>
+          <div class="progress-track"><div class="progress-fill" id="admin-diag-progress-fill" style="width:72%"></div></div>
+          <div class="mini-count" id="admin-diag-progress-text" style="margin-top:6px; margin-bottom:14px;">5 de 7 etapas concluídas</div>
+          <div id="admin-diag-municipio-view">
+
+          <div class="accordion-item done open">
+            <div class="accordion-head" onclick="toggleAcc(this)">
+              <div class="accordion-num">✓</div>
+              <div class="accordion-title"><strong>1. Perfil geral</strong><span>População, IDH, PIB — preenchido automaticamente</span></div>
+              <div class="accordion-chev">▾</div>
+            </div>
+            <div class="accordion-body">
+              <div class="field-group">
+                <div class="field-group-title">Dados públicos <span class="badge-count">fonte: IBGE / Atlas Brasil-PNUD</span></div>
+                <div class="field-row">
+                  <div class="field"><label>Município <span class="src-tag auto">IBGE</span></label><input type="text" value="Vila Serrana — PB" disabled></div>
+                  <div class="field"><label>População <span class="src-tag auto">IBGE</span></label><input type="text" value="18.400 habitantes" disabled></div>
+                </div>
+                <div class="field-row">
+                  <div class="field"><label>IDH municipal <span class="src-tag auto">PNUD</span></label><input type="text" value="0,612" disabled></div>
+                  <div class="field"><label>PIB per capita <span class="src-tag auto">IBGE</span></label><input type="text" value="R$ 14.200" disabled></div>
+                </div>
+              </div>
+              <div class="field-group">
+                <div class="field-group-title">Capacidade institucional</div>
+                <div class="field-row">
+                  <div class="field"><label>Equipe dedicada à captação de recursos? <span class="src-tag">Manual</span></label><select disabled><option>Não há equipe dedicada</option><option>1 pessoa parcialmente dedicada</option><option>Equipe/setor estruturado</option></select></div>
+                  <div class="field"><label>Convênios federais já executados <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 3" disabled></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item done">
+            <div class="accordion-head" onclick="toggleAcc(this)">
+              <div class="accordion-num">✓</div>
+              <div class="accordion-title"><strong>2. Saúde</strong><span>UBS por zona (CNES) + detalhe manual</span></div>
+              <div class="accordion-chev">▾</div>
+            </div>
+            <div class="accordion-body">
+              <div class="field-group">
+                <div class="field-group-title">Rede de saúde <span class="badge-count">fonte: CNES/DATASUS</span></div>
+                <div class="field-row">
+                  <div class="field"><label>UBS na zona urbana <span class="src-tag auto">CNES</span></label><input type="text" value="5 unidades" disabled></div>
+                  <div class="field"><label>UBS na zona rural <span class="src-tag auto">CNES</span></label><input type="text" value="3 unidades" disabled></div>
+                </div>
+              </div>
+              <div class="field-group">
+                <div class="field-group-title">Detalhe local</div>
+                <div class="field-row">
+                  <div class="field"><label>Idade média da última reforma <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: 11 anos" disabled></div>
+                  <div class="field"><label>Possui telessaúde? <span class="src-tag">Manual</span></label><select disabled><option>Não</option><option>Sim, em 1 unidade</option><option>Sim, em mais de 1</option></select></div>
+                </div>
+                <div class="field-row">
+                  <div class="field"><label>Frota de transporte sanitário <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 4 veículos" disabled></div>
+                  <div class="field"><label>Equipes de saúde da família <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 6 equipes" disabled></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item done">
+            <div class="accordion-head" onclick="toggleAcc(this)">
+              <div class="accordion-num">✓</div>
+              <div class="accordion-title"><strong>3. Educação</strong><span>Escolas (Censo Escolar/INEP) + detalhe manual</span></div>
+              <div class="accordion-chev">▾</div>
+            </div>
+            <div class="accordion-body">
+              <div class="field-group">
+                <div class="field-group-title">Rede escolar <span class="badge-count">fonte: Censo Escolar/INEP</span></div>
+                <div class="field-row">
+                  <div class="field"><label>Escolas municipais <span class="src-tag auto">INEP</span></label><input type="text" value="14 escolas" disabled></div>
+                  <div class="field"><label>Matrículas ativas <span class="src-tag auto">INEP</span></label><input type="text" value="3.120 alunos" disabled></div>
+                </div>
+              </div>
+              <div class="field-group">
+                <div class="field-group-title">Detalhe local</div>
+                <div class="field-row">
+                  <div class="field"><label>Creches em tempo integral <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 2" disabled></div>
+                  <div class="field"><label>Transporte escolar rural <span class="src-tag">Manual</span></label><select disabled><option>Atende bem a demanda</option><option>Atende parcialmente</option><option>Não atende</option></select></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item done">
+            <div class="accordion-head" onclick="toggleAcc(this)">
+              <div class="accordion-num">✓</div>
+              <div class="accordion-title"><strong>4. Infraestrutura viária</strong><span>100% manual — não há base federal aberta neste nível</span></div>
+              <div class="accordion-chev">▾</div>
+            </div>
+            <div class="accordion-body">
+              <div class="field-group">
+                <div class="field-row three">
+                  <div class="field"><label>Estradas vicinais sem pavimentação <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: 42 km" disabled></div>
+                  <div class="field"><label>Pontes em situação crítica <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 3" disabled></div>
+                  <div class="field"><label>Vias urbanas sem pavimentação <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: 4,2 km" disabled></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-head" onclick="toggleAcc(this)">
+              <div class="accordion-num">5</div>
+              <div class="accordion-title"><strong>5. Saneamento</strong><span>Cobertura (SINISA) + detalhe local — pendente</span></div>
+              <div class="accordion-chev">▾</div>
+            </div>
+            <div class="accordion-body">
+              <div class="field-group">
+                <div class="field-group-title">Cobertura <span class="badge-count">fonte: SINISA</span></div>
+                <div class="field-row">
+                  <div class="field"><label>Cobertura de água tratada <span class="src-tag auto">SINISA</span></label><input type="text" value="81%" disabled></div>
+                  <div class="field"><label>Cobertura de esgotamento sanitário <span class="src-tag auto">SINISA</span></label><input type="text" value="47%" disabled></div>
+                </div>
+              </div>
+              <div class="field-group">
+                <div class="field-group-title">Detalhe local</div>
+                <div class="field-row">
+                  <div class="field"><label>Bairros/localidades sem coleta de esgoto <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: 3 bairros" disabled></div>
+                  <div class="field"><label>Destinação de resíduos sólidos <span class="src-tag">Manual</span></label><select disabled><option>Aterro sanitário licenciado</option><option>Lixão a céu aberto</option><option>Consórcio intermunicipal</option></select></div>
+                </div>
+              </div>
+              <div class="skip-note">Você pode pular esta etapa e completar depois.</div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-head" onclick="toggleAcc(this)">
+              <div class="accordion-num">6</div>
+              <div class="accordion-title"><strong>6. Assistência social</strong><span>CRAS/CREAS (CadÚnico) — pendente</span></div>
+              <div class="accordion-chev">▾</div>
+            </div>
+            <div class="accordion-body">
+              <div class="field-group">
+                <div class="field-group-title">Rede socioassistencial <span class="badge-count">fonte: Censo SUAS/CadÚnico</span></div>
+                <div class="field-row">
+                  <div class="field"><label>CRAS ativos <span class="src-tag auto">Censo SUAS</span></label><input type="text" value="2 unidades" disabled></div>
+                  <div class="field"><label>Famílias no CadÚnico <span class="src-tag auto">CadÚnico</span></label><input type="text" value="2.340 famílias" disabled></div>
+                </div>
+              </div>
+              <div class="field-group">
+                <div class="field-group-title">Detalhe local</div>
+                <div class="field-row">
+                  <div class="field"><label>Cobertura territorial do CRAS <span class="src-tag">Manual</span></label><select disabled><option>Cobre toda a zona rural</option><option>Cobertura parcial</option><option>Só zona urbana</option></select></div>
+                  <div class="field"><label>Possui CREAS? <span class="src-tag">Manual</span></label><select disabled><option>Sim</option><option>Não</option><option>Compartilhado com consórcio</option></select></div>
+                </div>
+              </div>
+              <div class="skip-note">Você pode pular esta etapa e completar depois.</div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-head" onclick="toggleAcc(this)">
+              <div class="accordion-num">7</div>
+              <div class="accordion-title"><strong>7. Cultura, esporte e meio ambiente</strong><span>Bibliotecas (parcial) + detalhe manual — pendente</span></div>
+              <div class="accordion-chev">▾</div>
+            </div>
+            <div class="accordion-body">
+              <div class="field-group">
+                <div class="field-row">
+                  <div class="field"><label>Bibliotecas públicas <span class="src-tag auto">Sist. Nac. Bibliotecas</span></label><input type="text" value="1 unidade" disabled></div>
+                  <div class="field"><label>Bens tombados (IPHAN) <span class="src-tag auto">IPHAN</span></label><input type="text" value="0" disabled></div>
+                </div>
+                <div class="field-row">
+                  <div class="field"><label>Equipamentos esportivos públicos <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 2 quadras" disabled></div>
+                  <div class="field"><label>Áreas de risco ambiental mapeadas <span class="src-tag">Manual</span></label><select disabled><option>Sim, mapeadas</option><option>Parcialmente</option><option>Não mapeadas</option></select></div>
+                </div>
+              </div>
+              <div class="skip-note">Você pode pular esta etapa e completar depois.</div>
+            </div>
+          </div>
+
+        </div>
+        <div id="admin-diag-osc-view" style="display:none;">
+
+          <div class="accordion-item done open">
+            <div class="accordion-head" onclick="toggleAcc(this)">
+              <div class="accordion-num">✓</div>
+              <div class="accordion-title"><strong>1. Perfil da OSC</strong><span>Identificação e abrangência</span></div>
+              <div class="accordion-chev">▾</div>
+            </div>
+            <div class="accordion-body">
+              <div class="field-group">
+                <div class="field-row">
+                  <div class="field"><label>Nome da OSC <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: Instituto Semear" disabled></div>
+                  <div class="field"><label>CNPJ <span class="src-tag">Manual</span></label><input type="text" placeholder="00.000.000/0001-00" disabled></div>
+                </div>
+                <div class="field-row">
+                  <div class="field"><label>Ano de fundação <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: 2014" disabled></div>
+                  <div class="field"><label>Município sede <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: Vila Serrana — PB" disabled></div>
+                </div>
+                <div class="field-row">
+                  <div class="field"><label>Área de atuação principal <span class="src-tag">Manual</span></label>
+                    <select id="osc-area-select" onchange="swapOscTema(this.value)" disabled>
+                      <option value="educacao">Educação</option>
+                      <option value="saude">Saúde</option>
+                      <option value="meioambiente">Meio ambiente</option>
+                      <option value="cultura">Cultura e esporte</option>
+                      <option value="assistencia">Assistência social</option>
+                    </select>
+                  </div>
+                  <div class="field"><label>Público atendido (média/ano) <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 450 pessoas" disabled></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item done">
+            <div class="accordion-head" onclick="toggleAcc(this)">
+              <div class="accordion-num">✓</div>
+              <div class="accordion-title"><strong>2. Regularidade e capacidade de execução</strong><span>CNEAS, certidões e histórico</span></div>
+              <div class="accordion-chev">▾</div>
+            </div>
+            <div class="accordion-body">
+              <div class="field-group">
+                <div class="field-row">
+                  <div class="field"><label>Inscrita no CNEAS? <span class="src-tag">Manual</span></label><select disabled><option>Sim</option><option>Não</option><option>Em processo</option></select></div>
+                  <div class="field"><label>Certidões federais em dia? <span class="src-tag">Manual</span></label><select disabled><option>Sim, todas</option><option>Parcialmente</option><option>Não</option></select></div>
+                </div>
+                <div class="field-row">
+                  <div class="field"><label>Convênios/parcerias já executados <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 2" disabled></div>
+                  <div class="field"><label>Equipe técnica dedicada a projetos <span class="src-tag">Manual</span></label><select disabled><option>Não há</option><option>1 pessoa parcial</option><option>Equipe estruturada</option></select></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="accordion-item">
+            <div class="accordion-head" onclick="toggleAcc(this)">
+              <div class="accordion-num">3</div>
+              <div class="accordion-title"><strong>3. Diagnóstico temático</strong><span id="osc-tema-sub">Adaptado à área de atuação escolhida acima</span></div>
+              <div class="accordion-chev">▾</div>
+            </div>
+            <div class="accordion-body">
+              <div id="osc-tema-educacao" class="field-group">
+                <div class="field-row">
+                  <div class="field"><label>Alunos atendidos por ano <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 180" disabled></div>
+                  <div class="field"><label>Nº de educadores/voluntários <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 12" disabled></div>
+                </div>
+              </div>
+              <div id="osc-tema-saude" class="field-group">
+                <div class="field-row">
+                  <div class="field"><label>Atendimentos de saúde por ano <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 900" disabled></div>
+                  <div class="field"><label>Profissionais de saúde envolvidos <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 5" disabled></div>
+                </div>
+              </div>
+              <div id="osc-tema-meioambiente" class="field-group">
+                <div class="field-row">
+                  <div class="field"><label>Área ambiental sob cuidado (ha) <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: 40 ha" disabled></div>
+                  <div class="field"><label>Mudas plantadas / ano <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 3.000" disabled></div>
+                </div>
+              </div>
+              <div id="osc-tema-cultura" class="field-group">
+                <div class="field-row">
+                  <div class="field"><label>Eventos/oficinas por ano <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 24" disabled></div>
+                  <div class="field"><label>Espaço cultural próprio? <span class="src-tag">Manual</span></label><select disabled><option>Sim</option><option>Não, usa espaço cedido</option></select></div>
+                </div>
+              </div>
+              <div id="osc-tema-assistencia" class="field-group">
+                <div class="field-row">
+                  <div class="field"><label>Famílias atendidas por ano <span class="src-tag">Manual</span></label><input type="number" placeholder="Ex.: 320" disabled></div>
+                  <div class="field"><label>Serviços ofertados <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: acolhimento, oficinas, cesta básica" disabled></div>
+                </div>
+              </div>
+              <div class="field-group">
+                <div class="field-group-title">Captação de recursos privados <span class="badge-count">exclusivo para OSC</span></div>
+                <div class="field-row">
+                  <div class="field"><label>Recursos privados captados (últimos 12 meses) <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: R$ 60.000" disabled></div>
+                  <div class="field"><label>Principais fontes privadas <span class="src-tag">Manual</span></label><input type="text" placeholder="Ex.: doações, editais de institutos" disabled></div>
+                </div>
+              </div>
+              <div class="skip-note">Você pode pular esta etapa e completar depois.</div>
+            </div>
+          </div>
+
+        </div>
+        </div>
+
         <div class="panel danger-zone">
           <div class="panel-head"><h2>Zona de risco</h2></div>
           <div class="danger-row">
@@ -668,24 +977,24 @@
             <thead><tr><th>Organização</th><th>Área</th><th>Propostos</th><th>Aprovados</th><th>Execução</th><th>Prest. contas</th><th></th><th></th></tr></thead>
             <tbody>
               <tr>
-                <td class="name-cell" onclick="openMunicipio('Instituto Semear — Educação')" style="cursor:pointer;"><strong>Instituto Semear</strong><span>Vila Serrana — PB</span></td>
-                <td onclick="openMunicipio('Instituto Semear — Educação')" style="cursor:pointer;"><span class="status-pill execucao">Educação</span></td>
+                <td class="name-cell" onclick="openMunicipio('Instituto Semear — Educação', 'osc')" style="cursor:pointer;"><strong>Instituto Semear</strong><span>Vila Serrana — PB</span></td>
+                <td onclick="openMunicipio('Instituto Semear — Educação', 'osc')" style="cursor:pointer;"><span class="status-pill execucao">Educação</span></td>
                 <td class="mini-count">2</td><td class="mini-count">2</td><td class="mini-count">1</td><td class="mini-count">0</td>
-                <td><button class="row-link" onclick="openMunicipio('Instituto Semear — Educação')">Ver detalhes →</button></td>
+                <td><button class="row-link" onclick="openMunicipio('Instituto Semear — Educação', 'osc')">Ver detalhes →</button></td>
                 <td><button class="row-delete" title="Excluir ou limpar dados" onclick="event.stopPropagation(); openDeleteModal('Instituto Semear', 'OSC', this)">🗑</button></td>
               </tr>
               <tr>
-                <td class="name-cell" onclick="openMunicipio('Coletivo Raízes — Cultura')" style="cursor:pointer;"><strong>Coletivo Raízes</strong><span>Serra Alta — MG</span></td>
-                <td onclick="openMunicipio('Coletivo Raízes — Cultura')" style="cursor:pointer;"><span class="status-pill aprovado">Cultura</span></td>
+                <td class="name-cell" onclick="openMunicipio('Coletivo Raízes — Cultura', 'osc')" style="cursor:pointer;"><strong>Coletivo Raízes</strong><span>Serra Alta — MG</span></td>
+                <td onclick="openMunicipio('Coletivo Raízes — Cultura', 'osc')" style="cursor:pointer;"><span class="status-pill aprovado">Cultura</span></td>
                 <td class="mini-count">1</td><td class="mini-count">1</td><td class="mini-count">0</td><td class="mini-count">0</td>
-                <td><button class="row-link" onclick="openMunicipio('Coletivo Raízes — Cultura')">Ver detalhes →</button></td>
+                <td><button class="row-link" onclick="openMunicipio('Coletivo Raízes — Cultura', 'osc')">Ver detalhes →</button></td>
                 <td><button class="row-delete" title="Excluir ou limpar dados" onclick="event.stopPropagation(); openDeleteModal('Coletivo Raízes', 'OSC', this)">🗑</button></td>
               </tr>
               <tr>
-                <td class="name-cell" onclick="openMunicipio('Rede Verde Viva — Meio ambiente')" style="cursor:pointer;"><strong>Rede Verde Viva</strong><span>Boa Vista do Norte — CE</span></td>
-                <td onclick="openMunicipio('Rede Verde Viva — Meio ambiente')" style="cursor:pointer;"><span class="status-pill proposto">Meio ambiente</span></td>
+                <td class="name-cell" onclick="openMunicipio('Rede Verde Viva — Meio ambiente', 'osc')" style="cursor:pointer;"><strong>Rede Verde Viva</strong><span>Boa Vista do Norte — CE</span></td>
+                <td onclick="openMunicipio('Rede Verde Viva — Meio ambiente', 'osc')" style="cursor:pointer;"><span class="status-pill proposto">Meio ambiente</span></td>
                 <td class="mini-count">1</td><td class="mini-count">0</td><td class="mini-count">0</td><td class="mini-count">0</td>
-                <td><button class="row-link" onclick="openMunicipio('Rede Verde Viva — Meio ambiente')">Ver detalhes →</button></td>
+                <td><button class="row-link" onclick="openMunicipio('Rede Verde Viva — Meio ambiente', 'osc')">Ver detalhes →</button></td>
                 <td><button class="row-delete" title="Excluir ou limpar dados" onclick="event.stopPropagation(); openDeleteModal('Rede Verde Viva', 'OSC', this)">🗑</button></td>
               </tr>
             </tbody>
@@ -795,7 +1104,7 @@
           </div>
           <div class="edital-footer">
             <a class="source-link" href="#">Ver edital original ↗</a>
-            <div class="edital-actions"><button class="btn-discard">Descartar</button><button class="btn-add">+ Adicionar à plataforma</button></div>
+            <div class="edital-actions"><button class="btn-discard" onclick="descartarEdital(this)">Descartar</button><button class="btn-add" onclick="adicionarEditalPlataforma(this)">+ Adicionar à plataforma</button></div>
           </div>
         </div>
 
@@ -811,7 +1120,7 @@
           </div>
           <div class="edital-footer">
             <a class="source-link" href="#">Ver edital original ↗</a>
-            <div class="edital-actions"><button class="btn-discard">Descartar</button><button class="btn-add">+ Adicionar à plataforma</button></div>
+            <div class="edital-actions"><button class="btn-discard" onclick="descartarEdital(this)">Descartar</button><button class="btn-add" onclick="adicionarEditalPlataforma(this)">+ Adicionar à plataforma</button></div>
           </div>
         </div>
 
@@ -827,7 +1136,7 @@
           </div>
           <div class="edital-footer">
             <a class="source-link" href="#">Ver edital original ↗</a>
-            <div class="edital-actions"><button class="btn-discard">Descartar</button><button class="btn-add">+ Adicionar à plataforma</button></div>
+            <div class="edital-actions"><button class="btn-discard" onclick="descartarEdital(this)">Descartar</button><button class="btn-add" onclick="adicionarEditalPlataforma(this)">+ Adicionar à plataforma</button></div>
           </div>
         </div>
 
@@ -839,6 +1148,41 @@
               A IA resume o conteúdo público das páginas consultadas, mas prazos e valores podem mudar ou ser interpretados incorretamente. Confirme os dados no site oficial da fonte antes de publicar o edital para prefeitos e OSCs.
             </div>
           </div>
+        </div>
+
+        <div class="panel-head" style="margin-top:28px;"><h2 style="font-family:'IBM Plex Serif', serif;">Elaborar projeto a partir de um edital específico</h2><span class="note">carregue o edital (ou documento similar) e, se quiser, um projeto modelo — a plataforma lê o conteúdo e monta a estrutura base do projeto</span></div>
+
+        <div class="panel" style="margin-bottom:16px;">
+          <div class="field-row" style="margin-bottom:10px;">
+            <div class="form-field"><label>Edital ou documento de referência (PDF) — obrigatório</label><input type="file" id="upload-edital-privado" accept=".pdf"></div>
+            <div class="form-field"><label>Projeto modelo/exemplo (PDF) — opcional</label><input type="file" id="upload-modelo-privado" accept=".pdf"></div>
+          </div>
+          <button class="btn-primary" onclick="processarEditalPrivado()">Analisar edital e montar estrutura do projeto</button>
+          <span id="edital-privado-status" class="mini-count" style="margin-left:12px;"></span>
+        </div>
+
+        <div class="panel" id="painel-edital-lido" style="display:none;">
+          <div class="panel-head"><h2>Conteúdo lido do edital</h2><span class="note" id="edital-lido-nota"></span></div>
+          <div class="form-field"><label>Trecho extraído (revise — a extração de texto pode não capturar 100% da formatação original)</label><textarea id="edital-texto-extraido" style="min-height:160px; font-size:12px;" readonly></textarea></div>
+        </div>
+
+        <div class="panel" id="painel-modelo-lido" style="display:none;">
+          <div class="panel-head"><h2>Conteúdo lido do projeto modelo</h2><span class="note">usado como referência de estilo e estrutura</span></div>
+          <div class="form-field"><textarea id="modelo-texto-extraido" style="min-height:120px; font-size:12px;" readonly></textarea></div>
+        </div>
+
+        <div class="panel" id="painel-estrutura-projeto" style="display:none;">
+          <div class="panel-head"><h2>Estrutura do projeto</h2><span class="note">preenchimento manual nesta fase — a redação automática por IA está prevista para a próxima etapa do projeto</span></div>
+          <div style="background:var(--info-soft); border:1px solid var(--info); border-radius:8px; padding:12px 14px; margin-bottom:16px; font-size:12px; color:var(--ink);">
+            ℹ A plataforma já leu e extraiu o texto do edital acima — mas <strong>escrever o conteúdo de cada seção abaixo, de forma personalizada ao edital, é uma tarefa de geração de texto por inteligência artificial</strong>, ainda não conectada nesta fase do projeto. Por enquanto, preencha manualmente com base no edital lido; quando a IA estiver integrada, esses campos serão sugeridos automaticamente, exatamente como já ocorre na aba "Elaboração de projetos" para captação pública.
+          </div>
+          <div class="form-field"><label>Título do projeto</label><input type="text" id="ep-titulo" placeholder="Ex.: Ampliação do atendimento socioeducativo — Instituto Semear"></div>
+          <div class="form-field"><label>Identificação da entidade proponente</label><textarea id="ep-identificacao" style="min-height:70px;" placeholder="Nome, CNPJ, área de atuação, tempo de existência..."></textarea></div>
+          <div class="form-field"><label>Justificativa</label><textarea id="ep-justificativa" style="min-height:100px;" placeholder="Por que este projeto é necessário, à luz do que o edital pede..."></textarea></div>
+          <div class="form-field"><label>Objetivos e metas</label><textarea id="ep-objetivos" style="min-height:80px;" placeholder="O que o projeto pretende entregar, de forma mensurável..."></textarea></div>
+          <div class="form-field"><label>Cronograma resumido</label><textarea id="ep-cronograma" style="min-height:80px;" placeholder="Principais etapas e prazos..."></textarea></div>
+          <div class="form-field"><label>Orçamento resumido</label><textarea id="ep-orcamento" style="min-height:80px;" placeholder="Principais itens de custo e valor total solicitado..."></textarea></div>
+          <button class="btn-gold" onclick="exportarProjetoPrivadoPDF()">Exportar projeto em PDF</button>
         </div>
 
       </div>
@@ -986,7 +1330,7 @@
 
         <!-- ===== OSC: Instituto MF ===== -->
         <div id="fin-osc" style="display:none;">
-          <div class="panel-head"><h2 style="font-family:'IBM Plex Serif', serif; font-size:19px;">Instituto MF — Educação</h2><span class="note">Munifortelândia — PA · atuação em educação básica</span></div>
+          <div class="panel-head"><h2 id="fin-osc-titulo" style="font-family:'IBM Plex Serif', serif; font-size:19px;">Instituto MF — Educação</h2><span class="note">Munifortelândia — PA · atuação em educação básica</span></div>
 
           <div class="status-banner ok">
             <div class="icon-badge">✓</div>
@@ -998,13 +1342,35 @@
             <div><h3 style="color:var(--info);">Dados institucionais: parcialmente preenchidos</h3><p>Os indicadores de regularidade vêm de bases públicas. O valor de recursos privados captados foi informado pela própria OSC no formulário — sem esse preenchimento, o relatório mostraria apenas os dados públicos disponíveis.</p></div>
           </div>
 
-          <div class="panel">
+          <div class="panel" id="painel-osc-regularidade">
             <div class="panel-head"><h2>Verificação de regularidade</h2><span class="note">itens que impedem recebimento de recursos</span></div>
             <div class="checklist-row"><div class="check-icon ok">✓</div><div class="t"><strong>CNPJ ativo e CNEAS (Cadastro Nacional de OSCs)</strong><span>Situação regular</span></div><div class="src">MROSC/MDS</div></div>
             <div class="checklist-row"><div class="check-icon ok">✓</div><div class="t"><strong>Certidão negativa de débitos federais</strong><span>Válida</span></div><div class="src">Receita Federal</div></div>
             <div class="checklist-row"><div class="check-icon ok">✓</div><div class="t"><strong>Regularidade com FGTS e trabalhista</strong><span>Sem pendências</span></div><div class="src">CNDT/FGTS</div></div>
             <div class="checklist-row"><div class="check-icon ok">✓</div><div class="t"><strong>Prestação de contas de parcerias anteriores</strong><span>2 parcerias concluídas sem ressalva</span></div><div class="src">Transferegov</div></div>
             <div class="checklist-row"><div class="check-icon ok">✓</div><div class="t"><strong>Utilidade Pública Federal</strong><span>Não possui — não é exigência para a maioria dos editais consultados</span></div><div class="src">Ministério da Justiça</div></div>
+          </div>
+
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="panel-head"><h2>Importar extrato do CAUC (entidade privada)</h2><span class="note">PDF gerado em sisweb.tesouro.gov.br, opção "Entidades Privadas sem Fins Lucrativos"</span></div>
+            <div class="field-row" style="margin-bottom:10px;">
+              <div class="form-field"><label>Extrato CAUC (PDF)</label><input type="file" id="upload-cauc-osc" accept=".pdf"></div>
+            </div>
+            <button class="btn-primary" onclick="processarExtratoCauc('osc')">Processar extrato</button>
+            <span id="cauc-osc-upload-status" class="mini-count" style="margin-left:12px;"></span>
+          </div>
+
+          <div class="panel" id="painel-cauc-osc">
+            <div class="panel-head"><h2>Verificação de regularidade — CAUC</h2><span class="note" id="cauc-osc-panel-note">Grupos I e II — os únicos aplicáveis a entidades privadas sem fins lucrativos</span></div>
+            <div id="cauc-osc-status-badge" style="margin:6px 0 4px; font-size:11.5px; font-weight:600;"></div>
+
+            <table style="width:100%; border-collapse:collapse; font-size:12.5px; margin-top:8px;">
+              <thead><tr style="text-align:left; border-bottom:1px solid var(--border);">
+                <th style="padding:8px 10px; font-size:11px; color:var(--ink-soft); text-transform:uppercase; width:36px;"></th>
+                <th style="padding:8px 10px; font-size:11px; color:var(--ink-soft); text-transform:uppercase;">Requisito</th>
+              </tr></thead>
+              <tbody id="cauc-osc-tbody"></tbody>
+            </table>
           </div>
 
           <div class="panel">
@@ -1135,6 +1501,19 @@
             <button class="row-link" onclick="setView('admin-elaboracao')">Abrir →</button>
           </div>
         </div>
+      </div>
+    </section>
+
+    <section id="admin-notificacoes" class="view">
+      <div class="topbar">
+        <div><h1>Notificações de interesse</h1><div class="sub">Prefeitos e diretores de OSC que sinalizaram interesse em uma ideia de projeto</div></div>
+        <div class="topbar-actions"><button class="btn-ghost" onclick="renderNotificacoes()">↻ Atualizar</button><button class="btn-logout" onclick="logout()">⏻ Sair</button></div>
+      </div>
+      <div class="content">
+        <div id="notif-vazio" class="panel" style="text-align:center; padding:40px 20px; display:none;">
+          <p style="color:var(--ink-soft); font-size:13.5px;">Nenhuma sinalização de interesse até o momento. Assim que um prefeito ou diretor de OSC clicar em "Sinalizar interesse" numa ideia de projeto, ela aparece aqui automaticamente.</p>
+        </div>
+        <div id="notif-lista"></div>
       </div>
     </section>
 
@@ -1368,6 +1747,73 @@
     item.addEventListener('click', () => setView(item.dataset.view));
   });
 
+  // ===== Notificações de interesse (sinalizadas pelo painel do usuário) =====
+  function lerNotificacoesAdmin(){
+    try { return JSON.parse(localStorage.getItem('muniforte_notificacoes_interesse') || '[]'); }
+    catch(e){ return []; }
+  }
+  function salvarNotificacoesAdmin(lista){
+    try { localStorage.setItem('muniforte_notificacoes_interesse', JSON.stringify(lista)); } catch(e){}
+  }
+  function renderNotificacoes(){
+    const lista = lerNotificacoesAdmin();
+    const pendentes = lista.filter(n => !n.atendido);
+    const container = document.getElementById('notif-lista');
+    const vazio = document.getElementById('notif-vazio');
+    const dot = document.getElementById('notif-dot');
+    if (!container) return;
+    if (dot) dot.style.display = pendentes.length ? 'inline-block' : 'none';
+    if (!lista.length){
+      if (vazio) vazio.style.display = 'block';
+      container.innerHTML = '';
+      return;
+    }
+    if (vazio) vazio.style.display = 'none';
+    const ordenada = lista.map((n, i) => ({ n, i })).sort((a, b) => new Date(b.n.data) - new Date(a.n.data));
+    container.innerHTML = ordenada.map(({ n, i }) => {
+      const dataFmt = new Date(n.data).toLocaleString('pt-BR');
+      const tipoLabel = n.tipoProjeto === 'privado' ? 'Captação privada' : 'Captação pública federal';
+      const tipoCor = n.tipoProjeto === 'privado' ? '#6A4C93' : '#16424A';
+      return '<div class="panel" style="margin-bottom:14px; opacity:' + (n.atendido ? '0.55' : '1') + ';">' +
+        '<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;">' +
+          '<div>' +
+            '<span style="display:inline-block; font-size:10px; font-weight:700; text-transform:uppercase; padding:3px 9px; border-radius:20px; background:' + tipoCor + '1A; color:' + tipoCor + '; margin-bottom:8px;">' + tipoLabel + (n.atendido ? ' · atendido' : '') + '</span>' +
+            '<h3 style="margin:0 0 4px; font-size:15px;">' + n.titulo + '</h3>' +
+            '<div style="font-size:12.5px; color:var(--ink-soft);">' + n.nome + ' — ' + n.papelEntidade + '</div>' +
+            '<div class="mini-count" style="margin-top:4px;">sinalizado em ' + dataFmt + '</div>' +
+          '</div>' +
+          '<div style="display:flex; gap:8px; flex-wrap:wrap;">' +
+            (n.atendido ? '' : '<button class="btn-gold" onclick="elaborarProjetoDaNotificacao(' + i + ')">Elaborar projeto</button>') +
+            '<button class="btn-ghost" onclick="marcarNotificacaoAtendida(' + i + ')">' + (n.atendido ? 'Reabrir' : 'Marcar como atendido') + '</button>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
+    }).join('');
+  }
+  function marcarNotificacaoAtendida(i){
+    const lista = lerNotificacoesAdmin();
+    if (!lista[i]) return;
+    lista[i].atendido = !lista[i].atendido;
+    salvarNotificacoesAdmin(lista);
+    renderNotificacoes();
+  }
+  function elaborarProjetoDaNotificacao(i){
+    const lista = lerNotificacoesAdmin();
+    const n = lista[i];
+    if (!n) return;
+    if (n.tipoProjeto === 'privado'){
+      setView('admin-busca-privada');
+      setTimeout(() => {
+        document.getElementById('painel-estrutura-projeto')?.scrollIntoView({ behavior: 'smooth' });
+        const tituloEl = document.getElementById('ep-titulo');
+        if (tituloEl && !tituloEl.value) tituloEl.value = 'Projeto para: ' + n.titulo;
+      }, 200);
+    } else {
+      setView('admin-elaboracao');
+    }
+  }
+  renderNotificacoes();
+
   function exportPrazosList(){
     const rows = document.querySelectorAll('#admin-prazos .deadline-row');
     if (!rows.length){ alert('Não há prazos para exportar.'); return; }
@@ -1401,8 +1847,55 @@
     }
   }
 
-  function openMunicipio(name){
+  function toggleAcc(headEl){
+    headEl.parentElement.classList.toggle('open');
+  }
+
+  // ===== Editais privados: publicar para as OSCs verem no painel delas =====
+  function lerEditaisPublicados(){
+    try { return JSON.parse(localStorage.getItem('muniforte_editais_privados_publicados') || '[]'); }
+    catch(e){ return []; }
+  }
+  function salvarEditaisPublicados(lista){
+    try { localStorage.setItem('muniforte_editais_privados_publicados', JSON.stringify(lista)); } catch(e){}
+  }
+  function descartarEdital(btn){
+    const card = btn.closest('.edital-card');
+    if (card) card.remove();
+  }
+  function adicionarEditalPlataforma(btn){
+    const card = btn.closest('.edital-card');
+    if (!card) return;
+    const fonte = card.querySelector('.source-badge')?.textContent.trim() || '';
+    const area = card.querySelector('.area-badge')?.textContent.trim() || '';
+    const titulo = card.querySelector('h3')?.textContent.trim() || '';
+    const desc = card.querySelector('p')?.textContent.trim() || '';
+    const meta = Array.from(card.querySelectorAll('.edital-meta .item')).map(it => ({
+      k: it.querySelector('.k')?.textContent.trim() || '',
+      v: it.querySelector('.v')?.textContent.trim() || '',
+    }));
+    const link = card.querySelector('.source-link')?.getAttribute('href') || '#';
+
+    let editais = lerEditaisPublicados();
+    editais = editais.filter(e => e.titulo !== titulo);
+    editais.push({ fonte, area, titulo, desc, meta, link, dataPublicacao: new Date().toISOString() });
+    salvarEditaisPublicados(editais);
+
+    btn.textContent = '✓ Adicionado';
+    btn.disabled = true;
+    btn.style.opacity = '0.7';
+    card.style.opacity = '0.7';
+  }
+
+  function openMunicipio(name, tipo){
+    tipo = tipo || 'municipio';
     document.getElementById('municipio-detail-title').textContent = name;
+    const viewMun = document.getElementById('admin-diag-municipio-view');
+    const viewOsc = document.getElementById('admin-diag-osc-view');
+    const nota = document.getElementById('admin-diag-note');
+    if (viewMun) viewMun.style.display = tipo === 'osc' ? 'none' : 'block';
+    if (viewOsc) viewOsc.style.display = tipo === 'osc' ? 'block' : 'none';
+    if (nota) nota.textContent = tipo === 'osc' ? 'o que a OSC já preencheu (somente leitura)' : 'o que o prefeito já preencheu (somente leitura)';
     setView('admin-municipio-detail');
   }
 
@@ -1772,12 +2265,15 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
   function parseCaucPDF(textoOriginal){
     const texto = limparTextoParaXML(textoOriginal).replace(/\s+/g, ' ');
 
-    const entMatch = texto.match(/Ente Federativo:\s*([\d.\/-]+)\s*-\s*MUNICIPIO DE ([^\/]+)\/([A-Z]{2})/i);
+    const entMunicipio = texto.match(/Ente Federativo:\s*([\d.\/-]+)\s*-\s*MUNICIPIO DE ([^\/]+)\/([A-Z]{2})/i);
+    const entOsc = texto.match(/CNPJ da Entidade Privada sem Fins Lucrativos:\s*([\d.\/-]+)\s*-\s*(.+?)\s*Data da Pesquisa/i);
     const dataMatch = texto.match(/Data da Pesquisa:\s*(\d{2}\/\d{2}\/\d{4})/);
-    if (!entMatch) return null;
+    if (!entMunicipio && !entOsc) return null;
 
-    const municipioNome = entMatch[2].trim();
-    const uf = entMatch[3].trim();
+    const tipo = entMunicipio ? 'municipio' : 'osc';
+    const cnpj = tipo === 'municipio' ? entMunicipio[1].trim() : entOsc[1].trim();
+    const municipioNome = tipo === 'municipio' ? entMunicipio[2].trim() : entOsc[2].trim();
+    const uf = tipo === 'municipio' ? entMunicipio[3].trim() : '';
     const dataPesquisa = dataMatch ? dataMatch[1] : '';
 
     const pattern = /(\d)\.(\d)(?:\.(\d))?\s*-\s*(.+?)\s+(Comprovado|A Comprovar|Desativado)\s+(\(\*\)|\[Desativado\]|\d{2}\/\d{2}\/\d{4})/g;
@@ -1804,16 +2300,131 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
     const totalItens = Object.values(itensPorGrupo).reduce((s, arr) => s + arr.length, 0);
     if (totalItens === 0) return null;
 
-    return { municipio: municipioNome, uf, dataPesquisa, itensPorGrupo, totalItens };
+    return { tipo, cnpj, municipio: municipioNome, uf, dataPesquisa, itensPorGrupo, totalItens };
   }
 
   function tituloCaso(str){
     return str.replace(/\w\S*/g, t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase());
   }
 
-  async function processarExtratoCauc(){
-    const statusEl = document.getElementById('cauc-upload-status');
-    const file = document.getElementById('upload-cauc')?.files[0];
+  // ===== Elaboração de projeto a partir de edital privado específico =====
+  let EDITAL_PRIVADO_NOME = '';
+
+  async function processarEditalPrivado(){
+    const statusEl = document.getElementById('edital-privado-status');
+    const fEdital = document.getElementById('upload-edital-privado')?.files[0];
+    const fModelo = document.getElementById('upload-modelo-privado')?.files[0];
+    if (!fEdital){
+      alert('Selecione o PDF do edital ou documento de referência antes de analisar.');
+      return;
+    }
+    if (statusEl) statusEl.textContent = 'Lendo documentos...';
+    try {
+      const textoEdital = limparTextoParaXML(await extrairTextoPDF(fEdital));
+      EDITAL_PRIVADO_NOME = fEdital.name.replace(/\.pdf$/i, '');
+
+      const painelEdital = document.getElementById('painel-edital-lido');
+      const areaEdital = document.getElementById('edital-texto-extraido');
+      const notaEdital = document.getElementById('edital-lido-nota');
+      if (painelEdital) painelEdital.style.display = 'block';
+      if (areaEdital) areaEdital.value = textoEdital;
+      if (notaEdital) notaEdital.textContent = fEdital.name + ' · ' + Math.round(textoEdital.length/1000) + ' mil caracteres extraídos';
+
+      if (fModelo){
+        const textoModelo = limparTextoParaXML(await extrairTextoPDF(fModelo));
+        const painelModelo = document.getElementById('painel-modelo-lido');
+        const areaModelo = document.getElementById('modelo-texto-extraido');
+        if (painelModelo) painelModelo.style.display = 'block';
+        if (areaModelo) areaModelo.value = textoModelo;
+      } else {
+        const painelModelo = document.getElementById('painel-modelo-lido');
+        if (painelModelo) painelModelo.style.display = 'none';
+      }
+
+      const painelEstrutura = document.getElementById('painel-estrutura-projeto');
+      if (painelEstrutura) painelEstrutura.style.display = 'block';
+      const tituloEl = document.getElementById('ep-titulo');
+      if (tituloEl && !tituloEl.value) tituloEl.value = 'Projeto para: ' + EDITAL_PRIVADO_NOME;
+
+      if (statusEl) statusEl.textContent = 'Edital lido com sucesso' + (fModelo ? ' (com projeto modelo de referência)' : '') + '. Preencha a estrutura do projeto abaixo.';
+    } catch(e){
+      console.error(e);
+      if (statusEl) statusEl.textContent = 'Erro ao ler o PDF — confira se o arquivo não está corrompido, protegido por senha, ou escaneado como imagem.';
+    }
+  }
+
+  async function exportarProjetoPrivadoPDF(){
+    if (typeof window.jspdf === 'undefined'){
+      alert('A biblioteca de exportação ainda está carregando — aguarde um instante e tente novamente.');
+      return;
+    }
+    const campo = id => document.getElementById(id)?.value.trim() || '';
+    const titulo = campo('ep-titulo') || 'Projeto para captação de recursos privados';
+    const secoes = [
+      ['Identificação da entidade proponente', campo('ep-identificacao')],
+      ['Justificativa', campo('ep-justificativa')],
+      ['Objetivos e metas', campo('ep-objetivos')],
+      ['Cronograma resumido', campo('ep-cronograma')],
+      ['Orçamento resumido', campo('ep-orcamento')],
+    ];
+    if (secoes.every(s => !s[1])){
+      alert('Preencha ao menos uma seção do projeto antes de exportar.');
+      return;
+    }
+
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ unit: 'pt', format: 'a4' });
+    const marginX = 50;
+    const pageW = doc.internal.pageSize.getWidth();
+    const pageH = doc.internal.pageSize.getHeight();
+    const maxW = pageW - marginX * 2;
+    let y = 60;
+
+    doc.setFillColor('#16424A'); doc.rect(0, 0, pageW, 90, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor('#9DBAB8');
+    doc.text('MUNIFORTE · CONSULTORIA EM GESTÃO PÚBLICA', marginX, 32);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor('#FFFFFF');
+    const tituloLines = doc.splitTextToSize(pdfSafe(titulo), maxW);
+    doc.text(tituloLines, marginX, 55);
+    if (EDITAL_PRIVADO_NOME){
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor('#DCEAE9');
+      doc.text('Elaborado com base no edital: ' + pdfSafe(EDITAL_PRIVADO_NOME), marginX, 55 + tituloLines.length * 16);
+    }
+    y = 90 + 30;
+
+    secoes.forEach(([label, texto]) => {
+      if (!texto) return;
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor('#16424A');
+      if (y > pageH - 80){ doc.addPage(); y = 60; }
+      doc.text(label, marginX, y); y += 16;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor('#1C2B2E');
+      const lines = doc.splitTextToSize(pdfSafe(texto), maxW);
+      lines.forEach(line => {
+        if (y > pageH - 60){ doc.addPage(); y = 60; }
+        doc.text(line, marginX, y, { align: 'justify', maxWidth: maxW });
+        y += 14;
+      });
+      y += 14;
+    });
+
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++){
+      doc.setPage(i);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor('#8A8577');
+      doc.text('MuniForte · Consultoria em Gestão Pública — projeto para captação privada', marginX, pageH - 24);
+      doc.text('Página ' + i + ' de ' + pageCount, pageW - marginX, pageH - 24, { align: 'right' });
+    }
+
+    const blob = doc.output('blob');
+    baixarArquivoBlob(blob, 'muniforte-projeto-privado-' + new Date().toISOString().slice(0,10) + '.pdf');
+  }
+
+  let CAUC_DATA_OSC = null; // extrato CAUC real da OSC (slot único, enquanto não há seletor multi-OSC)
+
+  async function processarExtratoCauc(contexto){
+    contexto = contexto || 'municipio';
+    const statusEl = document.getElementById(contexto === 'osc' ? 'cauc-osc-upload-status' : 'cauc-upload-status');
+    const file = document.getElementById(contexto === 'osc' ? 'upload-cauc-osc' : 'upload-cauc')?.files[0];
     if (!file){
       alert('Selecione o arquivo PDF do extrato CAUC antes de processar.');
       return;
@@ -1826,17 +2437,32 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
         if (statusEl) statusEl.textContent = 'Não foi possível reconhecer o extrato — confira se é um PDF do CAUC (sisweb.tesouro.gov.br), sem estar escaneado como imagem.';
         return;
       }
-      const nomeFormatado = tituloCaso(resultado.municipio);
-      const chave = nomeFormatado + '|' + resultado.uf;
-      CAUC_DATA[chave] = resultado;
 
-      if (statusEl) statusEl.textContent = resultado.totalItens + ' itens do CAUC de ' + nomeFormatado + ' — ' + resultado.uf + ' importados (pesquisa em ' + resultado.dataPesquisa + ').';
+      if (resultado.tipo === 'osc'){
+        if (contexto !== 'osc'){
+          if (statusEl) statusEl.textContent = 'Este é um extrato de entidade privada (OSC) — use o campo de importação na aba de OSC, não na de município.';
+          return;
+        }
+        CAUC_DATA_OSC = resultado;
+        if (statusEl) statusEl.textContent = resultado.totalItens + ' itens do CAUC de ' + resultado.municipio + ' importados (pesquisa em ' + resultado.dataPesquisa + ').';
+        renderCaucTableOsc();
+      } else {
+        if (contexto !== 'municipio'){
+          if (statusEl) statusEl.textContent = 'Este é um extrato de município — use o campo de importação na aba de Análise financeira do município, não na de OSC.';
+          return;
+        }
+        const nomeFormatado = tituloCaso(resultado.municipio);
+        const chave = nomeFormatado + '|' + resultado.uf;
+        CAUC_DATA[chave] = resultado;
 
-      // se o município do extrato já é o selecionado, atualizar a tela na hora
-      const selAtual = document.getElementById('municipio-select')?.value;
-      const ufAtual = document.getElementById('uf-select')?.value;
-      if (selAtual === nomeFormatado && ufAtual === resultado.uf){
-        renderCaucTable(nomeFormatado, resultado.uf);
+        if (statusEl) statusEl.textContent = resultado.totalItens + ' itens do CAUC de ' + nomeFormatado + ' — ' + resultado.uf + ' importados (pesquisa em ' + resultado.dataPesquisa + ').';
+
+        // se o município do extrato já é o selecionado, atualizar a tela na hora
+        const selAtual = document.getElementById('municipio-select')?.value;
+        const ufAtual = document.getElementById('uf-select')?.value;
+        if (selAtual === nomeFormatado && ufAtual === resultado.uf){
+          renderCaucTable(nomeFormatado, resultado.uf);
+        }
       }
     } catch(e){
       console.error(e);
@@ -1867,6 +2493,23 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
     }
   };
 
+  function montarLinhasCauc(itensPorGrupo){
+    let html = '';
+    ['1','2','3','4','5'].forEach(g => {
+      const itens = itensPorGrupo[g];
+      if (!itens || !itens.length) return;
+      html += '<tr><td colspan="2" style="padding:10px 10px 4px; font-weight:700; color:var(--primary); font-size:12px;">' + CAUC_GRUPOS_NOMES[g] + '</td></tr>';
+      itens.forEach(it => {
+        const ok = it.situacao === 'Comprovado';
+        const icone = ok ? 'ok' : (it.situacao === 'Desativado' ? 'ok' : 'bad');
+        const simbolo = ok ? '✓' : (it.situacao === 'Desativado' ? '—' : '!');
+        const detalhe = [it.fonte, it.situacao, it.validade && it.validade !== '(*)' ? ('validade: ' + it.validade) : ''].filter(Boolean).join(' — ');
+        html += '<tr class="checklist-row"><td class="check-icon ' + icone + '" style="text-align:center; padding:6px 10px;">' + simbolo + '</td><td class="t" style="padding:6px 10px;"><strong>' + it.codigo + ' — ' + it.label + '</strong><span style="display:block; color:var(--ink-soft);">' + detalhe + '</span></td></tr>';
+      });
+    });
+    return html;
+  }
+
   function renderCaucTable(municipio, uf){
     const tbody = document.getElementById('cauc-tbody');
     const badge = document.getElementById('cauc-status-badge');
@@ -1885,21 +2528,47 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
       if (nota) nota.textContent = '18 requisitos fiscais em 5 grupos + requisitos fora do CAUC (Portaria Conjunta MGI/MF/CGU nº 44/2023)';
     }
 
-    let html = '';
-    ['1','2','3','4','5'].forEach(g => {
-      const itens = dados.itensPorGrupo[g];
-      if (!itens || !itens.length) return;
-      html += '<tr><td colspan="2" style="padding:10px 10px 4px; font-weight:700; color:var(--primary); font-size:12px;">' + CAUC_GRUPOS_NOMES[g] + '</td></tr>';
-      itens.forEach(it => {
-        const ok = it.situacao === 'Comprovado';
-        const icone = ok ? 'ok' : (it.situacao === 'Desativado' ? 'ok' : 'bad');
-        const simbolo = ok ? '✓' : (it.situacao === 'Desativado' ? '—' : '!');
-        const detalhe = [it.fonte, it.situacao, it.validade && it.validade !== '(*)' ? ('validade: ' + it.validade) : ''].filter(Boolean).join(' — ');
-        html += '<tr class="checklist-row"><td class="check-icon ' + icone + '" style="text-align:center; padding:6px 10px;">' + simbolo + '</td><td class="t" style="padding:6px 10px;"><strong>' + it.codigo + ' — ' + it.label + '</strong><span style="display:block; color:var(--ink-soft);">' + detalhe + '</span></td></tr>';
-      });
-    });
-    tbody.innerHTML = html;
+    tbody.innerHTML = montarLinhasCauc(dados.itensPorGrupo);
   }
+
+  const CAUC_EXEMPLO_OSC = {
+    itensPorGrupo: {
+      '1': [
+        { codigo: '1.1', label: 'Regularidade quanto a Tributos, a Contribuições Previdenciárias Federais e à Dívida Ativa da União', fonte: 'PGFN/RFB', situacao: 'Comprovado', validade: '' },
+        { codigo: '1.3', label: 'Regularidade quanto a Contribuições para o FGTS', fonte: 'CAIXA', situacao: 'Comprovado', validade: '' },
+        { codigo: '1.5', label: 'Regularidade perante o Poder Público Federal', fonte: 'CADIN', situacao: 'Comprovado', validade: '' },
+      ],
+      '2': [
+        { codigo: '2.1.1', label: 'SIAFI/Subsistema Transferências', fonte: '', situacao: 'Comprovado', validade: '' },
+        { codigo: '2.1.2', label: 'Transferegov.br', fonte: '', situacao: 'Comprovado', validade: '' },
+      ],
+      '3': [], '4': [], '5': [],
+    }
+  };
+
+  function renderCaucTableOsc(){
+    const tbody = document.getElementById('cauc-osc-tbody');
+    const badge = document.getElementById('cauc-osc-status-badge');
+    const nota = document.getElementById('cauc-osc-panel-note');
+    if (!tbody) return;
+
+    const real = CAUC_DATA_OSC;
+    const dados = real || CAUC_EXEMPLO_OSC;
+    const nomeOsc = real ? real.municipio : (document.getElementById('fin-osc-titulo')?.textContent.trim() || 'esta OSC');
+
+    if (real){
+      if (badge){ badge.style.color = 'var(--ok, #3A7A5D)'; badge.textContent = '✓ Dados reais — extrato CAUC (CNPJ ' + real.cnpj + ') pesquisado em ' + real.dataPesquisa; }
+      if (nota) nota.textContent = 'Fonte: extrato CAUC oficial (sisweb.tesouro.gov.br), importado para ' + nomeOsc;
+      const tituloEl = document.getElementById('fin-osc-titulo');
+      if (tituloEl) tituloEl.textContent = tituloCaso(nomeOsc);
+    } else {
+      if (badge){ badge.style.color = 'var(--gold)'; badge.textContent = '⚠ Dados de exemplo — extrato CAUC ainda não importado para esta OSC. Use o campo acima para importar o PDF real.'; }
+      if (nota) nota.textContent = 'Grupos I e II — os únicos aplicáveis a entidades privadas sem fins lucrativos';
+    }
+
+    tbody.innerHTML = montarLinhasCauc(dados.itensPorGrupo);
+  }
+
 
   function findMunicipioPA(nome){
     return findMunicipioAtual(nome, document.getElementById('uf-select')?.value);
@@ -2026,32 +2695,34 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
     event.target.classList.add('active');
     document.getElementById('fin-municipio').style.display = kind === 'municipio' ? 'block' : 'none';
     document.getElementById('fin-osc').style.display = kind === 'osc' ? 'block' : 'none';
+    if (kind === 'osc' && typeof renderCaucTableOsc === 'function') renderCaucTableOsc();
   }
   function collectFinData(){
     const isMunicipio = document.getElementById('fin-municipio').style.display !== 'none';
     const container = isMunicipio ? document.getElementById('fin-municipio') : document.getElementById('fin-osc');
     const nomeEntidade = isMunicipio
       ? (document.getElementById('fin-mun-titulo')?.textContent.trim() || 'Município')
-      : (document.querySelector('#admin-financeiro .tenant-name')?.textContent.trim() || 'Instituto Semear');
+      : (document.getElementById('fin-osc-titulo')?.textContent.trim() || 'OSC');
     const titulo = container.querySelector('.panel-head h2')?.textContent.trim() || 'Análise financeira';
     const subtitulo = container.querySelector('.panel-head .note')?.textContent.trim() || '';
     const statusTitulo = container.querySelector('.status-banner h3')?.textContent.trim() || '';
     const statusTexto = container.querySelector('.status-banner p')?.textContent.trim() || '';
 
-    const diagnostico7 = document.getElementById('painel-diagnostico-7');
-    const painelCauc = document.getElementById('painel-cauc');
+    const diagnostico7 = isMunicipio ? document.getElementById('painel-diagnostico-7') : null;
+    const painelCauc = isMunicipio ? document.getElementById('painel-cauc') : document.getElementById('painel-cauc-osc');
+    const painelOscRegularidade = document.getElementById('painel-osc-regularidade');
     const checklist = diagnostico7 ? Array.from(diagnostico7.querySelectorAll('.checklist-row')).map((row, i) => {
       const label = row.querySelector('.t strong')?.textContent.trim() || '';
       const detalhe = row.querySelector('.t span')?.textContent.trim() || '';
       const ok = row.querySelector('.check-icon')?.classList.contains('bad') ? false : true;
       return { label: (i+1) + ') ' + label, detalhe, ok };
-    }) : Array.from(container.querySelectorAll('.checklist-row')).map(row => {
+    }) : Array.from((painelOscRegularidade || container).querySelectorAll('.checklist-row')).map(row => {
       const label = row.querySelector('.t strong')?.textContent.trim() || '';
       const detalhe = row.querySelector('.t span')?.textContent.trim() || '';
       const ok = row.querySelector('.check-icon')?.classList.contains('bad') ? false : true;
       return { label, detalhe, ok };
     });
-    const resumo8 = Array.from(document.getElementById('resumo-8-lista')?.querySelectorAll('li') || []).map(li => li.textContent.trim());
+    const resumo8 = isMunicipio ? Array.from(document.getElementById('resumo-8-lista')?.querySelectorAll('li') || []).map(li => li.textContent.trim()) : [];
     const caucChecklist = painelCauc ? Array.from(painelCauc.querySelectorAll('.checklist-row')).map(row => {
       const label = row.querySelector('.t strong')?.textContent.trim() || '';
       const detalhe = row.querySelector('.t span')?.textContent.trim() || '';
@@ -2141,7 +2812,10 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
       }
     }
 
-    return { nomeEntidade, titulo, subtitulo, statusTitulo, statusTexto, checklist, resumo8, caucChecklist, indicadores, leitura, isMunicipio, contextoNacional, fragilidadesBeneficios, rankingReal, rankingRealFonte, convenioChartData };
+    const checklistTitulo = isMunicipio ? 'Diagnóstico financeiro e de captação (tópicos 1 a 7)' : 'Verificação de regularidade';
+    const indicadoresTitulo = isMunicipio ? 'Indicadores e limites legais' : 'Capacidade de execução';
+
+    return { nomeEntidade, titulo, subtitulo, statusTitulo, statusTexto, checklist, checklistTitulo, resumo8, caucChecklist, indicadores, indicadoresTitulo, leitura, isMunicipio, contextoNacional, fragilidadesBeneficios, rankingReal, rankingRealFonte, convenioChartData };
   }
 
   function baixarArquivoBlob(blob, nomeArquivo){
@@ -2339,6 +3013,8 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
     return {
       ...data,
       titulo: c(data.titulo), subtitulo: c(data.subtitulo),
+      checklistTitulo: c(data.checklistTitulo),
+      indicadoresTitulo: c(data.indicadoresTitulo),
       statusTitulo: c(data.statusTitulo), statusTexto: c(data.statusTexto),
       checklist: data.checklist.map(x => ({ ...x, label: c(x.label), detalhe: c(x.detalhe) })),
       resumo8: (data.resumo8 || []).map(c),
@@ -2527,7 +3203,7 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
     if (data.checklist.length){
       ensureSpace(24);
       doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor('#16424A');
-      doc.text('Diagnóstico financeiro e de captação (tópicos 1 a 7)', marginX, y); y += 12;
+      doc.text(data.checklistTitulo, marginX, y); y += 12;
       doc.autoTable({
         startY: y,
         margin: { left: marginX, right: marginX },
@@ -2617,7 +3293,7 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
     if (data.indicadores.length){
       ensureSpace(24);
       doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor('#16424A');
-      doc.text('Indicadores e limites legais', marginX, y); y += 10;
+      doc.text(data.indicadoresTitulo, marginX, y); y += 10;
       doc.autoTable({
         startY: y,
         margin: { left: marginX, right: marginX },
@@ -2635,7 +3311,7 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
         }
       });
       y = doc.lastAutoTable.finalY + 20;
-      y = renderIndicatorChartPDF(doc, marginX, maxW, y, ensureSpace, data.indicadores);
+      if (data.isMunicipio) y = renderIndicatorChartPDF(doc, marginX, maxW, y, ensureSpace, data.indicadores);
     }
 
     if (data.rankingReal && data.rankingReal.length){
@@ -2779,7 +3455,7 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
     // ===== SLIDE 5 — DIAGNÓSTICO FINANCEIRO E DE CAPTAÇÃO (1 a 7) =====
     if (data.checklist.length){
       const s5 = pptx.addSlide();
-      pageFrame(s5, 'Diagnóstico financeiro e de captação (tópicos 1 a 7)');
+      pageFrame(s5, data.checklistTitulo);
       const rows = [[
         { text: '', options: { bold: true, color: 'FFFFFF', fill: '16424A' } },
         { text: 'Tópico', options: { bold: true, color: 'FFFFFF', fill: '16424A' } },
@@ -2852,7 +3528,7 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
     // ===== SLIDE 6 — INDICADORES =====
     if (data.indicadores.length){
       const s6 = pptx.addSlide();
-      pageFrame(s6, 'Indicadores e limites legais');
+      pageFrame(s6, data.indicadoresTitulo);
       const rows6 = [[
         { text: 'Indicador', options: { bold: true, color: 'FFFFFF', fill: '16424A' } },
         { text: 'Valor', options: { bold: true, color: 'FFFFFF', fill: '16424A' } },
@@ -2865,8 +3541,8 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
       s6.addTable(rows6, { x: 0.4, y: 0.85, w: W - 0.8, colW: [3.5, 1.7, 4], fontSize: 10.5, border: { type: 'solid', color: 'E0DCCF', pt: 0.5 } });
     }
 
-    // ===== SLIDE 6B — GRÁFICO: INDICADORES VS. LIMITES =====
-    const indicatorRows = computeIndicatorRows(data.indicadores);
+    // ===== SLIDE 6B — GRÁFICO: INDICADORES VS. LIMITES (só município) =====
+    const indicatorRows = data.isMunicipio ? computeIndicatorRows(data.indicadores) : [];
     if (indicatorRows.length){
       try {
         const s6b = pptx.addSlide();
@@ -3002,6 +3678,7 @@ const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
   function closeSourcesModal(){ document.getElementById('sources-modal-overlay').classList.remove('open'); }
 
   populateMunicipioSelect();
+  if (typeof renderCaucTableOsc === 'function') renderCaucTableOsc();
 </script>
 
 <!-- ===== MODAL: FONTES DE DADOS OFICIAIS ===== -->

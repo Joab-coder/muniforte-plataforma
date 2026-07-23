@@ -62,6 +62,11 @@
   .btn-gold{ background:var(--gold); color:#fff; border:none; border-radius:7px; padding:10px 18px; font-size:13px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:7px; }
   .btn-gold:hover{ background:#A2751F; }
   .btn-ghost{ background:none; border:1px solid var(--border); border-radius:7px; padding:9px 14px; font-size:12.5px; color:var(--ink); font-weight:600; }
+  .btn-justificativa{ background:var(--primary-wash); border-color:transparent; color:var(--primary); }
+  .btn-justificativa:hover{ background:var(--primary); color:#fff; }
+  .btn-sinalizar{ background:none; border:1.5px solid var(--gold, #B8842C); color:var(--gold, #B8842C); }
+  .btn-sinalizar:hover{ background:var(--gold-soft, #F3E8D2); }
+  .btn-sinalizar.ativo{ background:var(--gold, #B8842C); border-color:var(--gold, #B8842C); color:#fff; }
   .btn-ghost:hover{ border-color:var(--primary); }
   .btn-wa{ background:#25D366; color:#fff; border:none; border-radius:7px; padding:10px 18px; font-size:13px; font-weight:700; text-decoration:none; display:inline-flex; align-items:center; gap:7px; }
   .btn-wa:hover{ background:#1EBE5A; }
@@ -184,6 +189,7 @@
   .audience-tag.municipio{ background:var(--primary-wash); color:var(--primary); }
   .audience-tag.osc{ background:var(--gold-soft); color:var(--gold); }
   .audience-tag.ambos{ background:var(--success-soft); color:var(--success); }
+  .audience-tag.privado{ background:#EDE7F6; color:#6A4C93; }
   .prog-card .desc{ font-size:12.5px; color:var(--ink-soft); max-width:520px; margin:6px 0 10px; line-height:1.5; }
   .prog-card .side{ display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
   .deadline-chip{ font-size:11px; font-weight:600; padding:4px 10px; border-radius:20px; }
@@ -251,7 +257,8 @@
     </div>
     <div class="nav-group">
       <div class="nav-label">Oportunidades</div>
-      <button class="nav-item" data-view="usr-buscar"><span class="ic">🔎</span> Buscar programas</button>
+      <button class="nav-item" data-view="usr-buscar"><span class="ic">🔎</span> <span id="nav-buscar-label">Buscar programas</span></button>
+      <button class="nav-item" data-view="usr-editais-privados" id="nav-editais-privados" style="display:none;"><span class="ic">🤝</span> Editais privados</button>
       <button class="nav-item" data-view="usr-ideias"><span class="ic">💡</span> Ideias de projeto</button>
     </div>
     <div class="nav-group">
@@ -320,7 +327,7 @@
         <div class="panel">
           <div class="panel-head"><h2>Atalhos</h2></div>
           <div style="display:flex; gap:12px; flex-wrap:wrap;">
-            <button class="btn-ghost" onclick="setView('usr-buscar')">🔎 Buscar programas</button>
+            <button class="btn-ghost" onclick="setView('usr-buscar')">🔎 <span id="dash-buscar-label">Buscar programas</span></button>
             <button class="btn-ghost" onclick="setView('usr-ideias')">💡 Ver ideias de projeto</button>
             <button class="btn-ghost" onclick="setView('usr-status')">📈 Acompanhar meus projetos</button>
             <a class="btn-wa" href="https://wa.me/5593991154436?text=Ol%C3%A1%2C%20quero%20agendar%20uma%20conversa%20com%20a%20MuniForte." target="_blank" rel="noopener"><svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.48 1.32 4.99L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.005c5.46 0 9.91-4.45 9.91-9.91C21.93 6.45 17.5 2 12.04 2zm5.78 14.15c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.13.11-1.82-.11-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36.2 0 .39 0 .56.01.18.01.42-.07.66.5.24.58.82 2 .89 2.15.07.15.12.32.02.51-.1.19-.15.31-.3.48-.15.17-.31.38-.44.51-.15.15-.31.31-.13.61.18.3.79 1.31 1.71 2.12 1.17 1.05 2.16 1.37 2.46 1.53.3.15.48.13.65-.08.18-.2.75-.87.95-1.17.2-.3.4-.25.66-.15.27.1 1.7.8 1.99.95.29.15.48.22.55.34.08.13.08.72-.16 1.4z"/></svg> Agendar conversa</a>
@@ -635,7 +642,7 @@
       <!-- ===================== BUSCAR PROGRAMAS ===================== -->
       <section id="usr-buscar" class="view">
         <div class="panel">
-          <div class="panel-head"><h2>Buscar programas de repasse federal</h2><span class="note">dados sincronizados diariamente com o Transferegov</span></div>
+          <div class="panel-head"><h2 id="buscar-panel-title">Buscar programas de repasse federal</h2><span class="note">dados sincronizados diariamente com o Transferegov</span></div>
           <div class="callout" id="buscar-osc-note" style="display:none; margin-bottom:16px;">Mostrando só programas abertos a Organizações da Sociedade Civil. Editais de obra pública (construção de escolas, UBS, pavimentação etc.) são exclusivos de prefeituras e não aparecem aqui.</div>
           <div style="display:flex; gap:10px; margin-bottom:16px;">
             <input type="text" placeholder="Descreva o que você precisa: ex. reforma de UBS, projeto cultural…" style="flex:1; border:1px solid var(--border); border-radius:7px; padding:10px 12px; font-size:13px;">
@@ -707,7 +714,40 @@
             </div>
             <div class="side"><button class="btn-primary" onclick="setView('usr-ideias')">Ver ideias de projeto</button></div>
           </div>
+          <div class="prog-card" data-area="assistencia" data-entity="osc">
+            <div>
+              <span class="deadline-chip ok">Encerra em 40 dias</span>
+              <h3>Edital de Investimento Social — Banco parceiro</h3>
+              <div class="org">Instituição financeira privada <span class="audience-tag privado">Oportunidade privada</span></div>
+              <p class="desc">Recursos a fundo perdido para OSCs com projetos de impacto social comprovado, sem exigência de contrapartida.</p>
+            </div>
+            <div class="side"><button class="btn-primary" onclick="setView('usr-ideias')">Ver ideias de projeto</button></div>
+          </div>
+          <div class="prog-card" data-area="educacao" data-entity="osc">
+            <div>
+              <span class="deadline-chip ok">Encerra em 58 dias</span>
+              <h3>Chamada de Responsabilidade Social Corporativa</h3>
+              <div class="org">Empresa parceira (setor privado) <span class="audience-tag privado">Oportunidade privada</span></div>
+              <p class="desc">Patrocínio para projetos educacionais executados por OSCs com atuação comprovada na comunidade local.</p>
+            </div>
+            <div class="side"><button class="btn-primary" onclick="setView('usr-ideias')">Ver ideias de projeto</button></div>
+          </div>
         </div>
+      </section>
+
+      <!-- ===================== EDITAIS PRIVADOS (publicados pelo admin) ===================== -->
+      <section id="usr-editais-privados" class="view">
+        <div class="panel">
+          <div class="panel-head"><h2>Editais e oportunidades privadas</h2><span class="note">selecionados e revisados pela equipe MuniForte</span></div>
+          <div class="callout">
+            <strong>Como funciona</strong>
+            A equipe MuniForte pesquisa oportunidades de financiamento privado (institutos, fundações, empresas) e adiciona aqui as que fazem sentido para o seu perfil. Novos editais aparecem automaticamente.
+          </div>
+        </div>
+        <div id="editais-privados-vazio" class="panel" style="text-align:center; padding:40px 20px; display:none;">
+          <p style="color:var(--ink-soft); font-size:13.5px;">Nenhum edital privado disponível no momento. Assim que a equipe MuniForte adicionar um, ele aparece aqui automaticamente.</p>
+        </div>
+        <div id="editais-privados-lista" class="card-list"></div>
       </section>
 
       <!-- ===================== IDEIAS DE PROJETO ===================== -->
@@ -725,7 +765,8 @@
               <div class="item"><span class="k">Execução</span><span class="v">até 18 meses</span></div>
             </div>
             <div class="idea-footer">
-              <button class="btn-ghost">Ver justificativa</button>
+              <button class="btn-ghost btn-justificativa" onclick="verJustificativaIdeia(this)">◆ Ver justificativa</button>
+              <button class="btn-ghost btn-sinalizar" onclick="sinalizarInteresseIdeia(this)">☆ Sinalizar interesse</button>
               <a href="https://wa.me/5593991154436?text=Ol%C3%A1%2C%20vi%20uma%20ideia%20de%20projeto%20na%20plataforma%20e%20quero%20falar%20com%20um%20especialista." target="_blank" rel="noopener" class="btn-primary"><svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.48 1.32 4.99L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.005c5.46 0 9.91-4.45 9.91-9.91C21.93 6.45 17.5 2 12.04 2zm5.78 14.15c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.13.11-1.82-.11-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36.2 0 .39 0 .56.01.18.01.42-.07.66.5.24.58.82 2 .89 2.15.07.15.12.32.02.51-.1.19-.15.31-.3.48-.15.17-.31.38-.44.51-.15.15-.31.31-.13.61.18.3.79 1.31 1.71 2.12 1.17 1.05 2.16 1.37 2.46 1.53.3.15.48.13.65-.08.18-.2.75-.87.95-1.17.2-.3.4-.25.66-.15.27.1 1.7.8 1.99.95.29.15.48.22.55.34.08.13.08.72-.16 1.4z"/></svg> Falar com especialista sobre esta ideia</a>
             </div>
           </div>
@@ -740,7 +781,8 @@
               <div class="item"><span class="k">Execução</span><span class="v">até 10 meses</span></div>
             </div>
             <div class="idea-footer">
-              <button class="btn-ghost">Ver justificativa</button>
+              <button class="btn-ghost btn-justificativa" onclick="verJustificativaIdeia(this)">◆ Ver justificativa</button>
+              <button class="btn-ghost btn-sinalizar" onclick="sinalizarInteresseIdeia(this)">☆ Sinalizar interesse</button>
               <a href="https://wa.me/5593991154436?text=Ol%C3%A1%2C%20vi%20uma%20ideia%20de%20projeto%20na%20plataforma%20e%20quero%20falar%20com%20um%20especialista." target="_blank" rel="noopener" class="btn-primary"><svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.48 1.32 4.99L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.005c5.46 0 9.91-4.45 9.91-9.91C21.93 6.45 17.5 2 12.04 2zm5.78 14.15c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.13.11-1.82-.11-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36.2 0 .39 0 .56.01.18.01.42-.07.66.5.24.58.82 2 .89 2.15.07.15.12.32.02.51-.1.19-.15.31-.3.48-.15.17-.31.38-.44.51-.15.15-.31.31-.13.61.18.3.79 1.31 1.71 2.12 1.17 1.05 2.16 1.37 2.46 1.53.3.15.48.13.65-.08.18-.2.75-.87.95-1.17.2-.3.4-.25.66-.15.27.1 1.7.8 1.99.95.29.15.48.22.55.34.08.13.08.72-.16 1.4z"/></svg> Falar com especialista sobre esta ideia</a>
             </div>
           </div>
@@ -755,7 +797,8 @@
               <div class="item"><span class="k">Execução</span><span class="v">até 12 meses</span></div>
             </div>
             <div class="idea-footer">
-              <button class="btn-ghost">Ver justificativa</button>
+              <button class="btn-ghost btn-justificativa" onclick="verJustificativaIdeia(this)">◆ Ver justificativa</button>
+              <button class="btn-ghost btn-sinalizar" onclick="sinalizarInteresseIdeia(this)">☆ Sinalizar interesse</button>
               <a href="https://wa.me/5593991154436?text=Ol%C3%A1%2C%20vi%20uma%20ideia%20de%20projeto%20na%20plataforma%20e%20quero%20falar%20com%20um%20especialista." target="_blank" rel="noopener" class="btn-primary"><svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.48 1.32 4.99L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.005c5.46 0 9.91-4.45 9.91-9.91C21.93 6.45 17.5 2 12.04 2zm5.78 14.15c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.13.11-1.82-.11-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36.2 0 .39 0 .56.01.18.01.42-.07.66.5.24.58.82 2 .89 2.15.07.15.12.32.02.51-.1.19-.15.31-.3.48-.15.17-.31.38-.44.51-.15.15-.31.31-.13.61.18.3.79 1.31 1.71 2.12 1.17 1.05 2.16 1.37 2.46 1.53.3.15.48.13.65-.08.18-.2.75-.87.95-1.17.2-.3.4-.25.66-.15.27.1 1.7.8 1.99.95.29.15.48.22.55.34.08.13.08.72-.16 1.4z"/></svg> Falar com especialista sobre esta ideia</a>
             </div>
           </div>
@@ -770,7 +813,8 @@
               <div class="item"><span class="k">Execução</span><span class="v">até 8 meses</span></div>
             </div>
             <div class="idea-footer">
-              <button class="btn-ghost">Ver justificativa</button>
+              <button class="btn-ghost btn-justificativa" onclick="verJustificativaIdeia(this)">◆ Ver justificativa</button>
+              <button class="btn-ghost btn-sinalizar" onclick="sinalizarInteresseIdeia(this)">☆ Sinalizar interesse</button>
               <a href="https://wa.me/5593991154436?text=Ol%C3%A1%2C%20vi%20uma%20ideia%20de%20projeto%20na%20plataforma%20e%20quero%20falar%20com%20um%20especialista." target="_blank" rel="noopener" class="btn-primary"><svg viewBox="0 0 24 24" fill="currentColor" style="width:15px;height:15px;flex-shrink:0;" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.48 1.32 4.99L2.05 22l5.25-1.38a9.9 9.9 0 0 0 4.74 1.21h.005c5.46 0 9.91-4.45 9.91-9.91C21.93 6.45 17.5 2 12.04 2zm5.78 14.15c-.24.68-1.4 1.32-1.93 1.4-.5.08-1.13.11-1.82-.11-.42-.13-.96-.31-1.65-.6-2.9-1.25-4.8-4.17-4.94-4.36-.14-.19-1.18-1.57-1.18-3 0-1.42.75-2.12 1.02-2.41.27-.29.58-.36.78-.36.2 0 .39 0 .56.01.18.01.42-.07.66.5.24.58.82 2 .89 2.15.07.15.12.32.02.51-.1.19-.15.31-.3.48-.15.17-.31.38-.44.51-.15.15-.31.31-.13.61.18.3.79 1.31 1.71 2.12 1.17 1.05 2.16 1.37 2.46 1.53.3.15.48.13.65-.08.18-.2.75-.87.95-1.17.2-.3.4-.25.66-.15.27.1 1.7.8 1.99.95.29.15.48.22.55.34.08.13.08.72-.16 1.4z"/></svg> Falar com especialista sobre esta ideia</a>
             </div>
           </div>
@@ -858,6 +902,61 @@
 </div>
 
 <script>
+  function verJustificativaIdeia(btn){
+    const card = btn.closest('.idea-card');
+    if (!card) return;
+    const titulo = card.querySelector('h3')?.textContent.trim() || 'Ideia de projeto';
+    const desc = card.querySelector('.desc')?.textContent.trim() || '';
+    const meta = Array.from(card.querySelectorAll('.idea-meta .item')).map(function(it){
+      const k = it.querySelector('.k')?.textContent.trim();
+      const v = it.querySelector('.v')?.textContent.trim();
+      return k + ': ' + v;
+    }).join('\n');
+    alert('JUSTIFICATIVA DA IDEIA\n\n' + titulo + '\n\n' + desc + (meta ? '\n\n' + meta : ''));
+  }
+
+  function sinalizarInteresseIdeia(btn){
+    const card = btn.closest('.idea-card');
+    if (!card) return;
+    const titulo = card.querySelector('h3')?.textContent.trim() || 'Ideia de projeto';
+    const jaAtivo = btn.classList.contains('ativo');
+    if (jaAtivo){
+      btn.classList.remove('ativo');
+      btn.innerHTML = '☆ Sinalizar interesse';
+      removerNotificacaoInteresse(titulo);
+    } else {
+      btn.classList.add('ativo');
+      btn.innerHTML = '★ Interesse sinalizado';
+      registrarNotificacaoInteresse(titulo);
+      alert('Interesse sinalizado! A equipe MuniForte foi notificada e entrará em contato, mesmo que você não fale pelo WhatsApp.');
+    }
+  }
+
+  function lerNotificacoesInteresse(){
+    try { return JSON.parse(localStorage.getItem('muniforte_notificacoes_interesse') || '[]'); }
+    catch(e){ return []; }
+  }
+  function salvarNotificacoesInteresse(lista){
+    try { localStorage.setItem('muniforte_notificacoes_interesse', JSON.stringify(lista)); } catch(e){}
+  }
+  function registrarNotificacaoInteresse(tituloIdeia){
+    const quemEl = document.querySelector('.sidebar-foot .who');
+    const nome = quemEl?.querySelector('strong')?.textContent.trim() || 'Usuário';
+    const papelEntidade = quemEl?.querySelector('span')?.textContent.trim() || '';
+    const tipoProjeto = currentEntity === 'osc' ? 'privado' : 'publico';
+    let lista = lerNotificacoesInteresse();
+    lista = lista.filter(function(n){ return !(n.titulo === tituloIdeia && n.nome === nome); });
+    lista.push({ titulo: tituloIdeia, nome: nome, papelEntidade: papelEntidade, tipoProjeto: tipoProjeto, data: new Date().toISOString(), atendido: false });
+    salvarNotificacoesInteresse(lista);
+  }
+  function removerNotificacaoInteresse(tituloIdeia){
+    const quemEl = document.querySelector('.sidebar-foot .who');
+    const nome = quemEl?.querySelector('strong')?.textContent.trim() || 'Usuário';
+    let lista = lerNotificacoesInteresse();
+    lista = lista.filter(function(n){ return !(n.titulo === tituloIdeia && n.nome === nome); });
+    salvarNotificacoesInteresse(lista);
+  }
+
   function setView(id){
     document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
     document.getElementById(id).classList.add('active');
@@ -865,7 +964,10 @@
     const titles = {
       'usr-inicio':['Início','Bem-vindo(a) de volta — aqui está o resumo da sua captação de recursos.'],
       'usr-diagnostico':['Diagnóstico','Quanto mais completo, melhores as sugestões de projeto e os relatórios futuros.'],
-      'usr-buscar':['Buscar programas','Encontre programas de repasse federal compatíveis com seu perfil.'],
+      'usr-buscar': currentEntity === 'osc'
+        ? ['Buscar oportunidades','Encontre programas federais e oportunidades privadas compatíveis com seu perfil.']
+        : ['Buscar programas','Encontre programas de repasse federal compatíveis com seu perfil.'],
+      'usr-editais-privados':['Editais privados','Oportunidades de financiamento privado selecionadas pela equipe MuniForte.'],
       'usr-ideias':['Ideias de projeto','Sugestões geradas a partir do edital, do Transferegov e do seu diagnóstico.'],
       'usr-status':['Meus projetos','Acompanhe o status de cada projeto em andamento.'],
       'usr-prazos':['Prazos','Fique de olho nos prazos de cada programa e prestação de contas.'],
@@ -887,6 +989,37 @@
   let currentRefArea = 'todas';
   let currentBuscarArea = 'todas';
 
+  function renderEditaisPrivados(){
+    let editais = [];
+    try { editais = JSON.parse(localStorage.getItem('muniforte_editais_privados_publicados') || '[]'); }
+    catch(e){ editais = []; }
+    const container = document.getElementById('editais-privados-lista');
+    const vazio = document.getElementById('editais-privados-vazio');
+    if (!container) return;
+    if (!editais.length){
+      if (vazio) vazio.style.display = 'block';
+      container.innerHTML = '';
+      return;
+    }
+    if (vazio) vazio.style.display = 'none';
+    const ordenados = editais.slice().sort((a, b) => new Date(b.dataPublicacao) - new Date(a.dataPublicacao));
+    container.innerHTML = ordenados.map(function(e){
+      const metaHtml = (e.meta || []).map(function(m){
+        return '<div class="item"><span class="k">' + m.k + '</span><span class="v">' + m.v + '</span></div>';
+      }).join('');
+      return '<div class="prog-card">' +
+        '<div>' +
+          '<span class="audience-tag privado">' + (e.fonte || 'Oportunidade privada') + '</span>' +
+          (e.area ? ' <span class="audience-tag osc">' + e.area + '</span>' : '') +
+          '<h3>' + e.titulo + '</h3>' +
+          '<p class="desc">' + e.desc + '</p>' +
+          '<div class="idea-meta">' + metaHtml + '</div>' +
+        '</div>' +
+        '<div class="side"><a class="btn-ghost" href="' + (e.link || '#') + '" target="_blank" rel="noopener">Ver edital original ↗</a></div>' +
+      '</div>';
+    }).join('');
+  }
+
   function applyEntity(entity){
     currentEntity = entity;
     const isMunicipio = entity === 'municipio';
@@ -907,7 +1040,22 @@
 
     // Buscar programas: OSC não vê editais exclusivos de obra pública municipal
     document.getElementById('buscar-osc-note').style.display = isMunicipio ? 'none' : 'block';
+    const rotuloBuscar = isMunicipio ? 'Buscar programas' : 'Buscar oportunidades';
+    const navBuscarEl = document.getElementById('nav-buscar-label');
+    const dashBuscarEl = document.getElementById('dash-buscar-label');
+    const painelBuscarEl = document.getElementById('buscar-panel-title');
+    if (navBuscarEl) navBuscarEl.textContent = rotuloBuscar;
+    if (dashBuscarEl) dashBuscarEl.textContent = rotuloBuscar;
+    if (painelBuscarEl) painelBuscarEl.textContent = isMunicipio ? 'Buscar programas de repasse federal' : 'Buscar oportunidades de captação';
+    if (document.getElementById('usr-buscar')?.classList.contains('active')){
+      document.getElementById('topbar-title').textContent = rotuloBuscar;
+    }
     filterBuscarCards();
+
+    // Editais privados: aba exclusiva de OSC
+    const navEditaisPrivados = document.getElementById('nav-editais-privados');
+    if (navEditaisPrivados) navEditaisPrivados.style.display = isMunicipio ? 'none' : '';
+    if (!isMunicipio) renderEditaisPrivados();
 
     // Ideias: mostra só os cards compatíveis com o tipo de conta
     document.querySelectorAll('#usr-ideias .idea-card').forEach(card => {
