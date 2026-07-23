@@ -6,7 +6,9 @@
 <meta name="color-scheme" content="light">
 <title>Painel do Administrador — MuniForte</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js" defer></script>
 <script src="https://cdn.jsdelivr.net/npm/pptxgenjs@3.12.0/dist/pptxgen.bundle.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js" defer></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%2316424A'/%3E%3Cpath d='M15,44 L15,20 L24,34 L33,20 L33,44 M41,44 L41,20 L51,20 M41,31 L49,31' fill='none' stroke='%23B8842C' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Baloo+2:wght@600;700;800&display=swap" rel="stylesheet">
@@ -854,147 +856,125 @@
           <button onclick="switchFinEntity('osc')">OSC</button>
         </div>
 
-        <!-- ===== MUNICÍPIO: Munifortelândia ===== -->
+        <!-- ===== MUNICÍPIO: dados reais SICONFI (qualquer estado do Brasil) ===== -->
         <div id="fin-municipio">
-          <div class="panel-head"><h2 style="font-family:'IBM Plex Serif', serif; font-size:19px;">Munifortelândia — PA</h2><span class="note">~50.200 habitantes · exercício de referência: 2026 · metodologia: Planilha Meu Município / SICONFI</span></div>
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="panel-head"><h2>Importar planilhas do SICONFI</h2><span class="note">funciona para qualquer estado — o SICONFI disponibiliza um par de arquivos (Receitas e Despesas) por UF</span></div>
+            <div class="field-row" style="margin-bottom:10px;">
+              <div class="form-field"><label>Planilha de Receitas (CSV)</label><input type="file" id="upload-receitas" accept=".csv"></div>
+              <div class="form-field"><label>Planilha de Despesas (CSV)</label><input type="file" id="upload-despesas" accept=".csv"></div>
+            </div>
+            <button class="btn-primary" onclick="processarPlanilhasSiconfi()">Processar e adicionar municípios</button>
+            <span id="upload-status" class="mini-count" style="margin-left:12px;"></span>
+          </div>
+
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="panel-head"><h2>Selecionar município</h2><span class="note" id="total-municipios-note">98 municípios do Pará que constam no SICONFI (2025)</span></div>
+            <div class="field-row">
+              <div class="form-field"><label>Estado (UF)</label><select id="uf-select" onchange="filtrarMunicipiosPorUF()" style="width:100%; border:1px solid var(--border); border-radius:7px; padding:10px 12px; font-size:13.5px;"></select></div>
+              <div class="form-field"><label>Município</label><select id="municipio-select" onchange="renderMunicipioReal(this.value)" style="width:100%; border:1px solid var(--border); border-radius:7px; padding:10px 12px; font-size:13.5px;"></select></div>
+            </div>
+          </div>
+
+          <div class="panel-head"><h2 id="fin-mun-titulo" style="font-family:'IBM Plex Serif', serif; font-size:19px;">—</h2><span class="note" id="fin-mun-sub">exercício de referência: 2025 · fonte: SICONFI (Receitas e Despesas por município)</span></div>
 
           <div class="status-banner alert">
             <div class="icon-badge">!</div>
-            <div><h3>Regular no CAUC, com 1 ponto de atenção</h3><p>Sem pendências que impeçam o recebimento de transferências hoje — mas a despesa com pessoal está próxima do limite prudencial da LRF, e o município nunca captou recursos privados.</p></div>
+            <div><h3>Diagnóstico baseado em dados públicos oficiais</h3><p>Este relatório usa dados reais declarados pelo próprio município ao SICONFI (Receitas e Despesas Orçamentárias) — é o material usado para apresentar a proposta antes da contratação, seja para um município já cliente, seja em prospecção.</p></div>
           </div>
 
-          <div class="status-banner alert" style="background:var(--info-soft); border-color:var(--info);">
-            <div class="icon-badge" style="background:var(--info);">i</div>
-            <div><h3 style="color:var(--info);">Dados institucionais: ainda não preenchidos pela prefeitura</h3><p>Este relatório usa apenas dados públicos do SICONFI e do CAUC — é o material usado para apresentar a proposta antes da contratação. Após o início do contrato, a prefeitura preenche o formulário institucional e os próximos relatórios passam a incluir também essas informações.</p></div>
+          <!-- ===== OS 7 CÁLCULOS + RESUMO (8 TÓPICOS) ===== -->
+          <div class="panel" id="painel-diagnostico-7">
+            <div class="panel-head"><h2>Diagnóstico financeiro e de captação</h2><span class="note">fonte: SICONFI · exercício 2025</span></div>
+
+            <div class="checklist-row">
+              <div class="check-icon ok" id="ic-1">1</div>
+              <div class="t"><strong>Análise de déficit ou superávit da prefeitura</strong><span id="calc-1"></span></div>
+            </div>
+            <div class="checklist-row">
+              <div class="check-icon ok" id="ic-2">2</div>
+              <div class="t"><strong>Grau de investimento (Despesas x Investimentos)</strong><span id="calc-2"></span></div>
+            </div>
+            <div class="checklist-row">
+              <div class="check-icon ok" id="ic-3">3</div>
+              <div class="t"><strong>Arrecadação de impostos municipais — IPTU, ISS e ITBI</strong><span id="calc-3"></span></div>
+            </div>
+            <div class="checklist-row">
+              <div class="check-icon ok" id="ic-4">4</div>
+              <div class="t"><strong>Receitas de convênios federais (transferências voluntárias)</strong><span id="calc-4"></span></div>
+            </div>
+            <div class="checklist-row">
+              <div class="check-icon ok" id="ic-5">5</div>
+              <div class="t"><strong>Receitas de convênios estaduais (transferências voluntárias dos estados)</strong><span id="calc-5"></span></div>
+            </div>
+            <div class="checklist-row">
+              <div class="check-icon ok" id="ic-6">6</div>
+              <div class="t"><strong>Receitas de convênios privados</strong><span id="calc-6"></span></div>
+            </div>
+            <div class="checklist-row">
+              <div class="check-icon ok" id="ic-7">7</div>
+              <div class="t"><strong>Despesas com consultoria</strong><span id="calc-7"></span></div>
+            </div>
           </div>
 
-          <!-- ===== OS 7 CÁLCULOS ===== -->
+          <div class="panel" id="resumo-8-box" style="background:var(--surface);">
+            <div class="panel-head"><h2>8) Resumo dos tópicos analisados</h2><span class="note">síntese dos 7 indicadores acima</span></div>
+            <ul style="color:var(--ink); margin:0; padding-left:20px; line-height:1.9;" id="resumo-8-lista"></ul>
+          </div>
+
+          <div class="invest-box" style="background:var(--gold-soft);" id="leitura-box">
+            <h3 style="color:var(--gold);">Leitura para a reunião com o gestor</h3>
+            <ul style="color:var(--ink);" id="leitura-lista"></ul>
+          </div>
+
+          <!-- ===== RANKING COMPARATIVO (real, captação de recursos federais) ===== -->
           <div class="panel">
-            <div class="panel-head"><h2>Os 7 cálculos da análise financeira</h2><span class="note">fonte: SICONFI/FINBRA · exercício 2026</span></div>
-
-            <div class="checklist-row">
-              <div class="check-icon ok">1</div>
-              <div class="t"><strong>Receitas x Despesas</strong><span>R$ 92.500.000,00 − R$ 87.200.000,00 = <strong>R$ 5.300.000,00 (superávit)</strong></span></div>
-            </div>
-            <div class="checklist-row">
-              <div class="check-icon ok">2</div>
-              <div class="t"><strong>Despesas de investimento</strong><span>(Despesas de Capital − Amortização da Dívida) / Despesa Total × 100 = <strong>12,8%</strong> aplicado em investimento</span></div>
-            </div>
-            <div class="checklist-row">
-              <div class="check-icon ok">3</div>
-              <div class="t"><strong>Arrecadação de IPTU per capita</strong><span>R$ 1.180.000,00 ÷ 50.200 hab. = <strong>R$ 23,51 por habitante</strong> — abaixo da média de municípios paraenses de porte semelhante</span></div>
-            </div>
-            <div class="checklist-row">
-              <div class="check-icon ok">4</div>
-              <div class="t"><strong>Receitas de convênios federais</strong><span>Correntes + capital = <strong>R$ 3.240.000,00</strong> captados em 2026 (a fundo perdido)</span></div>
-            </div>
-            <div class="checklist-row">
-              <div class="check-icon ok">5</div>
-              <div class="t"><strong>Receitas de convênios estaduais</strong><span><strong>R$ 610.000,00</strong> captados junto ao Governo do Pará</span></div>
-            </div>
-            <div class="checklist-row">
-              <div class="check-icon bad">6</div>
-              <div class="t"><strong>Receitas de convênios privados</strong><span><strong>R$ 0,00</strong> — o município nunca recebeu recursos a fundo perdido de instituições ou empresas privadas</span></div>
-            </div>
-            <div class="checklist-row">
-              <div class="check-icon bad">7</div>
-              <div class="t"><strong>Despesas com consultoria (conta 3.3.90.35.00)</strong><span><strong>R$ 95.000,00</strong> no exercício — investimento baixo em assessoria especializada frente ao potencial de captação ainda não explorado</span></div>
-            </div>
-          </div>
-
-          <div class="invest-box" style="background:var(--gold-soft);">
-            <h3 style="color:var(--gold);">Leitura para a reunião com o prefeito</h3>
-            <ul style="color:var(--ink);">
-              <li>O município já tem superávit e margem de investimento, mas capta pouco: R$ 3,85 milhões em convênios federais e estaduais somados, e <strong>nunca acessou recursos privados</strong></li>
-              <li>O investimento atual em consultoria (R$ 95 mil) é baixo frente ao volume de recursos federais disponíveis e não explorados</li>
-              <li>A arrecadação própria de IPTU por habitante está abaixo da média regional — há espaço para revisão de cadastro imobiliário, mas isso não substitui a captação de transferências</li>
-            </ul>
-          </div>
-
-          <!-- ===== RANKING COMPARATIVO ===== -->
-          <div class="panel">
-            <div class="panel-head"><h2>Ranking de captação federal — municípios do Pará (2026)</h2><span class="note">fonte: Transferegov/SICONFI</span></div>
+            <div class="panel-head"><h2>Ranking estadual — captação de recursos públicos federais</h2><span class="note" id="ranking-panel-note">convênios federais (Transferegov) · SICONFI 2025</span></div>
             <table style="width:100%; border-collapse:collapse; font-size:12.5px;">
-              <thead><tr style="text-align:left; border-bottom:1px solid var(--border);"><th style="padding:8px 10px; font-size:11px; color:var(--ink-soft); text-transform:uppercase;">Posição</th><th style="padding:8px 10px; font-size:11px; color:var(--ink-soft); text-transform:uppercase;">Município</th><th style="padding:8px 10px; font-size:11px; color:var(--ink-soft); text-transform:uppercase;">Valor captado</th></tr></thead>
-              <tbody>
-                <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px 10px;">1º</td><td style="padding:8px 10px;">Belém</td><td style="padding:8px 10px;" class="mini-count">R$ 210,0 mi</td></tr>
-                <tr style="border-bottom:1px solid var(--border); background:var(--bg);"><td style="padding:8px 10px;">2º</td><td style="padding:8px 10px;">Altamira</td><td style="padding:8px 10px;" class="mini-count">R$ 92,0 mi</td></tr>
-                <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px 10px;">3º</td><td style="padding:8px 10px;">Marabá</td><td style="padding:8px 10px;" class="mini-count">R$ 74,3 mi</td></tr>
-                <tr style="border-bottom:1px solid var(--border);"><td style="padding:8px 10px;">4º</td><td style="padding:8px 10px;">Santarém</td><td style="padding:8px 10px;" class="mini-count">R$ 61,2 mi</td></tr>
-                <tr style="border-bottom:1px solid var(--gold); background:var(--gold-soft);"><td style="padding:8px 10px; font-weight:700;">34º</td><td style="padding:8px 10px; font-weight:700;">Munifortelândia</td><td style="padding:8px 10px; font-weight:700;" class="mini-count">R$ 3,85 mi</td></tr>
-              </tbody>
+              <thead><tr style="text-align:left; border-bottom:1px solid var(--border);"><th style="padding:8px 10px; font-size:11px; color:var(--ink-soft); text-transform:uppercase;">Posição</th><th style="padding:8px 10px; font-size:11px; color:var(--ink-soft); text-transform:uppercase;">Município</th><th style="padding:8px 10px; font-size:11px; color:var(--ink-soft); text-transform:uppercase;">Valor captado (convênio federal)</th></tr></thead>
+              <tbody id="ranking-tbody"></tbody>
             </table>
-            <p style="font-size:11.5px; color:var(--ink-soft); margin-top:10px;">Munifortelândia capta muito abaixo do potencial comparado a municípios de porte semelhante na região — argumento central para a proposta de assessoria.</p>
+            <p style="font-size:11.5px; color:var(--ink-soft); margin-top:10px;" id="ranking-nota"></p>
           </div>
 
-          <!-- ===== LIMITES CONSTITUCIONAIS ===== -->
-          <div class="indicator-grid">
-            <div class="indicator-card alert">
-              <div class="indicator-k">Despesa com pessoal (Executivo)</div>
-              <div class="indicator-v">51,8% da RCL</div>
-              <div class="indicator-limit">limite prudencial: 51,3% · máximo: 54% (LRF art. 19)</div>
-            </div>
-            <div class="indicator-card ok">
-              <div class="indicator-k">Aplicação mínima — Saúde</div>
-              <div class="indicator-v">16,2% da RCL</div>
-              <div class="indicator-limit">mínimo constitucional: 15% (EC 29/2000)</div>
-            </div>
-            <div class="indicator-card ok">
-              <div class="indicator-k">Aplicação mínima — Educação</div>
-              <div class="indicator-v">26,4% da RCL</div>
-              <div class="indicator-limit">mínimo constitucional: 25% (CF art. 212)</div>
-            </div>
-            <div class="indicator-card ok">
-              <div class="indicator-k">Dívida consolidada</div>
-              <div class="indicator-v">38,2% da RCL</div>
-              <div class="indicator-limit">limite: 120% da RCL (Resolução SF 40/2001)</div>
-            </div>
-          </div>
-
-          <!-- ===== CAUC EM 5 GRUPOS ===== -->
-          <div class="panel">
-            <div class="panel-head"><h2>Verificação de regularidade — CAUC</h2><span class="note">18 requisitos fiscais em 5 grupos + requisitos fora do CAUC (Portaria Conjunta MGI/MF/CGU nº 44/2023)</span></div>
-
-            <h3 class="sub" style="font-family:'IBM Plex Sans', sans-serif; font-size:12.5px; font-weight:700; color:var(--primary); margin:14px 0 6px;">Grupo 1 — Obrigações de adimplência financeira</h3>
-            <div class="checklist-row"><div class="check-icon ok">✓</div><div class="t"><strong>Tributos federais, contribuições previdenciárias e dívida ativa da União</strong><span>PGFN/RFB — regular</span></div></div>
-            <div class="checklist-row"><div class="check-icon ok">✓</div><div class="t"><strong>Contribuições ao FGTS</strong><span>CAIXA — regular</span></div></div>
-
-            <h3 class="sub" style="font-family:'IBM Plex Sans', sans-serif; font-size:12.5px; font-weight:700; color:var(--primary); margin:14px 0 6px;">Grupo 2 — Prestação de contas de recursos federais anteriores</h3>
-            <div class="checklist-row"><div class="check-icon ok">✓</div><div class="t"><strong>Prestação de contas no SIAFI/Transferegov</strong><span>Sem pendências registradas</span></div></div>
-
-            <h3 class="sub" style="font-family:'IBM Plex Sans', sans-serif; font-size:12.5px; font-weight:700; color:var(--primary); margin:14px 0 6px;">Grupo 3 — Obrigações de transparência (SICONFI)</h3>
-            <div class="checklist-row"><div class="check-icon ok">✓</div><div class="t"><strong>Relatório de Gestão Fiscal (RGF) e RREO</strong><span>Publicados e encaminhados em dia</span></div></div>
-            <div class="checklist-row"><div class="check-icon ok">✓</div><div class="t"><strong>Contas anuais e Matriz de Saldos Contábeis</strong><span>Encaminhadas ao SICONFI</span></div></div>
-
-            <h3 class="sub" style="font-family:'IBM Plex Sans', sans-serif; font-size:12.5px; font-weight:700; color:var(--primary); margin:14px 0 6px;">Grupo 4 — Adimplemento de obrigações constitucionais</h3>
-            <div class="checklist-row"><div class="check-icon ok">✓</div><div class="t"><strong>Plena competência tributária e regularidade previdenciária</strong><span>SICONFI / CADPREV — regular</span></div></div>
-
-            <h3 class="sub" style="font-family:'IBM Plex Sans', sans-serif; font-size:12.5px; font-weight:700; color:var(--primary); margin:14px 0 6px;">Grupo 5 — Cumprimento de limites constitucionais e legais</h3>
-            <div class="checklist-row"><div class="check-icon ok">✓</div><div class="t"><strong>Aplicação mínima em Saúde (SIOPS) e Educação (SIOPE)</strong><span>Ambos acima do mínimo exigido</span></div></div>
-            <div class="checklist-row"><div class="check-icon bad">!</div><div class="t"><strong>Limite de despesa com pessoal</strong><span>Acima do limite prudencial — ponto de atenção para novos convênios</span></div></div>
-
-            <h3 class="sub" style="font-family:'IBM Plex Sans', sans-serif; font-size:12.5px; font-weight:700; color:var(--gold); margin:14px 0 6px;">Requisitos fora do CAUC</h3>
-            <div class="checklist-row"><div class="check-icon ok">✓</div><div class="t"><strong>Área gestora de recursos federais, com servidor efetivo lotado</strong><span>Exigência do Acórdão TCU nº 1.905/2017 — confirmada</span></div></div>
-            <div class="checklist-row"><div class="check-icon ok">✓</div><div class="t"><strong>Transparência da execução orçamentária em meio eletrônico</strong><span>Portal da transparência ativo e declarado</span></div></div>
-          </div>
-
-          <div class="panel" style="background:var(--warning-soft); border-color:var(--warning);">
+          <div class="panel" style="background:var(--info-soft); border-color:var(--info);">
             <div style="display:flex; gap:12px; align-items:flex-start;">
-              <span style="font-size:18px;">⚠</span>
+              <span style="font-size:18px;">ℹ</span>
               <div style="font-size:12.5px; color:var(--ink); line-height:1.7;">
-                <strong style="display:block; margin-bottom:4px; color:var(--warning);">Por que a regularidade importa: caso real (Altamira-PA, 2025)</strong>
-                Uma proposta de R$ 267.274,18 para aquisição de roçadeira e grade aradora avançou por meses de análise técnica — e foi <strong>rejeitada em 30/12/2025</strong> por ausência de comprovação de regularidade quanto a tributos e dívida ativa da União. Meses de trabalho perdidos por uma pendência que poderia ter sido identificada antes da submissão.
+                <strong style="display:block; margin-bottom:4px; color:var(--info);">Programas federais abertos agora (em breve)</strong>
+                Assim que a integração com a API do Transferegov estiver ativa, esta seção mostrará o número de programas e o volume de recursos disponíveis para captação no momento — cruzando automaticamente com o perfil deste município.
               </div>
             </div>
           </div>
 
+          <!-- ===== CAUC EM 5 GRUPOS (tabela, dados reais quando importados) ===== -->
+          <div class="panel" style="margin-bottom:16px;">
+            <div class="panel-head"><h2>Importar extrato do CAUC</h2><span class="note">PDF gerado em sisweb.tesouro.gov.br — associado automaticamente ao município selecionado acima</span></div>
+            <div class="field-row" style="margin-bottom:10px;">
+              <div class="form-field"><label>Extrato CAUC (PDF)</label><input type="file" id="upload-cauc" accept=".pdf"></div>
+            </div>
+            <button class="btn-primary" onclick="processarExtratoCauc()">Processar extrato</button>
+            <span id="cauc-upload-status" class="mini-count" style="margin-left:12px;"></span>
+          </div>
+
+          <div class="panel" id="painel-cauc">
+            <div class="panel-head"><h2>Verificação de regularidade — CAUC</h2><span class="note" id="cauc-panel-note">18 requisitos fiscais em 5 grupos + requisitos fora do CAUC (Portaria Conjunta MGI/MF/CGU nº 44/2023)</span></div>
+            <div id="cauc-status-badge" style="margin:6px 0 4px; font-size:11.5px; font-weight:600;"></div>
+
+            <table style="width:100%; border-collapse:collapse; font-size:12.5px; margin-top:8px;">
+              <thead><tr style="text-align:left; border-bottom:1px solid var(--border);">
+                <th style="padding:8px 10px; font-size:11px; color:var(--ink-soft); text-transform:uppercase; width:36px;"></th>
+                <th style="padding:8px 10px; font-size:11px; color:var(--ink-soft); text-transform:uppercase;">Requisito</th>
+              </tr></thead>
+              <tbody id="cauc-tbody"></tbody>
+            </table>
+          </div>
+
           <div class="invest-box">
-            <h3>Como investir as transferências voluntárias, dada a baixa arrecadação própria</h3>
+            <h3>Como investir os recursos federais captados, dada a baixa arrecadação própria</h3>
             <ul>
               <li>Receita própria (tributária, patrimonial, IPTU) responde por parcela pequena do orçamento — priorizar programas sem exigência de contrapartida municipal</li>
               <li>Direcionar recursos federais para investimento (obras, equipamentos), preservando a folha de pessoal já próxima do limite prudencial</li>
-              <li>Explorar convênios estaduais (ICMS, IPVA), hoje pouco explorados — fonte adicional de recurso público sem disputa com outros 5.568 municípios</li>
-              <li>Priorizar programas de fluxo contínuo (sem disputa de edital), reduzindo o risco de perda de prazo por pendência de regularidade</li>
             </ul>
           </div>
 
@@ -1563,6 +1543,473 @@
   });
 
   // ===== Análise financeira: alternar Município / OSC =====
+
+const MUNICIPIOS_PA_2025 = [{"municipio": "Belém", "populacao": 1367336, "totalReceita": 6105975122.0, "totalDespesa": 5621703163.0, "superavit": 484271959.0, "despesaCapital": 496678771.6, "amortizacao": 168838396.7, "pctInvestimento": 5.83, "iptu": 320972273.5, "iptuPerCapita": 234.74, "iss": 949025023.0, "issPerCapita": 694.07, "itbi": 67374612.68, "itbiPerCapita": 49.27, "convenioFederal": 55624927.48, "convenioEstadual": 18112843.1, "convenioPrivado": 712500.0, "transferenciaEspecial": 39161242.27, "consultoria": 21159320.12, "totalVoluntarias": 73737770.58, "rankVoluntarias": 1}, {"municipio": "Bragança", "populacao": 121793, "totalReceita": 550571883.8, "totalDespesa": 536768646.4, "superavit": 13803237.4, "despesaCapital": 32642221.11, "amortizacao": 12331114.67, "pctInvestimento": 3.78, "iptu": 2135739.82, "iptuPerCapita": 17.54, "iss": 10302740.65, "issPerCapita": 84.59, "itbi": 993812.7, "itbiPerCapita": 8.16, "convenioFederal": 4986557.78, "convenioEstadual": 29729343.55, "convenioPrivado": 80000.0, "transferenciaEspecial": 0.0, "consultoria": 891000.0, "totalVoluntarias": 34715901.33, "rankVoluntarias": 2}, {"municipio": "Breu Branco", "populacao": 40157, "totalReceita": 294716367.5, "totalDespesa": 286440857.2, "superavit": 8275510.3, "despesaCapital": 47810130.34, "amortizacao": 4181372.73, "pctInvestimento": 15.23, "iptu": 314301.01, "iptuPerCapita": 7.83, "iss": 9840525.45, "issPerCapita": 245.05, "itbi": 406155.66, "itbiPerCapita": 10.11, "convenioFederal": 14827445.08, "convenioEstadual": 8580385.68, "convenioPrivado": 0.0, "transferenciaEspecial": 1956225.15, "consultoria": 862000.0, "totalVoluntarias": 23407830.76, "rankVoluntarias": 3}, {"municipio": "Tucuruí", "populacao": 90232, "totalReceita": 828640225.1, "totalDespesa": 795721847.8, "superavit": 32918377.3, "despesaCapital": 141301930.4, "amortizacao": 10281212.61, "pctInvestimento": 16.47, "iptu": 1208240.06, "iptuPerCapita": 13.39, "iss": 21005168.34, "issPerCapita": 232.79, "itbi": 542394.12, "itbiPerCapita": 6.01, "convenioFederal": 12307768.22, "convenioEstadual": 7930899.77, "convenioPrivado": 0.0, "transferenciaEspecial": 27274245.0, "consultoria": 1698078.0, "totalVoluntarias": 20238667.99, "rankVoluntarias": 4}, {"municipio": "Castanhal", "populacao": 200003, "totalReceita": 980153229.2, "totalDespesa": 972924209.8, "superavit": 7229019.4, "despesaCapital": 72003505.27, "amortizacao": 13536304.22, "pctInvestimento": 6.01, "iptu": 10941687.71, "iptuPerCapita": 54.71, "iss": 49350984.31, "issPerCapita": 246.75, "itbi": 4745046.06, "itbiPerCapita": 23.72, "convenioFederal": 498446.94, "convenioEstadual": 18903846.96, "convenioPrivado": 3984515.21, "transferenciaEspecial": 6153543.0, "consultoria": 1197148.17, "totalVoluntarias": 19402293.9, "rankVoluntarias": 5}, {"municipio": "Altamira", "populacao": 135067, "totalReceita": 804520748.2, "totalDespesa": 762456939.2, "superavit": 42063809.0, "despesaCapital": 76269060.27, "amortizacao": 3876569.25, "pctInvestimento": 9.49, "iptu": 6449333.81, "iptuPerCapita": 47.75, "iss": 50989050.48, "issPerCapita": 377.51, "itbi": 2662707.62, "itbiPerCapita": 19.71, "convenioFederal": 400000.0, "convenioEstadual": 18203115.21, "convenioPrivado": 325000.0, "transferenciaEspecial": 0.0, "consultoria": 4415772.23, "totalVoluntarias": 18603115.21, "rankVoluntarias": 6}, {"municipio": "Marabá", "populacao": 271321, "totalReceita": 2127406297.0, "totalDespesa": 1773067554.0, "superavit": 354338743.0, "despesaCapital": 232696412.9, "amortizacao": 22163847.77, "pctInvestimento": 11.87, "iptu": 16223421.66, "iptuPerCapita": 59.79, "iss": 244157530.2, "issPerCapita": 899.88, "itbi": 7740467.07, "itbiPerCapita": 28.53, "convenioFederal": 8738948.89, "convenioEstadual": 9851217.56, "convenioPrivado": 64599621.21, "transferenciaEspecial": 0.0, "consultoria": 3000519.36, "totalVoluntarias": 18590166.45, "rankVoluntarias": 7}, {"municipio": "Augusto Corrêa", "populacao": 43691, "totalReceita": 284201645.2, "totalDespesa": 264833883.2, "superavit": 19367762.0, "despesaCapital": 52045277.67, "amortizacao": 0.0, "pctInvestimento": 19.65, "iptu": 37908.17, "iptuPerCapita": 0.87, "iss": 4532175.42, "issPerCapita": 103.73, "itbi": 55814.12, "itbiPerCapita": 1.28, "convenioFederal": 11959673.9, "convenioEstadual": 4606808.3, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 2340993.04, "totalVoluntarias": 16566482.2, "rankVoluntarias": 8}, {"municipio": "Xinguara", "populacao": 56127, "totalReceita": 326387098.7, "totalDespesa": 300783979.1, "superavit": 25603119.6, "despesaCapital": 33150373.63, "amortizacao": 9733085.89, "pctInvestimento": 7.79, "iptu": 2106843.97, "iptuPerCapita": 37.54, "iss": 11893301.11, "issPerCapita": 211.9, "itbi": 1977807.35, "itbiPerCapita": 35.24, "convenioFederal": 5689935.61, "convenioEstadual": 9884230.66, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 0.0, "totalVoluntarias": 15574166.27, "rankVoluntarias": 9}, {"municipio": "Itupiranga", "populacao": 53873, "totalReceita": 306325100.9, "totalDespesa": 293096518.8, "superavit": 13228582.1, "despesaCapital": 33667839.56, "amortizacao": 2182494.53, "pctInvestimento": 10.74, "iptu": 423168.07, "iptuPerCapita": 7.85, "iss": 4290786.35, "issPerCapita": 79.65, "itbi": 251995.91, "itbiPerCapita": 4.68, "convenioFederal": 3188356.14, "convenioEstadual": 12362949.88, "convenioPrivado": 270000.0, "transferenciaEspecial": 4603500.0, "consultoria": 21658.73, "totalVoluntarias": 15551306.02, "rankVoluntarias": 10}, {"municipio": "Uruará", "populacao": 48511, "totalReceita": 291214954.2, "totalDespesa": 265000294.7, "superavit": 26214659.5, "despesaCapital": 31423562.15, "amortizacao": 4142430.25, "pctInvestimento": 10.29, "iptu": 492525.77, "iptuPerCapita": 10.15, "iss": 4486593.9, "issPerCapita": 92.49, "itbi": 615108.33, "itbiPerCapita": 12.68, "convenioFederal": 6049844.81, "convenioEstadual": 8727460.8, "convenioPrivado": 0.0, "transferenciaEspecial": 1336500.0, "consultoria": 2334681.68, "totalVoluntarias": 14777305.61, "rankVoluntarias": 11}, {"municipio": "Bagre", "populacao": 35265, "totalReceita": 194216489.0, "totalDespesa": 178473028.0, "superavit": 15743461.0, "despesaCapital": 31550661.3, "amortizacao": 1699428.65, "pctInvestimento": 16.73, "iptu": 34046.54, "iptuPerCapita": 0.97, "iss": 1393760.95, "issPerCapita": 39.52, "itbi": 778.14, "itbiPerCapita": 0.02, "convenioFederal": 7698097.19, "convenioEstadual": 5774939.4, "convenioPrivado": 0.0, "transferenciaEspecial": 13230806.04, "consultoria": 695867.48, "totalVoluntarias": 13473036.59, "rankVoluntarias": 12}, {"municipio": "Ulianópolis", "populacao": 56562, "totalReceita": 250058434.9, "totalDespesa": 211113216.5, "superavit": 38945218.4, "despesaCapital": 19207636.4, "amortizacao": 4404852.94, "pctInvestimento": 7.01, "iptu": 862423.89, "iptuPerCapita": 15.25, "iss": 6297239.26, "issPerCapita": 111.33, "itbi": 512514.48, "itbiPerCapita": 9.06, "convenioFederal": 4114232.41, "convenioEstadual": 9341362.42, "convenioPrivado": 0.0, "transferenciaEspecial": 12066000.0, "consultoria": 2248602.1, "totalVoluntarias": 13455594.83, "rankVoluntarias": 13}, {"municipio": "Santa Izabel do Pará", "populacao": 68963, "totalReceita": 358331145.8, "totalDespesa": 307516107.6, "superavit": 50815038.2, "despesaCapital": 41597868.86, "amortizacao": 18591147.84, "pctInvestimento": 7.48, "iptu": 3136002.42, "iptuPerCapita": 45.47, "iss": 8874801.45, "issPerCapita": 128.69, "itbi": 705405.34, "itbiPerCapita": 10.23, "convenioFederal": 5556812.76, "convenioEstadual": 7189015.52, "convenioPrivado": 59299.45, "transferenciaEspecial": 2079545.73, "consultoria": 3082959.0, "totalVoluntarias": 12745828.28, "rankVoluntarias": 14}, {"municipio": "Almeirim", "populacao": 38843, "totalReceita": 286125976.5, "totalDespesa": 265838650.8, "superavit": 20287325.7, "despesaCapital": 19678378.69, "amortizacao": 9292.38, "pctInvestimento": 7.4, "iptu": 0.0, "iptuPerCapita": 0.0, "iss": 10818592.34, "issPerCapita": 278.52, "itbi": 0.0, "itbiPerCapita": 0.0, "convenioFederal": 6686993.49, "convenioEstadual": 5661224.23, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 384000.0, "totalVoluntarias": 12348217.72, "rankVoluntarias": 15}, {"municipio": "Cametá", "populacao": 134734, "totalReceita": 716720044.0, "totalDespesa": 668641329.8, "superavit": 48078714.2, "despesaCapital": 67795961.7, "amortizacao": 9094065.24, "pctInvestimento": 8.78, "iptu": 635200.86, "iptuPerCapita": 4.71, "iss": 9543744.02, "issPerCapita": 70.83, "itbi": 188867.94, "itbiPerCapita": 1.4, "convenioFederal": 1661931.79, "convenioEstadual": 9896971.23, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 657000.0, "totalVoluntarias": 11558903.02, "rankVoluntarias": 16}, {"municipio": "São Miguel do Guamá", "populacao": 52810, "totalReceita": 329841575.9, "totalDespesa": 307122899.0, "superavit": 22718676.9, "despesaCapital": 46661313.41, "amortizacao": 1316637.14, "pctInvestimento": 14.76, "iptu": 1287599.33, "iptuPerCapita": 24.38, "iss": 5806808.38, "issPerCapita": 109.96, "itbi": 336370.92, "itbiPerCapita": 6.37, "convenioFederal": 5175000.0, "convenioEstadual": 6177124.56, "convenioPrivado": 0.0, "transferenciaEspecial": 11094650.76, "consultoria": 815454.0, "totalVoluntarias": 11352124.56, "rankVoluntarias": 17}, {"municipio": "Ourém", "populacao": 17836, "totalReceita": 122195541.8, "totalDespesa": 110625892.8, "superavit": 11569649.0, "despesaCapital": 15197835.39, "amortizacao": 2711366.37, "pctInvestimento": 11.29, "iptu": 33070.93, "iptuPerCapita": 1.85, "iss": 1815452.44, "issPerCapita": 101.79, "itbi": 3484.52, "itbiPerCapita": 0.2, "convenioFederal": 3042001.44, "convenioEstadual": 7991761.27, "convenioPrivado": 0.0, "transferenciaEspecial": 396000.0, "consultoria": 2345994.78, "totalVoluntarias": 11033762.71, "rankVoluntarias": 18}, {"municipio": "Itaituba", "populacao": 137170, "totalReceita": 745029375.7, "totalDespesa": 651856498.3, "superavit": 93172877.4, "despesaCapital": 90308562.88, "amortizacao": 14470050.05, "pctInvestimento": 11.63, "iptu": 7594399.87, "iptuPerCapita": 55.36, "iss": 56123589.47, "issPerCapita": 409.15, "itbi": 2444629.54, "itbiPerCapita": 17.82, "convenioFederal": 3493567.44, "convenioEstadual": 7090093.33, "convenioPrivado": 80000.0, "transferenciaEspecial": 2376000.0, "consultoria": 597818.1, "totalVoluntarias": 10583660.77, "rankVoluntarias": 19}, {"municipio": "Nova Ipixuna", "populacao": 13318, "totalReceita": 118396740.9, "totalDespesa": 105598954.2, "superavit": 12797786.7, "despesaCapital": 16740350.34, "amortizacao": 880954.39, "pctInvestimento": 15.02, "iptu": 94638.56, "iptuPerCapita": 7.11, "iss": 1560743.79, "issPerCapita": 117.19, "itbi": 117028.08, "itbiPerCapita": 8.79, "convenioFederal": 4737199.62, "convenioEstadual": 5423137.15, "convenioPrivado": 0.0, "transferenciaEspecial": 5247000.0, "consultoria": 1239680.64, "totalVoluntarias": 10160336.77, "rankVoluntarias": 20}, {"municipio": "Piçarra", "populacao": 12794, "totalReceita": 111687477.3, "totalDespesa": 106752452.0, "superavit": 4935025.3, "despesaCapital": 5259377.65, "amortizacao": 730193.29, "pctInvestimento": 4.24, "iptu": 48317.11, "iptuPerCapita": 3.78, "iss": 1073903.75, "issPerCapita": 83.94, "itbi": 487371.68, "itbiPerCapita": 38.09, "convenioFederal": 2234595.12, "convenioEstadual": 7611858.59, "convenioPrivado": 125230.0, "transferenciaEspecial": 481104.0, "consultoria": 709717.87, "totalVoluntarias": 9846453.71, "rankVoluntarias": 21}, {"municipio": "Sapucaia", "populacao": 5295, "totalReceita": 69745129.63, "totalDespesa": 62856195.85, "superavit": 6888933.78, "despesaCapital": 9196580.36, "amortizacao": 313773.46, "pctInvestimento": 14.13, "iptu": 20068.93, "iptuPerCapita": 3.79, "iss": 779417.8, "issPerCapita": 147.2, "itbi": 404278.1, "itbiPerCapita": 76.35, "convenioFederal": 2650749.67, "convenioEstadual": 6441967.76, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 1445769.7, "totalVoluntarias": 9092717.43, "rankVoluntarias": 22}, {"municipio": "Juruti", "populacao": 57837, "totalReceita": 385038462.8, "totalDespesa": 337671826.1, "superavit": 47366636.7, "despesaCapital": 24998556.33, "amortizacao": 9148066.08, "pctInvestimento": 4.69, "iptu": 14841681.17, "iptuPerCapita": 256.61, "iss": 39471893.2, "issPerCapita": 682.47, "itbi": 59346.11, "itbiPerCapita": 1.03, "convenioFederal": 8334286.1, "convenioEstadual": 574000.0, "convenioPrivado": 600000.0, "transferenciaEspecial": 1621612.08, "consultoria": 3180652.0, "totalVoluntarias": 8908286.1, "rankVoluntarias": 23}, {"municipio": "Novo Repartimento", "populacao": 60438, "totalReceita": 369824528.3, "totalDespesa": 348431292.8, "superavit": 21393235.5, "despesaCapital": 23293981.07, "amortizacao": 2861181.11, "pctInvestimento": 5.86, "iptu": 519319.78, "iptuPerCapita": 8.59, "iss": 5677042.57, "issPerCapita": 93.93, "itbi": 1521434.11, "itbiPerCapita": 25.17, "convenioFederal": 0.0, "convenioEstadual": 8438841.86, "convenioPrivado": 0.0, "transferenciaEspecial": 633600.0, "consultoria": 369700.0, "totalVoluntarias": 8438841.86, "rankVoluntarias": 24}, {"municipio": "Óbidos", "populacao": 58121, "totalReceita": 280754101.1, "totalDespesa": 267650903.8, "superavit": 13103197.3, "despesaCapital": 30803896.03, "amortizacao": 5725400.08, "pctInvestimento": 9.37, "iptu": 698473.1, "iptuPerCapita": 12.02, "iss": 6840403.0, "issPerCapita": 117.69, "itbi": 66916.22, "itbiPerCapita": 1.15, "convenioFederal": 7324946.72, "convenioEstadual": 938366.98, "convenioPrivado": 0.0, "transferenciaEspecial": 7584498.86, "consultoria": 3024146.44, "totalVoluntarias": 8263313.7, "rankVoluntarias": 25}, {"municipio": "Tailândia", "populacao": 84206, "totalReceita": 401658936.5, "totalDespesa": 381185767.7, "superavit": 20473168.8, "despesaCapital": 24201811.0, "amortizacao": 6162231.26, "pctInvestimento": 4.73, "iptu": 30984.99, "iptuPerCapita": 0.37, "iss": 14117464.84, "issPerCapita": 167.65, "itbi": 909912.58, "itbiPerCapita": 10.81, "convenioFederal": 0.0, "convenioEstadual": 8212923.4, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 759331.34, "totalVoluntarias": 8212923.4, "rankVoluntarias": 26}, {"municipio": "Tomé-Açu", "populacao": 76055, "totalReceita": 546467557.4, "totalDespesa": 491467671.9, "superavit": 54999885.5, "despesaCapital": 61481356.06, "amortizacao": 11308214.88, "pctInvestimento": 10.21, "iptu": 1458087.6, "iptuPerCapita": 19.17, "iss": 12180005.18, "issPerCapita": 160.15, "itbi": 1195367.16, "itbiPerCapita": 15.72, "convenioFederal": 0.0, "convenioEstadual": 8151289.71, "convenioPrivado": 84966.0, "transferenciaEspecial": 5333140.0, "consultoria": 7002826.4, "totalVoluntarias": 8151289.71, "rankVoluntarias": 27}, {"municipio": "Benevides", "populacao": 56152, "totalReceita": 363332692.7, "totalDespesa": 312775757.2, "superavit": 50556935.5, "despesaCapital": 30771337.95, "amortizacao": 6211103.85, "pctInvestimento": 7.85, "iptu": 2432144.54, "iptuPerCapita": 43.31, "iss": 14917446.98, "issPerCapita": 265.66, "itbi": 1292189.21, "itbiPerCapita": 23.01, "convenioFederal": 525991.67, "convenioEstadual": 7540475.32, "convenioPrivado": 0.0, "transferenciaEspecial": 4950000.0, "consultoria": 3264649.68, "totalVoluntarias": 8066466.99, "rankVoluntarias": 28}, {"municipio": "Portel", "populacao": 67288, "totalReceita": 458663782.8, "totalDespesa": 469151592.6, "superavit": -10487809.8, "despesaCapital": 25901543.61, "amortizacao": 5795463.69, "pctInvestimento": 4.29, "iptu": 716817.38, "iptuPerCapita": 10.65, "iss": 7371248.8, "issPerCapita": 109.55, "itbi": 275706.02, "itbiPerCapita": 4.1, "convenioFederal": 1462500.0, "convenioEstadual": 6313439.24, "convenioPrivado": 2193783.27, "transferenciaEspecial": 17121671.0, "consultoria": 5373735.17, "totalVoluntarias": 7775939.24, "rankVoluntarias": 29}, {"municipio": "São Domingos do Araguaia", "populacao": 20970, "totalReceita": 136670617.5, "totalDespesa": 129465656.8, "superavit": 7204960.7, "despesaCapital": 14822516.55, "amortizacao": 2576115.85, "pctInvestimento": 9.46, "iptu": 107234.81, "iptuPerCapita": 5.11, "iss": 2048689.53, "issPerCapita": 97.7, "itbi": 392794.0, "itbiPerCapita": 18.73, "convenioFederal": 470702.8, "convenioEstadual": 7186699.93, "convenioPrivado": 0.0, "transferenciaEspecial": 1094000.0, "consultoria": 1574100.0, "totalVoluntarias": 7657402.73, "rankVoluntarias": 30}, {"municipio": "Peixe-Boi", "populacao": 8315, "totalReceita": 76325253.91, "totalDespesa": 71160116.77, "superavit": 5165137.14, "despesaCapital": 11124312.99, "amortizacao": 232612.67, "pctInvestimento": 15.31, "iptu": 5275.88, "iptuPerCapita": 0.63, "iss": 967273.53, "issPerCapita": 116.33, "itbi": 24250.29, "itbiPerCapita": 2.92, "convenioFederal": 0.0, "convenioEstadual": 7649843.02, "convenioPrivado": 0.0, "transferenciaEspecial": 1000000.0, "consultoria": 1428706.86, "totalVoluntarias": 7649843.02, "rankVoluntarias": 31}, {"municipio": "Paragominas", "populacao": 104883, "totalReceita": 825725102.0, "totalDespesa": 782988888.3, "superavit": 42736213.7, "despesaCapital": 104952384.8, "amortizacao": 17549936.98, "pctInvestimento": 11.16, "iptu": 6716157.42, "iptuPerCapita": 64.03, "iss": 54242537.93, "issPerCapita": 517.17, "itbi": 5436002.73, "itbiPerCapita": 51.83, "convenioFederal": 4474541.43, "convenioEstadual": 3128001.27, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 5297493.77, "totalVoluntarias": 7602542.7, "rankVoluntarias": 32}, {"municipio": "Baião", "populacao": 51844, "totalReceita": 218197422.0, "totalDespesa": 217964376.0, "superavit": 233046.0, "despesaCapital": 17813955.58, "amortizacao": 4933100.1, "pctInvestimento": 5.91, "iptu": 20994.99, "iptuPerCapita": 0.4, "iss": 2988782.07, "issPerCapita": 57.65, "itbi": 133230.5, "itbiPerCapita": 2.57, "convenioFederal": 3071532.89, "convenioEstadual": 3479278.92, "convenioPrivado": 0.0, "transferenciaEspecial": 990079.2, "consultoria": 1147422.22, "totalVoluntarias": 6550811.81, "rankVoluntarias": 33}, {"municipio": "São Sebastião da Boa Vista", "populacao": 31336, "totalReceita": 186651543.9, "totalDespesa": 181271866.7, "superavit": 5379677.2, "despesaCapital": 29003676.96, "amortizacao": 3424833.74, "pctInvestimento": 14.11, "iptu": 33090.95, "iptuPerCapita": 1.06, "iss": 2713481.46, "issPerCapita": 86.59, "itbi": 0.0, "itbiPerCapita": 0.0, "convenioFederal": 357059.7, "convenioEstadual": 5952928.44, "convenioPrivado": 0.0, "transferenciaEspecial": 4404147.0, "consultoria": 334465.05, "totalVoluntarias": 6309988.14, "rankVoluntarias": 34}, {"municipio": "Rio Maria", "populacao": 17965, "totalReceita": 126776637.9, "totalDespesa": 111772209.9, "superavit": 15004428.0, "despesaCapital": 8730270.06, "amortizacao": 1874454.98, "pctInvestimento": 6.13, "iptu": 674838.66, "iptuPerCapita": 37.56, "iss": 3467302.13, "issPerCapita": 193.0, "itbi": 1629787.47, "itbiPerCapita": 90.72, "convenioFederal": 4223612.4, "convenioEstadual": 1921863.46, "convenioPrivado": 150000.0, "transferenciaEspecial": 0.0, "consultoria": 1268000.0, "totalVoluntarias": 6145475.86, "rankVoluntarias": 35}, {"municipio": "Afuá", "populacao": 38020, "totalReceita": 274056814.7, "totalDespesa": 251450528.5, "superavit": 22606286.2, "despesaCapital": 29524333.04, "amortizacao": 6017870.04, "pctInvestimento": 9.35, "iptu": 9912.17, "iptuPerCapita": 0.26, "iss": 1987839.31, "issPerCapita": 52.28, "itbi": 1301.82, "itbiPerCapita": 0.03, "convenioFederal": 6079561.03, "convenioEstadual": 0.0, "convenioPrivado": 0.0, "transferenciaEspecial": 1089000.0, "consultoria": 2608351.36, "totalVoluntarias": 6079561.03, "rankVoluntarias": 36}, {"municipio": "Cumaru do Norte", "populacao": 12397, "totalReceita": 127091596.3, "totalDespesa": 114304610.5, "superavit": 12786985.8, "despesaCapital": 19554523.54, "amortizacao": 2036774.95, "pctInvestimento": 15.33, "iptu": 84331.24, "iptuPerCapita": 6.8, "iss": 1895268.5, "issPerCapita": 152.88, "itbi": 2630580.63, "itbiPerCapita": 212.19, "convenioFederal": 1125360.6, "convenioEstadual": 4858121.27, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 1098500.0, "totalVoluntarias": 5983481.87, "rankVoluntarias": 37}, {"municipio": "Alenquer", "populacao": 86096, "totalReceita": 294030689.7, "totalDespesa": 263404221.8, "superavit": 30626467.9, "despesaCapital": 27422630.58, "amortizacao": 2181236.74, "pctInvestimento": 9.58, "iptu": 382407.38, "iptuPerCapita": 4.44, "iss": 3704377.57, "issPerCapita": 43.03, "itbi": 118072.32, "itbiPerCapita": 1.37, "convenioFederal": 498446.94, "convenioEstadual": 5214281.33, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 2735293.5, "totalVoluntarias": 5712728.27, "rankVoluntarias": 38}, {"municipio": "Limoeiro do Ajuru", "populacao": 29617, "totalReceita": 174001341.1, "totalDespesa": 155581534.4, "superavit": 18419806.7, "despesaCapital": 10732931.67, "amortizacao": 3625915.91, "pctInvestimento": 4.57, "iptu": 100042.12, "iptuPerCapita": 3.38, "iss": 840288.1, "issPerCapita": 28.37, "itbi": 0.0, "itbiPerCapita": 0.0, "convenioFederal": 517933.91, "convenioEstadual": 4735696.72, "convenioPrivado": 0.0, "transferenciaEspecial": 10713577.0, "consultoria": 920498.2, "totalVoluntarias": 5253630.63, "rankVoluntarias": 39}, {"municipio": "Inhangapi", "populacao": 10334, "totalReceita": 73067698.84, "totalDespesa": 69386743.12, "superavit": 3680955.72, "despesaCapital": 16979904.76, "amortizacao": 1069644.56, "pctInvestimento": 22.93, "iptu": 1914.32, "iptuPerCapita": 0.19, "iss": 1616181.3, "issPerCapita": 156.39, "itbi": 1374.37, "itbiPerCapita": 0.13, "convenioFederal": 2013127.97, "convenioEstadual": 3220074.95, "convenioPrivado": 0.0, "transferenciaEspecial": 990000.0, "consultoria": 1447870.45, "totalVoluntarias": 5233202.92, "rankVoluntarias": 40}, {"municipio": "Bonito", "populacao": 12892, "totalReceita": 81831736.3, "totalDespesa": 70765873.66, "superavit": 11065862.64, "despesaCapital": 9070359.23, "amortizacao": 342255.05, "pctInvestimento": 12.33, "iptu": 0.0, "iptuPerCapita": 0.0, "iss": 646144.68, "issPerCapita": 50.12, "itbi": 25440.4, "itbiPerCapita": 1.97, "convenioFederal": 0.0, "convenioEstadual": 5207117.91, "convenioPrivado": 0.0, "transferenciaEspecial": 3414413.0, "consultoria": 2259134.27, "totalVoluntarias": 5207117.91, "rankVoluntarias": 41}, {"municipio": "Capitão Poço", "populacao": 56331, "totalReceita": 251920994.3, "totalDespesa": 249402277.4, "superavit": 2518716.9, "despesaCapital": 19424360.54, "amortizacao": 3364532.8, "pctInvestimento": 6.44, "iptu": 212081.87, "iptuPerCapita": 3.76, "iss": 2713761.05, "issPerCapita": 48.18, "itbi": 553225.97, "itbiPerCapita": 9.82, "convenioFederal": 0.0, "convenioEstadual": 5143911.8, "convenioPrivado": 0.0, "transferenciaEspecial": 2970000.0, "consultoria": 1054210.0, "totalVoluntarias": 5143911.8, "rankVoluntarias": 42}, {"municipio": "Abaetetuba", "populacao": 158042, "totalReceita": 706653665.9, "totalDespesa": 715447678.8, "superavit": -8794012.9, "despesaCapital": 36897241.69, "amortizacao": 1031580.19, "pctInvestimento": 5.01, "iptu": 2141529.56, "iptuPerCapita": 13.55, "iss": 16276663.67, "issPerCapita": 102.99, "itbi": 1364143.83, "itbiPerCapita": 8.63, "convenioFederal": 3178614.0, "convenioEstadual": 1729530.88, "convenioPrivado": 0.0, "transferenciaEspecial": 6794958.0, "consultoria": 2870521.4, "totalVoluntarias": 4908144.88, "rankVoluntarias": 43}, {"municipio": "Maracanã", "populacao": 25929, "totalReceita": 186803649.7, "totalDespesa": 174987334.5, "superavit": 11816315.2, "despesaCapital": 13760133.29, "amortizacao": 2269389.46, "pctInvestimento": 6.57, "iptu": 45731.46, "iptuPerCapita": 1.76, "iss": 1383121.56, "issPerCapita": 53.34, "itbi": 44065.68, "itbiPerCapita": 1.7, "convenioFederal": 2710216.57, "convenioEstadual": 2047255.56, "convenioPrivado": 100000.0, "transferenciaEspecial": 5598238.0, "consultoria": 1709000.0, "totalVoluntarias": 4757472.13, "rankVoluntarias": 44}, {"municipio": "Dom Eliseu", "populacao": 58444, "totalReceita": 315988063.2, "totalDespesa": 302874912.1, "superavit": 13113151.1, "despesaCapital": 26185274.82, "amortizacao": 5807088.03, "pctInvestimento": 6.73, "iptu": 2892115.64, "iptuPerCapita": 49.49, "iss": 7223939.6, "issPerCapita": 123.6, "itbi": 1765928.74, "itbiPerCapita": 30.22, "convenioFederal": 0.0, "convenioEstadual": 4750976.91, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 2622583.56, "totalVoluntarias": 4750976.91, "rankVoluntarias": 45}, {"municipio": "Jacareacanga", "populacao": 24742, "totalReceita": 260538061.2, "totalDespesa": 230498230.4, "superavit": 30039830.8, "despesaCapital": 27041574.16, "amortizacao": 693885.01, "pctInvestimento": 11.43, "iptu": 123575.27, "iptuPerCapita": 4.99, "iss": 4610174.99, "issPerCapita": 186.33, "itbi": 601890.35, "itbiPerCapita": 24.33, "convenioFederal": 848780.81, "convenioEstadual": 3600955.85, "convenioPrivado": 0.0, "transferenciaEspecial": 297000.0, "consultoria": 3583200.0, "totalVoluntarias": 4449736.66, "rankVoluntarias": 46}, {"municipio": "Rondon do Pará", "populacao": 35182, "totalReceita": 234218571.4, "totalDespesa": 203661856.8, "superavit": 30556714.6, "despesaCapital": 17564946.67, "amortizacao": 4261130.1, "pctInvestimento": 6.53, "iptu": 1111721.44, "iptuPerCapita": 31.6, "iss": 3645310.67, "issPerCapita": 103.61, "itbi": 2248159.89, "itbiPerCapita": 63.9, "convenioFederal": 386759.0, "convenioEstadual": 4052697.47, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 1059000.0, "totalVoluntarias": 4439456.47, "rankVoluntarias": 47}, {"municipio": "Oriximiná", "populacao": 76140, "totalReceita": 463361164.3, "totalDespesa": 458954829.2, "superavit": 4406335.1, "despesaCapital": 36181602.32, "amortizacao": 0.0, "pctInvestimento": 7.88, "iptu": 1840789.03, "iptuPerCapita": 24.18, "iss": 43471518.39, "issPerCapita": 570.94, "itbi": 209069.46, "itbiPerCapita": 2.75, "convenioFederal": 3243565.79, "convenioEstadual": 1032608.76, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 800000.0, "totalVoluntarias": 4276174.55, "rankVoluntarias": 48}, {"municipio": "Vitória do Xingu", "populacao": 15104, "totalReceita": 386366877.8, "totalDespesa": 346443296.7, "superavit": 39923581.1, "despesaCapital": 57703535.38, "amortizacao": 5381366.92, "pctInvestimento": 15.1, "iptu": 745134.01, "iptuPerCapita": 49.33, "iss": 10488598.48, "issPerCapita": 694.43, "itbi": 388094.22, "itbiPerCapita": 25.69, "convenioFederal": 0.0, "convenioEstadual": 4236767.28, "convenioPrivado": 100000.0, "transferenciaEspecial": 0.0, "consultoria": 3451203.28, "totalVoluntarias": 4236767.28, "rankVoluntarias": 49}, {"municipio": "São Caetano de Odivelas", "populacao": 15226, "totalReceita": 110767658.6, "totalDespesa": 116696481.1, "superavit": -5928822.5, "despesaCapital": 13933812.91, "amortizacao": 1623945.84, "pctInvestimento": 10.55, "iptu": 35698.06, "iptuPerCapita": 2.34, "iss": 661085.67, "issPerCapita": 43.42, "itbi": 350494.52, "itbiPerCapita": 23.02, "convenioFederal": 0.0, "convenioEstadual": 4131762.11, "convenioPrivado": 0.0, "transferenciaEspecial": 100000.0, "consultoria": 765864.54, "totalVoluntarias": 4131762.11, "rankVoluntarias": 50}, {"municipio": "Placas", "populacao": 18602, "totalReceita": 188651698.8, "totalDespesa": 180951956.1, "superavit": 7699742.7, "despesaCapital": 11009246.32, "amortizacao": 673292.52, "pctInvestimento": 5.71, "iptu": 269847.59, "iptuPerCapita": 14.51, "iss": 1351560.17, "issPerCapita": 72.66, "itbi": 277825.13, "itbiPerCapita": 14.94, "convenioFederal": 2117005.5, "convenioEstadual": 1987872.69, "convenioPrivado": 50000.0, "transferenciaEspecial": 990000.0, "consultoria": 2091271.58, "totalVoluntarias": 4104878.19, "rankVoluntarias": 51}, {"municipio": "Santarém Novo", "populacao": 6116, "totalReceita": 62606149.64, "totalDespesa": 62696212.64, "superavit": -90063.0, "despesaCapital": 10354810.03, "amortizacao": 1896813.35, "pctInvestimento": 13.49, "iptu": 0.0, "iptuPerCapita": 0.0, "iss": 1106666.65, "issPerCapita": 180.95, "itbi": 1065.95, "itbiPerCapita": 0.17, "convenioFederal": 0.0, "convenioEstadual": 4005963.2, "convenioPrivado": 0.0, "transferenciaEspecial": 5546262.0, "consultoria": 751504.0, "totalVoluntarias": 4005963.2, "rankVoluntarias": 52}, {"municipio": "Igarapé-Açu", "populacao": 35788, "totalReceita": 171139955.3, "totalDespesa": 159501292.4, "superavit": 11638662.9, "despesaCapital": 14595033.39, "amortizacao": 651710.15, "pctInvestimento": 8.74, "iptu": 9544.74, "iptuPerCapita": 0.27, "iss": 1973532.6, "issPerCapita": 55.15, "itbi": 67554.89, "itbiPerCapita": 1.89, "convenioFederal": 0.0, "convenioEstadual": 3906108.02, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 1530400.0, "totalVoluntarias": 3906108.02, "rankVoluntarias": 53}, {"municipio": "Terra Santa", "populacao": 18804, "totalReceita": 167231624.5, "totalDespesa": 156679517.6, "superavit": 10552106.9, "despesaCapital": 12473111.51, "amortizacao": 0.0, "pctInvestimento": 7.96, "iptu": 240546.55, "iptuPerCapita": 12.79, "iss": 3701498.05, "issPerCapita": 196.85, "itbi": 17818.6, "itbiPerCapita": 0.95, "convenioFederal": 3205700.79, "convenioEstadual": 623181.5, "convenioPrivado": 209400.0, "transferenciaEspecial": 0.0, "consultoria": 29000.0, "totalVoluntarias": 3828882.29, "rankVoluntarias": 54}, {"municipio": "Redenção", "populacao": 91227, "totalReceita": 538890723.8, "totalDespesa": 514000173.2, "superavit": 24890550.6, "despesaCapital": 52719335.4, "amortizacao": 4651838.03, "pctInvestimento": 9.35, "iptu": 5425540.51, "iptuPerCapita": 59.47, "iss": 38360110.94, "issPerCapita": 420.49, "itbi": 6048683.63, "itbiPerCapita": 66.3, "convenioFederal": 0.0, "convenioEstadual": 3790285.84, "convenioPrivado": 0.0, "transferenciaEspecial": 2722576.23, "consultoria": 3321500.0, "totalVoluntarias": 3790285.84, "rankVoluntarias": 55}, {"municipio": "Tucumã", "populacao": 34812, "totalReceita": 272947013.1, "totalDespesa": 247751630.9, "superavit": 25195382.2, "despesaCapital": 39329573.25, "amortizacao": 4738712.91, "pctInvestimento": 13.96, "iptu": 6211622.73, "iptuPerCapita": 178.43, "iss": 19280236.9, "issPerCapita": 553.84, "itbi": 560563.83, "itbiPerCapita": 16.1, "convenioFederal": 2456124.95, "convenioEstadual": 1306596.88, "convenioPrivado": 4304279.4, "transferenciaEspecial": 0.0, "consultoria": 2299942.0, "totalVoluntarias": 3762721.83, "rankVoluntarias": 56}, {"municipio": "Belterra", "populacao": 18060, "totalReceita": 127518616.4, "totalDespesa": 116333885.4, "superavit": 11184731.0, "despesaCapital": 10980443.31, "amortizacao": 2801526.5, "pctInvestimento": 7.03, "iptu": 266539.17, "iptuPerCapita": 14.76, "iss": 1107173.67, "issPerCapita": 61.31, "itbi": 158360.67, "itbiPerCapita": 8.77, "convenioFederal": 2369104.0, "convenioEstadual": 1379899.03, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 1494123.06, "totalVoluntarias": 3749003.03, "rankVoluntarias": 57}, {"municipio": "Santa Luzia do Pará", "populacao": 20341, "totalReceita": 118885242.9, "totalDespesa": 112605375.1, "superavit": 6279867.8, "despesaCapital": 12115938.7, "amortizacao": 1183225.79, "pctInvestimento": 9.71, "iptu": 46047.99, "iptuPerCapita": 2.26, "iss": 875157.27, "issPerCapita": 43.02, "itbi": 39082.32, "itbiPerCapita": 1.92, "convenioFederal": 0.0, "convenioEstadual": 3663784.64, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 953000.0, "totalVoluntarias": 3663784.64, "rankVoluntarias": 58}, {"municipio": "Viseu", "populacao": 58095, "totalReceita": 344928054.8, "totalDespesa": 325376465.4, "superavit": 19551589.4, "despesaCapital": 47199152.34, "amortizacao": 3810449.22, "pctInvestimento": 13.33, "iptu": 133794.49, "iptuPerCapita": 2.3, "iss": 4688797.67, "issPerCapita": 80.71, "itbi": 37971.97, "itbiPerCapita": 0.65, "convenioFederal": 1023.56, "convenioEstadual": 3537166.84, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 1968853.56, "totalVoluntarias": 3538190.4, "rankVoluntarias": 59}, {"municipio": "Muaná", "populacao": 60117, "totalReceita": 267302211.7, "totalDespesa": 258406778.6, "superavit": 8895433.1, "despesaCapital": 33540032.45, "amortizacao": 299405.36, "pctInvestimento": 12.86, "iptu": 101532.4, "iptuPerCapita": 1.69, "iss": 5380284.1, "issPerCapita": 89.5, "itbi": 16659.0, "itbiPerCapita": 0.28, "convenioFederal": 1722126.0, "convenioEstadual": 1720273.58, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 456000.0, "totalVoluntarias": 3442399.58, "rankVoluntarias": 60}, {"municipio": "Santa Maria das Barreiras", "populacao": 17639, "totalReceita": 159451941.7, "totalDespesa": 140738150.5, "superavit": 18713791.2, "despesaCapital": 17313793.74, "amortizacao": 2393161.15, "pctInvestimento": 10.6, "iptu": 166956.1, "iptuPerCapita": 9.47, "iss": 6716667.53, "issPerCapita": 380.79, "itbi": 3667775.69, "itbiPerCapita": 207.94, "convenioFederal": 1079580.61, "convenioEstadual": 2309603.55, "convenioPrivado": 0.0, "transferenciaEspecial": 1089000.0, "consultoria": 2528618.0, "totalVoluntarias": 3389184.16, "rankVoluntarias": 61}, {"municipio": "Porto de Moz", "populacao": 40709, "totalReceita": 322926935.0, "totalDespesa": 290666500.3, "superavit": 32260434.7, "despesaCapital": 37614834.71, "amortizacao": 688102.11, "pctInvestimento": 12.7, "iptu": 155794.5, "iptuPerCapita": 3.83, "iss": 2304296.51, "issPerCapita": 56.6, "itbi": 88181.33, "itbiPerCapita": 2.17, "convenioFederal": 243867.0, "convenioEstadual": 3045762.71, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 1455467.52, "totalVoluntarias": 3289629.71, "rankVoluntarias": 62}, {"municipio": "Tracuateua", "populacao": 28015, "totalReceita": 160313935.2, "totalDespesa": 141724294.6, "superavit": 18589640.6, "despesaCapital": 14554789.59, "amortizacao": 2082238.37, "pctInvestimento": 8.8, "iptu": 7537.72, "iptuPerCapita": 0.27, "iss": 1098817.81, "issPerCapita": 39.22, "itbi": 12905.78, "itbiPerCapita": 0.46, "convenioFederal": 0.0, "convenioEstadual": 3163093.93, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 1289000.0, "totalVoluntarias": 3163093.93, "rankVoluntarias": 63}, {"municipio": "São Domingos do Capim", "populacao": 30144, "totalReceita": 200704043.6, "totalDespesa": 181289995.4, "superavit": 19414048.2, "despesaCapital": 12974071.36, "amortizacao": 3634948.59, "pctInvestimento": 5.15, "iptu": 5820.86, "iptuPerCapita": 0.19, "iss": 3524909.31, "issPerCapita": 116.94, "itbi": 0.0, "itbiPerCapita": 0.0, "convenioFederal": 398101.5, "convenioEstadual": 2722370.98, "convenioPrivado": 0.0, "transferenciaEspecial": 11491593.0, "consultoria": 2307677.08, "totalVoluntarias": 3120472.48, "rankVoluntarias": 64}, {"municipio": "Primavera", "populacao": 10700, "totalReceita": 93484333.25, "totalDespesa": 80829562.02, "superavit": 12654771.23, "despesaCapital": 9364128.79, "amortizacao": 319736.72, "pctInvestimento": 11.19, "iptu": 329034.9, "iptuPerCapita": 30.75, "iss": 6213700.35, "issPerCapita": 580.72, "itbi": 64500.0, "itbiPerCapita": 6.03, "convenioFederal": 0.0, "convenioEstadual": 3120166.95, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 2143845.38, "totalVoluntarias": 3120166.95, "rankVoluntarias": 65}, {"municipio": "Senador José Porfírio", "populacao": 22651, "totalReceita": 166193186.9, "totalDespesa": 162304613.3, "superavit": 3888573.6, "despesaCapital": 12737993.37, "amortizacao": 3068259.26, "pctInvestimento": 5.96, "iptu": 81282.39, "iptuPerCapita": 3.59, "iss": 2999986.33, "issPerCapita": 132.44, "itbi": 65491.66, "itbiPerCapita": 2.89, "convenioFederal": 1000000.0, "convenioEstadual": 2114535.77, "convenioPrivado": 25000.0, "transferenciaEspecial": 0.0, "consultoria": 1902211.29, "totalVoluntarias": 3114535.77, "rankVoluntarias": 66}, {"municipio": "Brejo Grande do Araguaia", "populacao": 6791, "totalReceita": 65839052.74, "totalDespesa": 60937454.77, "superavit": 4901597.97, "despesaCapital": 7368788.9, "amortizacao": 1291178.39, "pctInvestimento": 9.97, "iptu": 2318.09, "iptuPerCapita": 0.34, "iss": 734871.37, "issPerCapita": 108.21, "itbi": 375333.31, "itbiPerCapita": 55.27, "convenioFederal": 0.0, "convenioEstadual": 3078053.83, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 553673.19, "totalVoluntarias": 3078053.83, "rankVoluntarias": 67}, {"municipio": "Santana do Araguaia", "populacao": 44526, "totalReceita": 425567525.2, "totalDespesa": 376693846.0, "superavit": 48873679.2, "despesaCapital": 22038382.23, "amortizacao": 2790728.27, "pctInvestimento": 5.11, "iptu": 1882518.02, "iptuPerCapita": 42.28, "iss": 12075481.45, "issPerCapita": 271.2, "itbi": 8311755.43, "itbiPerCapita": 186.67, "convenioFederal": 0.0, "convenioEstadual": 2947797.36, "convenioPrivado": 0.0, "transferenciaEspecial": 1287000.0, "consultoria": 3393789.68, "totalVoluntarias": 2947797.36, "rankVoluntarias": 68}, {"municipio": "Água Azul do Norte", "populacao": 16672, "totalReceita": 165457168.7, "totalDespesa": 147164779.1, "superavit": 18292389.6, "despesaCapital": 26835167.64, "amortizacao": 7002041.15, "pctInvestimento": 13.48, "iptu": 194395.59, "iptuPerCapita": 11.66, "iss": 8611706.05, "issPerCapita": 516.54, "itbi": 724243.2, "itbiPerCapita": 43.44, "convenioFederal": 0.0, "convenioEstadual": 2888017.84, "convenioPrivado": 60000.0, "transferenciaEspecial": 0.0, "consultoria": 2942055.17, "totalVoluntarias": 2888017.84, "rankVoluntarias": 69}, {"municipio": "Eldorado do Carajás", "populacao": 30264, "totalReceita": 177322813.6, "totalDespesa": 168122250.2, "superavit": 9200563.4, "despesaCapital": 17087522.69, "amortizacao": 3310116.98, "pctInvestimento": 8.19, "iptu": 28690.06, "iptuPerCapita": 0.95, "iss": 1126676.64, "issPerCapita": 37.23, "itbi": 227035.39, "itbiPerCapita": 7.5, "convenioFederal": 0.0, "convenioEstadual": 2789960.45, "convenioPrivado": 740279.79, "transferenciaEspecial": 0.0, "consultoria": 316560.11, "totalVoluntarias": 2789960.45, "rankVoluntarias": 70}, {"municipio": "Anajás", "populacao": 34065, "totalReceita": 203552596.1, "totalDespesa": 201297652.8, "superavit": 2254943.3, "despesaCapital": 7518028.02, "amortizacao": 2834554.65, "pctInvestimento": 2.33, "iptu": 286.36, "iptuPerCapita": 0.01, "iss": 857672.01, "issPerCapita": 25.18, "itbi": 0.0, "itbiPerCapita": 0.0, "convenioFederal": 418386.82, "convenioEstadual": 2282705.94, "convenioPrivado": 0.0, "transferenciaEspecial": 396000.0, "consultoria": 3812014.09, "totalVoluntarias": 2701092.76, "rankVoluntarias": 71}, {"municipio": "São João do Araguaia", "populacao": 13446, "totalReceita": 90818968.0, "totalDespesa": 84549869.51, "superavit": 6269098.49, "despesaCapital": 5976542.76, "amortizacao": 1155924.88, "pctInvestimento": 5.7, "iptu": 17904.26, "iptuPerCapita": 1.33, "iss": 716691.88, "issPerCapita": 53.3, "itbi": 191159.0, "itbiPerCapita": 14.22, "convenioFederal": 0.0, "convenioEstadual": 2602449.58, "convenioPrivado": 0.0, "transferenciaEspecial": 853999.05, "consultoria": 842231.38, "totalVoluntarias": 2602449.58, "rankVoluntarias": 72}, {"municipio": "Bannach", "populacao": 3730, "totalReceita": 49620706.65, "totalDespesa": 45618007.39, "superavit": 4002699.26, "despesaCapital": 3969555.53, "amortizacao": 552132.65, "pctInvestimento": 7.49, "iptu": 0.0, "iptuPerCapita": 0.0, "iss": 484245.17, "issPerCapita": 129.82, "itbi": 1221355.28, "itbiPerCapita": 327.44, "convenioFederal": 1119571.94, "convenioEstadual": 1179200.0, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 1623500.0, "totalVoluntarias": 2298771.94, "rankVoluntarias": 73}, {"municipio": "Garrafão do Norte", "populacao": 24716, "totalReceita": 189725323.7, "totalDespesa": 172935260.1, "superavit": 16790063.6, "despesaCapital": 9200163.22, "amortizacao": 0.0, "pctInvestimento": 5.32, "iptu": 108533.12, "iptuPerCapita": 4.39, "iss": 1899022.41, "issPerCapita": 76.83, "itbi": 17952.28, "itbiPerCapita": 0.73, "convenioFederal": 1494630.84, "convenioEstadual": 412400.0, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 1045000.0, "totalVoluntarias": 1907030.84, "rankVoluntarias": 74}, {"municipio": "Mojuí dos Campos", "populacao": 22845, "totalReceita": 140192300.0, "totalDespesa": 122000120.9, "superavit": 18192179.1, "despesaCapital": 4827794.53, "amortizacao": 157719.45, "pctInvestimento": 3.83, "iptu": 32109.67, "iptuPerCapita": 1.41, "iss": 1492403.93, "issPerCapita": 65.33, "itbi": 149868.49, "itbiPerCapita": 6.56, "convenioFederal": 7235.93, "convenioEstadual": 1886650.58, "convenioPrivado": 404925.0, "transferenciaEspecial": 0.0, "consultoria": 2125000.0, "totalVoluntarias": 1893886.51, "rankVoluntarias": 75}, {"municipio": "Floresta do Araguaia", "populacao": 17896, "totalReceita": 132181536.8, "totalDespesa": 121462136.3, "superavit": 10719400.5, "despesaCapital": 7103963.71, "amortizacao": 0.0, "pctInvestimento": 5.85, "iptu": 264776.32, "iptuPerCapita": 14.8, "iss": 833427.14, "issPerCapita": 46.57, "itbi": 2429478.25, "itbiPerCapita": 135.76, "convenioFederal": 0.0, "convenioEstadual": 1886857.23, "convenioPrivado": 0.0, "transferenciaEspecial": 2475158.4, "consultoria": 630000.0, "totalVoluntarias": 1886857.23, "rankVoluntarias": 76}, {"municipio": "Goianésia do Pará", "populacao": 23806, "totalReceita": 193997619.9, "totalDespesa": 190548547.6, "superavit": 3449072.3, "despesaCapital": 10873769.85, "amortizacao": 1186440.05, "pctInvestimento": 5.08, "iptu": 0.0, "iptuPerCapita": 0.0, "iss": 3691637.23, "issPerCapita": 155.07, "itbi": 244201.24, "itbiPerCapita": 10.26, "convenioFederal": 246793.84, "convenioEstadual": 1148221.71, "convenioPrivado": 0.0, "transferenciaEspecial": 536846.91, "consultoria": 883000.0, "totalVoluntarias": 1395015.55, "rankVoluntarias": 77}, {"municipio": "Ponta de Pedras", "populacao": 24913, "totalReceita": 155733708.4, "totalDespesa": 144297578.7, "superavit": 11436129.7, "despesaCapital": 8416081.01, "amortizacao": 40919.31, "pctInvestimento": 5.8, "iptu": 402897.34, "iptuPerCapita": 16.17, "iss": 1779117.74, "issPerCapita": 71.41, "itbi": 47551.0, "itbiPerCapita": 1.91, "convenioFederal": 1378064.39, "convenioEstadual": 0.0, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 1855499.95, "totalVoluntarias": 1378064.39, "rankVoluntarias": 78}, {"municipio": "Palestina do Pará", "populacao": 6872, "totalReceita": 57560369.86, "totalDespesa": 52404226.95, "superavit": 5156142.91, "despesaCapital": 4113792.08, "amortizacao": 0.0, "pctInvestimento": 7.85, "iptu": 27386.64, "iptuPerCapita": 3.99, "iss": 509503.97, "issPerCapita": 74.14, "itbi": 166525.5, "itbiPerCapita": 24.23, "convenioFederal": 0.0, "convenioEstadual": 1203746.5, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 0.0, "totalVoluntarias": 1203746.5, "rankVoluntarias": 79}, {"municipio": "Soure", "populacao": 24183, "totalReceita": 128041827.2, "totalDespesa": 115544099.6, "superavit": 12497727.6, "despesaCapital": 5070433.27, "amortizacao": 1554555.12, "pctInvestimento": 3.04, "iptu": 244585.75, "iptuPerCapita": 10.11, "iss": 1261932.89, "issPerCapita": 52.18, "itbi": 39560.0, "itbiPerCapita": 1.64, "convenioFederal": 0.0, "convenioEstadual": 1183872.05, "convenioPrivado": 0.0, "transferenciaEspecial": 1188000.0, "consultoria": 967910.7, "totalVoluntarias": 1183872.05, "rankVoluntarias": 80}, {"municipio": "Pau D'Arco", "populacao": 6772, "totalReceita": 70802912.78, "totalDespesa": 62978419.8, "superavit": 7824492.98, "despesaCapital": 2087054.25, "amortizacao": 0.0, "pctInvestimento": 3.31, "iptu": 16934.5, "iptuPerCapita": 2.5, "iss": 524154.77, "issPerCapita": 77.4, "itbi": 415477.02, "itbiPerCapita": 61.35, "convenioFederal": 575477.0, "convenioEstadual": 424780.76, "convenioPrivado": 0.0, "transferenciaEspecial": 594000.0, "consultoria": 1125500.0, "totalVoluntarias": 1000257.76, "rankVoluntarias": 81}, {"municipio": "Oeiras do Pará", "populacao": 33886, "totalReceita": 216122485.7, "totalDespesa": 219046294.6, "superavit": -2923808.9, "despesaCapital": 13213047.27, "amortizacao": 3036868.15, "pctInvestimento": 4.65, "iptu": 87727.99, "iptuPerCapita": 2.59, "iss": 3346008.42, "issPerCapita": 98.74, "itbi": 5252.84, "itbiPerCapita": 0.16, "convenioFederal": 334946.35, "convenioEstadual": 504497.97, "convenioPrivado": 0.0, "transferenciaEspecial": 1300000.0, "consultoria": 2224100.0, "totalVoluntarias": 839444.32, "rankVoluntarias": 82}, {"municipio": "Ourilândia do Norte", "populacao": 26570, "totalReceita": 269110647.4, "totalDespesa": 254007473.8, "superavit": 15103173.6, "despesaCapital": 50371029.49, "amortizacao": 2297795.71, "pctInvestimento": 18.93, "iptu": 1175085.11, "iptuPerCapita": 44.23, "iss": 46265400.07, "issPerCapita": 1741.26, "itbi": 725931.34, "itbiPerCapita": 27.32, "convenioFederal": 779130.15, "convenioEstadual": 0.0, "convenioPrivado": 1954476.1, "transferenciaEspecial": 4406000.0, "consultoria": 3091300.0, "totalVoluntarias": 779130.15, "rankVoluntarias": 83}, {"municipio": "Ananindeua", "populacao": 515745, "totalReceita": 1807313792.0, "totalDespesa": 1745432925.0, "superavit": 61880867.0, "despesaCapital": 444563591.4, "amortizacao": 66514713.53, "pctInvestimento": 21.66, "iptu": 45996947.57, "iptuPerCapita": 89.19, "iss": 119841301.9, "issPerCapita": 232.37, "itbi": 15981554.67, "itbiPerCapita": 30.99, "convenioFederal": 740237.43, "convenioEstadual": 0.0, "convenioPrivado": 0.0, "transferenciaEspecial": 13481812.08, "consultoria": 1803400.0, "totalVoluntarias": 740237.43, "rankVoluntarias": 84}, {"municipio": "Abel Figueiredo", "populacao": 6119, "totalReceita": 51490718.55, "totalDespesa": 46203396.75, "superavit": 5287321.8, "despesaCapital": 3187876.56, "amortizacao": 331500.34, "pctInvestimento": 6.18, "iptu": 54133.82, "iptuPerCapita": 8.85, "iss": 784477.01, "issPerCapita": 128.2, "itbi": 105094.54, "itbiPerCapita": 17.18, "convenioFederal": 206816.69, "convenioEstadual": 457536.96, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 757058.46, "totalVoluntarias": 664353.65, "rankVoluntarias": 85}, {"municipio": "Irituia", "populacao": 30627, "totalReceita": 179159209.8, "totalDespesa": 159838003.8, "superavit": 19321206.0, "despesaCapital": 19997902.69, "amortizacao": 2585088.0, "pctInvestimento": 10.89, "iptu": 647.47, "iptuPerCapita": 0.02, "iss": 1378225.76, "issPerCapita": 45.0, "itbi": 14671.08, "itbiPerCapita": 0.48, "convenioFederal": 469029.5, "convenioEstadual": 32.48, "convenioPrivado": 0.0, "transferenciaEspecial": 21295500.99, "consultoria": 2399076.64, "totalVoluntarias": 469061.98, "rankVoluntarias": 86}, {"municipio": "Colares", "populacao": 11923, "totalReceita": 71494167.9, "totalDespesa": 63948688.95, "superavit": 7545478.95, "despesaCapital": 5304548.62, "amortizacao": 1850377.53, "pctInvestimento": 5.4, "iptu": 13245.96, "iptuPerCapita": 1.11, "iss": 514388.85, "issPerCapita": 43.14, "itbi": 5015.22, "itbiPerCapita": 0.42, "convenioFederal": 0.0, "convenioEstadual": 338915.14, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 1002333.44, "totalVoluntarias": 338915.14, "rankVoluntarias": 87}, {"municipio": "Curuá", "populacao": 14126, "totalReceita": 92382700.03, "totalDespesa": 80222993.13, "superavit": 12159706.9, "despesaCapital": 4079803.68, "amortizacao": 839196.35, "pctInvestimento": 4.04, "iptu": 16750.69, "iptuPerCapita": 1.19, "iss": 455329.15, "issPerCapita": 32.23, "itbi": 693.94, "itbiPerCapita": 0.05, "convenioFederal": 300000.0, "convenioEstadual": 0.0, "convenioPrivado": 0.0, "transferenciaEspecial": 5540482.0, "consultoria": 1816100.0, "totalVoluntarias": 300000.0, "rankVoluntarias": 88}, {"municipio": "Brasil Novo", "populacao": 30214, "totalReceita": 194900331.8, "totalDespesa": 181959920.0, "superavit": 12940411.8, "despesaCapital": 30913009.8, "amortizacao": 0.0, "pctInvestimento": 16.99, "iptu": 625133.11, "iptuPerCapita": 20.69, "iss": 3298122.73, "issPerCapita": 109.16, "itbi": 533417.28, "itbiPerCapita": 17.65, "convenioFederal": 0.0, "convenioEstadual": 148185.46, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 1190290.0, "totalVoluntarias": 148185.46, "rankVoluntarias": 89}, {"municipio": "Nova Timboteua", "populacao": 12737, "totalReceita": 84048537.99, "totalDespesa": 81404564.43, "superavit": 2643973.56, "despesaCapital": 3992649.73, "amortizacao": 1309857.67, "pctInvestimento": 3.3, "iptu": 4204.19, "iptuPerCapita": 0.33, "iss": 1398412.38, "issPerCapita": 109.79, "itbi": 46173.11, "itbiPerCapita": 3.63, "convenioFederal": 0.0, "convenioEstadual": 47812.92, "convenioPrivado": 615000.0, "transferenciaEspecial": 8269522.0, "consultoria": 538000.0, "totalVoluntarias": 47812.92, "rankVoluntarias": 90}, {"municipio": "Parauapebas", "populacao": 271577, "totalReceita": 2698005857.0, "totalDespesa": 2475141520.0, "superavit": 222864337.0, "despesaCapital": 382941055.0, "amortizacao": 60060522.54, "pctInvestimento": 13.04, "iptu": 13468551.46, "iptuPerCapita": 49.59, "iss": 275595150.1, "issPerCapita": 1014.8, "itbi": 6002020.77, "itbiPerCapita": 22.1, "convenioFederal": 0.0, "convenioEstadual": 38813.75, "convenioPrivado": 34100000.0, "transferenciaEspecial": 1485000.0, "consultoria": 5821904.93, "totalVoluntarias": 38813.75, "rankVoluntarias": 91}, {"municipio": "Canaã dos Carajás", "populacao": 75433, "totalReceita": 2065916291.0, "totalDespesa": 1962905756.0, "superavit": 103010535.0, "despesaCapital": 299942621.9, "amortizacao": 0.0, "pctInvestimento": 15.28, "iptu": 5727684.09, "iptuPerCapita": 75.93, "iss": 289433357.3, "issPerCapita": 3836.96, "itbi": 3592024.57, "itbiPerCapita": 47.62, "convenioFederal": 0.0, "convenioEstadual": 0.0, "convenioPrivado": 686980.0, "transferenciaEspecial": 3847377.0, "consultoria": 15374985.12, "totalVoluntarias": 0.0, "rankVoluntarias": 92}, {"municipio": "Monte Alegre", "populacao": 59890, "totalReceita": 339517723.9, "totalDespesa": 348656961.3, "superavit": -9139237.4, "despesaCapital": 17471837.86, "amortizacao": 288844.04, "pctInvestimento": 4.93, "iptu": 1310648.16, "iptuPerCapita": 21.88, "iss": 6063446.45, "issPerCapita": 101.24, "itbi": 161294.28, "itbiPerCapita": 2.69, "convenioFederal": 0.0, "convenioEstadual": 0.0, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 16000.0, "totalVoluntarias": 0.0, "rankVoluntarias": 93}, {"municipio": "São Francisco do Pará", "populacao": 14912, "totalReceita": 87729545.3, "totalDespesa": 76981827.73, "superavit": 10747717.57, "despesaCapital": 3619323.76, "amortizacao": 0.0, "pctInvestimento": 4.7, "iptu": 56916.84, "iptuPerCapita": 3.82, "iss": 1284733.48, "issPerCapita": 86.15, "itbi": 126312.19, "itbiPerCapita": 8.47, "convenioFederal": 0.0, "convenioEstadual": 0.0, "convenioPrivado": 0.0, "transferenciaEspecial": 5200000.0, "consultoria": 604000.0, "totalVoluntarias": 0.0, "rankVoluntarias": 94}, {"municipio": "São Félix do Xingu", "populacao": 81161, "totalReceita": 463188965.5, "totalDespesa": 414309135.5, "superavit": 48879830.0, "despesaCapital": 20186689.71, "amortizacao": 3862968.14, "pctInvestimento": 3.94, "iptu": 2781855.48, "iptuPerCapita": 34.28, "iss": 11865015.12, "issPerCapita": 146.19, "itbi": 2855374.25, "itbiPerCapita": 35.18, "convenioFederal": 0.0, "convenioEstadual": 0.0, "convenioPrivado": 1959422.12, "transferenciaEspecial": 0.0, "consultoria": 3048700.0, "totalVoluntarias": 0.0, "rankVoluntarias": 95}, {"municipio": "Salinópolis", "populacao": 44451, "totalReceita": 213013684.7, "totalDespesa": 215093527.6, "superavit": -2079842.9, "despesaCapital": 34766081.08, "amortizacao": 7389432.17, "pctInvestimento": 12.73, "iptu": 8154218.14, "iptuPerCapita": 183.44, "iss": 6967203.25, "issPerCapita": 156.74, "itbi": 2374973.26, "itbiPerCapita": 53.43, "convenioFederal": 0.0, "convenioEstadual": 0.0, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 2202382.4, "totalVoluntarias": 0.0, "rankVoluntarias": 96}, {"municipio": "Trairão", "populacao": 18924, "totalReceita": 120582751.7, "totalDespesa": 104700465.7, "superavit": 15882286.0, "despesaCapital": 8027732.39, "amortizacao": 564970.52, "pctInvestimento": 7.13, "iptu": 259946.42, "iptuPerCapita": 13.74, "iss": 5762826.9, "issPerCapita": 304.52, "itbi": 2124.26, "itbiPerCapita": 0.11, "convenioFederal": 0.0, "convenioEstadual": 0.0, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 2285314.88, "totalVoluntarias": 0.0, "rankVoluntarias": 97}, {"municipio": "São João da Ponta", "populacao": 4264, "totalReceita": 43033527.06, "totalDespesa": 33725337.17, "superavit": 9308189.89, "despesaCapital": 4597458.02, "amortizacao": 573279.74, "pctInvestimento": 11.93, "iptu": 0.0, "iptuPerCapita": 0.0, "iss": 468409.3, "issPerCapita": 109.85, "itbi": 7900.0, "itbiPerCapita": 1.85, "convenioFederal": 0.0, "convenioEstadual": 0.0, "convenioPrivado": 0.0, "transferenciaEspecial": 0.0, "consultoria": 1017070.0, "totalVoluntarias": 0.0, "rankVoluntarias": 98}];
+const MEDIANA_CONSULTORIA_PA = 1512261.53;
+const MEDIANA_VOLUNTARIAS_PA = 4184264.70;
+  var MEDIANA_INVESTIMENTO_PA = 8.47;
+
+  function fmtRS(v){
+    return 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2});
+  }
+  function fmtNumPt(v, casas){
+    casas = casas === undefined ? 1 : casas;
+    return Number(v).toLocaleString('pt-BR', {minimumFractionDigits:casas, maximumFractionDigits:casas});
+  }
+  let TODOS_MUNICIPIOS = MUNICIPIOS_PA_2025.map(function(m){ return Object.assign({uf: 'PA'}, m); });
+
+  function findMunicipioAtual(nome, uf){
+    return TODOS_MUNICIPIOS.find(function(m){ return m.municipio === nome && (!uf || m.uf === uf); });
+  }
+  function populateUFSelect(){
+    const sel = document.getElementById('uf-select');
+    if (!sel) return;
+    const atual = sel.value;
+    const ufs = Array.from(new Set(TODOS_MUNICIPIOS.map(function(m){ return m.uf; }))).sort();
+    sel.innerHTML = ufs.map(function(uf){ return '<option value="' + uf + '">' + uf + '</option>'; }).join('');
+    sel.value = ufs.indexOf(atual) >= 0 ? atual : (ufs.indexOf('PA') >= 0 ? 'PA' : ufs[0]);
+  }
+  function filtrarMunicipiosPorUF(){
+    populateMunicipioSelectOnly();
+  }
+  function populateMunicipioSelectOnly(){
+    const uf = document.getElementById('uf-select')?.value || 'PA';
+    const sel = document.getElementById('municipio-select');
+    if (!sel) return;
+    const ranqueado = calcularRankingFederal(uf);
+    const ordenado = ranqueado.slice().sort(function(a,b){ return a.municipio.localeCompare(b.municipio, 'pt-BR'); });
+    sel.innerHTML = ordenado.map(function(m){
+      return '<option value="' + m.municipio + '">' + m.municipio + ' \u2014 ' + m._rankFederal + '\u00ba em capta\u00e7\u00e3o federal (de ' + ordenado.length + ' munic\u00edpios do ' + uf + ')</option>';
+    }).join('');
+    const alt = ordenado.find(function(m){ return m.municipio === 'Altamira'; });
+    sel.value = (uf === 'PA' && alt) ? alt.municipio : (ordenado[0] ? ordenado[0].municipio : '');
+    const nota = document.getElementById('total-municipios-note');
+    if (nota) nota.textContent = ordenado.length + ' munic\u00edpios do ' + uf + ' que constam no SICONFI (2025)';
+    if (sel.value) renderMunicipioReal(sel.value);
+  }
+  function populateMunicipioSelect(){
+    populateUFSelect();
+    populateMunicipioSelectOnly();
+  }
+
+  // ===== Importação de planilhas SICONFI de qualquer estado =====
+  const SICONFI_CONTAS = {
+    totalReceitas: 'siconfi-cor_ReceitasExcetoIntraOrcamentarias',
+    iptu: 'siconfi-cor_RO1.1.1.2.50.0.0',
+    iss: 'siconfi-cor_RO1.1.1.4.51.1.0',
+    itbi: 'siconfi-cor_RO1.1.1.2.53.0.0',
+    convFedCorrente: 'siconfi-cor_RO1.7.1.7.00.0.0',
+    convFedCapital: 'siconfi-cor_RO2.4.1.4.00.0.0',
+    convEstCorrente: 'siconfi-cor_RO1.7.2.4.00.0.0',
+    convEstCapital: 'siconfi-cor_RO2.4.2.2.00.0.0',
+    convPrivCorrente: 'siconfi-cor_RO1.7.4.0.00.0.0',
+    convPrivCapital: 'siconfi-cor_RO2.4.4.0.00.0.0',
+  };
+  const SICONFI_CONTAS_DESPESA = {
+    totalDespesas: 'Total Geral da Despesa',
+    despesaCapital: '4.0.00.00.00 - Despesas de Capital',
+    amortizacao: '4.6.00.00.00 - Amortiza\u00e7\u00e3o da D\u00edvida',
+    consultoriaCorrente: '3.3.90.35.00 - Servi\u00e7os de Consultoria',
+    consultoriaCapital: '4.4.90.35.00 - Servi\u00e7os de Consultoria',
+  };
+
+  function lerArquivoLatin1(file){
+    return new Promise(function(resolve, reject){
+      const reader = new FileReader();
+      reader.onload = function(){
+        try {
+          const decoder = new TextDecoder('iso-8859-1');
+          resolve(decoder.decode(reader.result));
+        } catch(e){ reject(e); }
+      };
+      reader.onerror = reject;
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  function parseCSVSiconfi(texto){
+    const linhas = texto.split(/\r\n|\n/);
+    const dados = [];
+    for (let i = 4; i < linhas.length; i++){
+      const linha = linhas[i];
+      if (!linha || !linha.trim()) continue;
+      const cols = linha.split(';');
+      if (cols.length < 8) continue;
+      dados.push({
+        instituicao: cols[0].trim(),
+        uf: (cols[2] || '').trim(),
+        populacao: parseInt(cols[3], 10) || 0,
+        coluna: (cols[4] || '').trim(),
+        conta: (cols[5] || '').trim(),
+        id: (cols[6] || '').trim(),
+        valor: parseFloat((cols[7] || '0').replace(',', '.')) || 0,
+      });
+    }
+    return dados;
+  }
+
+  function somaPorId(linhas, instituicao, ids){
+    return linhas.filter(function(r){ return r.instituicao === instituicao && ids.indexOf(r.id) >= 0; })
+      .reduce(function(s,r){ return s + r.valor; }, 0);
+  }
+  function somaPorNomeConta(linhas, instituicao, nomeConta){
+    return linhas.filter(function(r){ return r.instituicao === instituicao && r.conta === nomeConta; })
+      .reduce(function(s,r){ return s + r.valor; }, 0);
+  }
+
+  async function processarPlanilhasSiconfi(){
+    const statusEl = document.getElementById('upload-status');
+    const fReceitas = document.getElementById('upload-receitas')?.files[0];
+    const fDespesas = document.getElementById('upload-despesas')?.files[0];
+    if (!fReceitas || !fDespesas){
+      alert('Selecione as duas planilhas (Receitas e Despesas) antes de processar.');
+      return;
+    }
+    if (statusEl) statusEl.textContent = 'Processando...';
+    try {
+      const [textoR, textoD] = await Promise.all([lerArquivoLatin1(fReceitas), lerArquivoLatin1(fDespesas)]);
+      const linhasR = parseCSVSiconfi(textoR).filter(function(r){ return r.coluna === 'Receitas Brutas Realizadas'; });
+      const linhasD = parseCSVSiconfi(textoD).filter(function(r){ return r.coluna === 'Despesas Empenhadas'; });
+
+      const instituicoes = {};
+      linhasR.forEach(function(r){
+        if (!instituicoes[r.instituicao]) instituicoes[r.instituicao] = { populacao: r.populacao, uf: r.uf };
+      });
+
+      let resultado = Object.keys(instituicoes).map(function(nome){
+        const pop = instituicoes[nome].populacao;
+        const uf = instituicoes[nome].uf;
+        const totalReceita = somaPorId(linhasR, nome, [SICONFI_CONTAS.totalReceitas]);
+        const totalDespesa = somaPorNomeConta(linhasD, nome, SICONFI_CONTAS_DESPESA.totalDespesas);
+        const despesaCapital = somaPorNomeConta(linhasD, nome, SICONFI_CONTAS_DESPESA.despesaCapital);
+        const amortizacao = somaPorNomeConta(linhasD, nome, SICONFI_CONTAS_DESPESA.amortizacao);
+        const iptu = somaPorId(linhasR, nome, [SICONFI_CONTAS.iptu]);
+        const iss = somaPorId(linhasR, nome, [SICONFI_CONTAS.iss]);
+        const itbi = somaPorId(linhasR, nome, [SICONFI_CONTAS.itbi]);
+        const convenioFederal = somaPorId(linhasR, nome, [SICONFI_CONTAS.convFedCorrente, SICONFI_CONTAS.convFedCapital]);
+        const convenioEstadual = somaPorId(linhasR, nome, [SICONFI_CONTAS.convEstCorrente, SICONFI_CONTAS.convEstCapital]);
+        const convenioPrivado = somaPorId(linhasR, nome, [SICONFI_CONTAS.convPrivCorrente, SICONFI_CONTAS.convPrivCapital]);
+        const consultoria = somaPorNomeConta(linhasD, nome, SICONFI_CONTAS_DESPESA.consultoriaCorrente) + somaPorNomeConta(linhasD, nome, SICONFI_CONTAS_DESPESA.consultoriaCapital);
+        const superavit = totalReceita - totalDespesa;
+        const pctInvestimento = totalDespesa ? (despesaCapital - amortizacao) / totalDespesa * 100 : 0;
+        const totalVoluntarias = convenioFederal + convenioEstadual;
+        const nomeCurto = nome.replace('Prefeitura Municipal de ', '').replace(' - ' + uf, '').trim();
+        return {
+          municipio: nomeCurto, uf: uf, populacao: pop,
+          totalReceita: totalReceita, totalDespesa: totalDespesa, superavit: superavit,
+          despesaCapital: despesaCapital, amortizacao: amortizacao, pctInvestimento: pctInvestimento,
+          iptu: iptu, iptuPerCapita: pop ? iptu/pop : 0,
+          iss: iss, issPerCapita: pop ? iss/pop : 0,
+          itbi: itbi, itbiPerCapita: pop ? itbi/pop : 0,
+          convenioFederal: convenioFederal, convenioEstadual: convenioEstadual, convenioPrivado: convenioPrivado,
+          transferenciaEspecial: 0, consultoria: consultoria, totalVoluntarias: totalVoluntarias,
+        };
+      });
+
+      resultado.sort(function(a,b){ return b.totalVoluntarias - a.totalVoluntarias; });
+      resultado.forEach(function(m,i){ m.rankVoluntarias = i + 1; });
+
+      if (!resultado.length){
+        if (statusEl) statusEl.textContent = 'Nenhum munic\u00edpio encontrado nas planilhas. Confira o formato dos arquivos.';
+        return;
+      }
+      const ufCarregada = resultado[0].uf;
+      TODOS_MUNICIPIOS = TODOS_MUNICIPIOS.filter(function(m){ return m.uf !== ufCarregada; }).concat(resultado);
+
+      populateMunicipioSelect();
+      const ufSel = document.getElementById('uf-select');
+      if (ufSel) ufSel.value = ufCarregada;
+      populateMunicipioSelectOnly();
+
+      if (statusEl) statusEl.textContent = resultado.length + ' munic\u00edpios de ' + ufCarregada + ' processados com sucesso.';
+    } catch(e){
+      console.error(e);
+      if (statusEl) statusEl.textContent = 'Erro ao processar as planilhas — confira se s\u00e3o os arquivos corretos do SICONFI (Receitas e Despesas, formato CSV).';
+    }
+  }
+
+  // ===== Importação do extrato CAUC (PDF) =====
+  let CAUC_DATA = {}; // chave: "Município|UF" -> { grupos: [...], dataPesquisa, ente }
+
+  const CAUC_FONTES_CONHECIDAS = [
+    'SIAFI/Subsistema Transferências', 'Transferegov.br', 'PGFN/RFB', 'CAIXA',
+    'SAHEM', 'CADIN', 'SICONFI', 'SIOPE', 'SIOPS', 'SADIPEM', 'CADPREV'
+  ].sort((a, b) => b.length - a.length);
+
+  const CAUC_GRUPOS_NOMES = {
+    '1': 'Grupo I — Obrigações de Adimplência Financeira',
+    '2': 'Grupo II — Adimplemento na Prestação de Contas de Convênios',
+    '3': 'Grupo III — Obrigações de Transparência',
+    '4': 'Grupo IV — Adimplemento de Obrigações Constitucionais ou Legais',
+    '5': 'Grupo V — Cumprimento de Limites Constitucionais e Legais',
+  };
+
+  async function extrairTextoPDF(file){
+    const arrayBuffer = await file.arrayBuffer();
+    const pdfjsLib = window['pdfjsLib'];
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let texto = '';
+    for (let i = 1; i <= pdf.numPages; i++){
+      const page = await pdf.getPage(i);
+      const content = await page.getTextContent();
+      texto += content.items.map(it => it.str).join(' ') + '\n';
+    }
+    return texto;
+  }
+
+  function parseCaucPDF(textoOriginal){
+    const texto = textoOriginal.replace(/\s+/g, ' ');
+
+    const entMatch = texto.match(/Ente Federativo:\s*([\d.\/-]+)\s*-\s*MUNICIPIO DE ([^\/]+)\/([A-Z]{2})/i);
+    const dataMatch = texto.match(/Data da Pesquisa:\s*(\d{2}\/\d{2}\/\d{4})/);
+    if (!entMatch) return null;
+
+    const municipioNome = entMatch[2].trim();
+    const uf = entMatch[3].trim();
+    const dataPesquisa = dataMatch ? dataMatch[1] : '';
+
+    const pattern = /(\d)\.(\d)(?:\.(\d))?\s*-\s*(.+?)\s+(Comprovado|A Comprovar|Desativado)\s+(\(\*\)|\[Desativado\]|\d{2}\/\d{2}\/\d{4})/g;
+    const itensPorGrupo = { '1': [], '2': [], '3': [], '4': [], '5': [] };
+    let m;
+    while ((m = pattern.exec(texto)) !== null){
+      const grupo = m[1];
+      const codigo = m[1] + '.' + m[2] + (m[3] ? '.' + m[3] : '');
+      let label = m[4].trim();
+      const situacao = m[5];
+      const validade = m[6];
+      let fonte = '';
+      for (const f of CAUC_FONTES_CONHECIDAS){
+        if (label.endsWith(f)){
+          fonte = f;
+          label = label.slice(0, -f.length).trim();
+          break;
+        }
+      }
+      if (!itensPorGrupo[grupo]) continue;
+      itensPorGrupo[grupo].push({ codigo, label, fonte, situacao, validade });
+    }
+
+    const totalItens = Object.values(itensPorGrupo).reduce((s, arr) => s + arr.length, 0);
+    if (totalItens === 0) return null;
+
+    return { municipio: municipioNome, uf, dataPesquisa, itensPorGrupo, totalItens };
+  }
+
+  function tituloCaso(str){
+    return str.replace(/\w\S*/g, t => t.charAt(0).toUpperCase() + t.slice(1).toLowerCase());
+  }
+
+  async function processarExtratoCauc(){
+    const statusEl = document.getElementById('cauc-upload-status');
+    const file = document.getElementById('upload-cauc')?.files[0];
+    if (!file){
+      alert('Selecione o arquivo PDF do extrato CAUC antes de processar.');
+      return;
+    }
+    if (statusEl) statusEl.textContent = 'Processando...';
+    try {
+      const texto = await extrairTextoPDF(file);
+      const resultado = parseCaucPDF(texto);
+      if (!resultado){
+        if (statusEl) statusEl.textContent = 'Não foi possível reconhecer o extrato — confira se é um PDF do CAUC (sisweb.tesouro.gov.br), sem estar escaneado como imagem.';
+        return;
+      }
+      const nomeFormatado = tituloCaso(resultado.municipio);
+      const chave = nomeFormatado + '|' + resultado.uf;
+      CAUC_DATA[chave] = resultado;
+
+      if (statusEl) statusEl.textContent = resultado.totalItens + ' itens do CAUC de ' + nomeFormatado + ' — ' + resultado.uf + ' importados (pesquisa em ' + resultado.dataPesquisa + ').';
+
+      // se o município do extrato já é o selecionado, atualizar a tela na hora
+      const selAtual = document.getElementById('municipio-select')?.value;
+      const ufAtual = document.getElementById('uf-select')?.value;
+      if (selAtual === nomeFormatado && ufAtual === resultado.uf){
+        renderCaucTable(nomeFormatado, resultado.uf);
+      }
+    } catch(e){
+      console.error(e);
+      if (statusEl) statusEl.textContent = 'Erro ao processar o PDF — confira se o arquivo não está corrompido ou protegido por senha.';
+    }
+  }
+
+  const CAUC_EXEMPLO = {
+    itensPorGrupo: {
+      '1': [
+        { codigo: '1.1', label: 'Tributos federais, contribuições previdenciárias e dívida ativa da União', fonte: 'PGFN/RFB', situacao: 'Comprovado', validade: '' },
+        { codigo: '1.2', label: 'Contribuições ao FGTS', fonte: 'CAIXA', situacao: 'Comprovado', validade: '' },
+      ],
+      '2': [
+        { codigo: '2.1', label: 'Prestação de contas no SIAFI/Transferegov', fonte: '', situacao: 'Comprovado', validade: '' },
+      ],
+      '3': [
+        { codigo: '3.1', label: 'Relatório de Gestão Fiscal (RGF) e RREO', fonte: 'SICONFI', situacao: 'Comprovado', validade: '' },
+        { codigo: '3.2', label: 'Contas anuais e Matriz de Saldos Contábeis', fonte: 'SICONFI', situacao: 'Comprovado', validade: '' },
+      ],
+      '4': [
+        { codigo: '4.1', label: 'Plena competência tributária e regularidade previdenciária', fonte: 'SICONFI / CADPREV', situacao: 'Comprovado', validade: '' },
+      ],
+      '5': [
+        { codigo: '5.1', label: 'Aplicação mínima em Saúde (SIOPS) e Educação (SIOPE)', fonte: '', situacao: 'Comprovado', validade: '' },
+        { codigo: '5.2', label: 'Limite de despesa com pessoal', fonte: '', situacao: 'A Comprovar', validade: '' },
+      ],
+    }
+  };
+
+  function renderCaucTable(municipio, uf){
+    const tbody = document.getElementById('cauc-tbody');
+    const badge = document.getElementById('cauc-status-badge');
+    const nota = document.getElementById('cauc-panel-note');
+    if (!tbody) return;
+
+    const chave = municipio + '|' + uf;
+    const real = CAUC_DATA[chave];
+    const dados = real || CAUC_EXEMPLO;
+
+    if (real){
+      if (badge){ badge.style.color = 'var(--ok, #3A7A5D)'; badge.textContent = '✓ Dados reais — extrato CAUC pesquisado em ' + real.dataPesquisa; }
+      if (nota) nota.textContent = 'Fonte: extrato CAUC oficial (sisweb.tesouro.gov.br), importado para ' + municipio + ' — ' + uf;
+    } else {
+      if (badge){ badge.style.color = 'var(--gold)'; badge.textContent = '⚠ Dados de exemplo — extrato CAUC ainda não importado para ' + municipio + '. Use o campo acima para importar o PDF real.'; }
+      if (nota) nota.textContent = '18 requisitos fiscais em 5 grupos + requisitos fora do CAUC (Portaria Conjunta MGI/MF/CGU nº 44/2023)';
+    }
+
+    let html = '';
+    ['1','2','3','4','5'].forEach(g => {
+      const itens = dados.itensPorGrupo[g];
+      if (!itens || !itens.length) return;
+      html += '<tr><td colspan="2" style="padding:10px 10px 4px; font-weight:700; color:var(--primary); font-size:12px;">' + CAUC_GRUPOS_NOMES[g] + '</td></tr>';
+      itens.forEach(it => {
+        const ok = it.situacao === 'Comprovado';
+        const icone = ok ? 'ok' : (it.situacao === 'Desativado' ? 'ok' : 'bad');
+        const simbolo = ok ? '✓' : (it.situacao === 'Desativado' ? '—' : '!');
+        const detalhe = [it.fonte, it.situacao, it.validade && it.validade !== '(*)' ? ('validade: ' + it.validade) : ''].filter(Boolean).join(' — ');
+        html += '<tr class="checklist-row"><td class="check-icon ' + icone + '" style="text-align:center; padding:6px 10px;">' + simbolo + '</td><td class="t" style="padding:6px 10px;"><strong>' + it.codigo + ' — ' + it.label + '</strong><span style="display:block; color:var(--ink-soft);">' + detalhe + '</span></td></tr>';
+      });
+    });
+    tbody.innerHTML = html;
+  }
+
+  function findMunicipioPA(nome){
+    return findMunicipioAtual(nome, document.getElementById('uf-select')?.value);
+  }
+
+  function mediana(valores){
+    if (!valores.length) return 0;
+    const v = valores.slice().sort(function(a,b){ return a-b; });
+    const meio = Math.floor(v.length/2);
+    return v.length % 2 ? v[meio] : (v[meio-1] + v[meio]) / 2;
+  }
+  function calcularRankingFederal(uf){
+    // Ordena por captação federal (Transferegov) — critério de desempate: ordem alfabética do nome do município.
+    // Usado de forma consistente em todo o sistema (seletor, tela e exportação) para nunca divergir.
+    const doEstado = TODOS_MUNICIPIOS.filter(function(m){ return m.uf === uf; });
+    const ordenado = doEstado.slice().sort(function(a,b){
+      if (b.convenioFederal !== a.convenioFederal) return b.convenioFederal - a.convenioFederal;
+      return a.municipio.localeCompare(b.municipio, 'pt-BR');
+    });
+    ordenado.forEach(function(m, i){ m._rankFederal = i + 1; });
+    return ordenado;
+  }
+
+  function calcularMedianasUF(uf){
+    const doEstado = TODOS_MUNICIPIOS.filter(function(m){ return m.uf === uf; });
+    if (!doEstado.length) return { consultoria: MEDIANA_CONSULTORIA_PA, voluntarias: MEDIANA_VOLUNTARIAS_PA, investimento: MEDIANA_INVESTIMENTO_PA, federal: 498446.94 };
+    return {
+      consultoria: mediana(doEstado.map(function(m){ return m.consultoria; })),
+      voluntarias: mediana(doEstado.map(function(m){ return m.totalVoluntarias; })),
+      investimento: mediana(doEstado.map(function(m){ return m.pctInvestimento; })),
+      federal: mediana(doEstado.map(function(m){ return m.convenioFederal; })),
+    };
+  }
+
+  function renderMunicipioReal(nome){
+    const uf = document.getElementById('uf-select')?.value || 'PA';
+    const m = findMunicipioAtual(nome, uf);
+    if (!m) return;
+    const medianas = calcularMedianasUF(uf);
+    const totalDoEstado = TODOS_MUNICIPIOS.filter(function(x){ return x.uf === uf; }).length;
+
+    if (typeof renderCaucTable === 'function') renderCaucTable(m.municipio, m.uf);
+
+    // Ranking de captação federal (Transferegov) — mesma função usada no seletor e na exportação
+    const ordenadoFederal = calcularRankingFederal(uf);
+    const rankFederal = m._rankFederal;
+
+    document.getElementById('fin-mun-titulo').textContent = m.municipio + ' \u2014 ' + m.uf;
+    document.getElementById('fin-mun-sub').textContent = m.populacao.toLocaleString('pt-BR') + ' habitantes \u00b7 exerc\u00edcio de refer\u00eancia: 2025 \u00b7 fonte: SICONFI (Receitas e Despesas por munic\u00edpio)';
+
+    const superavitPositivo = m.superavit >= 0;
+    document.getElementById('ic-1').className = 'check-icon ' + (superavitPositivo ? 'ok' : 'bad');
+    document.getElementById('calc-1').innerHTML = fmtRS(m.totalReceita) + ' \u2212 ' + fmtRS(m.totalDespesa) + ' = <strong>' + fmtRS(Math.abs(m.superavit)) + ' (' + (superavitPositivo ? 'super\u00e1vit' : 'd\u00e9ficit') + ')</strong>';
+
+    const investOk = m.pctInvestimento >= medianas.investimento;
+    document.getElementById('ic-2').className = 'check-icon ' + (investOk ? 'ok' : 'bad');
+    document.getElementById('calc-2').innerHTML = '(Despesas de Capital \u2212 Amortiza\u00e7\u00e3o da D\u00edvida) / Despesa Total \u00d7 100 = <strong>' + fmtNumPt(m.pctInvestimento) + '%</strong> aplicado em investimento' + (investOk ? '' : ' \u2014 abaixo da mediana estadual (' + fmtNumPt(medianas.investimento) + '%)');
+
+    document.getElementById('calc-3').innerHTML =
+      'IPTU: ' + fmtRS(m.iptu) + ' (' + fmtRS(m.iptuPerCapita) + '/hab.) &nbsp;\u00b7&nbsp; ' +
+      'ISS: ' + fmtRS(m.iss) + ' (' + fmtRS(m.issPerCapita) + '/hab.) &nbsp;\u00b7&nbsp; ' +
+      'ITBI: ' + fmtRS(m.itbi) + ' (' + fmtRS(m.itbiPerCapita) + '/hab.)';
+
+    document.getElementById('ic-4').className = 'check-icon ' + (m.convenioFederal > 0 ? 'ok' : 'bad');
+    document.getElementById('calc-4').innerHTML = 'Correntes + capital = <strong>' + fmtRS(m.convenioFederal) + '</strong> captados em 2025 via Transferegov (a fundo perdido)' + (m.convenioFederal === 0 ? ' \u2014 nenhum recurso federal via conv\u00eanio captado no exerc\u00edcio' : '');
+
+    document.getElementById('ic-5').className = 'check-icon ' + (m.convenioEstadual > 0 ? 'ok' : 'bad');
+    document.getElementById('calc-5').innerHTML = '<strong>' + fmtRS(m.convenioEstadual) + '</strong> captados junto ao Governo do Estado' + (m.convenioEstadual === 0 ? ' \u2014 nenhum recurso estadual via conv\u00eanio captado no exerc\u00edcio' : '') + ' <span style="color:var(--ink-soft);">(fora do escopo de atua\u00e7\u00e3o da MuniForte, apresentado apenas como refer\u00eancia)</span>';
+
+    document.getElementById('ic-6').className = 'check-icon ' + (m.convenioPrivado > 0 ? 'ok' : 'bad');
+    document.getElementById('calc-6').innerHTML = '<strong>' + fmtRS(m.convenioPrivado) + '</strong>' + (m.convenioPrivado === 0 ? ' \u2014 o munic\u00edpio n\u00e3o recebeu recursos a fundo perdido de institui\u00e7\u00f5es ou empresas privadas em 2025' : ' captados de institui\u00e7\u00f5es ou empresas privadas em 2025');
+
+    const altoConsultoria = m.consultoria >= medianas.consultoria;
+    const altaCaptacaoFederal = m.convenioFederal >= medianas.federal;
+    document.getElementById('ic-7').className = 'check-icon ' + ((altoConsultoria && altaCaptacaoFederal) ? 'ok' : 'bad');
+    let consultoriaTexto;
+    if (altoConsultoria && !altaCaptacaoFederal) {
+      consultoriaTexto = fmtRS(m.consultoria) + ' no exerc\u00edcio \u2014 <strong>investimento em consultoria j\u00e1 alto, mas a capta\u00e7\u00e3o de recursos federais segue abaixo da mediana estadual</strong>. Indício de que a assessoria atual n\u00e3o est\u00e1 focada em capta\u00e7\u00e3o t\u00e9cnica via Transferegov \u2014 a MuniForte \u00e9 especializada exatamente nisso.';
+    } else if (!altoConsultoria && !altaCaptacaoFederal) {
+      consultoriaTexto = fmtRS(m.consultoria) + ' no exerc\u00edcio \u2014 <strong>investimento baixo em assessoria especializada, com capta\u00e7\u00e3o federal tamb\u00e9m abaixo da mediana estadual</strong>. Sem consultoria dedicada, editais e conv\u00eanios federais tendem a passar despercebidos \u2014 esse investimento tende a se pagar rapidamente.';
+    } else if (altoConsultoria && altaCaptacaoFederal) {
+      consultoriaTexto = fmtRS(m.consultoria) + ' no exerc\u00edcio \u2014 o munic\u00edpio j\u00e1 investe em consultoria e tem capta\u00e7\u00e3o federal acima da mediana estadual. H\u00e1 espa\u00e7o para ampliar com foco espec\u00edfico em novos programas do Transferegov.';
+    } else {
+      consultoriaTexto = fmtRS(m.consultoria) + ' no exerc\u00edcio \u2014 <strong>investimento baixo em consultoria, mas com capta\u00e7\u00e3o federal acima da mediana estadual</strong>. Uma assessoria dedicada tende a tornar esse resultado mais consistente e recorrente.';
+    }
+    document.getElementById('calc-7').innerHTML = consultoriaTexto;
+
+    // ===== 8) Resumo dos tópicos =====
+    const resumo = [];
+    resumo.push((superavitPositivo ? 'Super\u00e1vit de ' + fmtRS(m.superavit) : 'D\u00e9ficit de ' + fmtRS(Math.abs(m.superavit))) + ' no exerc\u00edcio de 2025.');
+    resumo.push(fmtNumPt(m.pctInvestimento) + '% da despesa total aplicada em investimento' + (investOk ? '' : ' \u2014 abaixo da mediana estadual') + '.');
+    resumo.push('Arrecada\u00e7\u00e3o pr\u00f3pria (IPTU + ISS + ITBI): ' + fmtRS(m.iptu + m.iss + m.itbi) + '.');
+    resumo.push('Capta\u00e7\u00e3o de recursos federais via Transferegov: <strong>' + fmtRS(m.convenioFederal) + '</strong>, posi\u00e7\u00e3o ' + rankFederal + '\u00aa de ' + totalDoEstado + ' munic\u00edpios do ' + m.uf + ' que constam no SICONFI (2025).');
+    resumo.push('Conv\u00eanios estaduais: ' + fmtRS(m.convenioEstadual) + ' \u00b7 Conv\u00eanios privados: ' + fmtRS(m.convenioPrivado) + '.');
+    resumo.push('Despesa com consultoria: ' + fmtRS(m.consultoria) + (m.consultoria < medianas.consultoria ? ' (abaixo da mediana estadual)' : ' (acima da mediana estadual)') + '.');
+    document.getElementById('resumo-8-lista').innerHTML = resumo.map(function(t){ return '<li>' + t + '</li>'; }).join('');
+
+    const itensLeitura = [];
+    itensLeitura.push((superavitPositivo ? 'O munic\u00edpio fechou 2025 com super\u00e1vit de ' + fmtRS(m.superavit) : 'O munic\u00edpio fechou 2025 com d\u00e9ficit de ' + fmtRS(Math.abs(m.superavit))) + ', com ' + fmtNumPt(m.pctInvestimento) + '% da despesa total aplicada em investimento.');
+    itensLeitura.push('Capta\u00e7\u00e3o de recursos federais via Transferegov: <strong>' + fmtRS(m.convenioFederal) + '</strong>, posi\u00e7\u00e3o ' + rankFederal + '\u00aa de ' + totalDoEstado + ' munic\u00edpios do ' + m.uf + ' que constam no SICONFI (2025).' + (m.convenioPrivado === 0 ? ' Nunca captou recursos de conv\u00eanio privado.' : ''));
+    if (m.convenioFederal === 0) {
+      itensLeitura.push('<strong>O munic\u00edpio n\u00e3o captou nenhum recurso federal via convênio em 2025</strong> \u2014 toda a receita federal n\u00e3o obrigat\u00f3ria dispon\u00edvel via Transferegov ficou sem ser disputada.');
+    }
+    itensLeitura.push('Despesa com consultoria: ' + fmtRS(m.consultoria) + (m.consultoria < medianas.consultoria ? ' \u2014 abaixo da mediana estadual (' + fmtRS(medianas.consultoria) + ')' : ' \u2014 acima da mediana estadual (' + fmtRS(medianas.consultoria) + ')') + '.');
+    document.getElementById('leitura-lista').innerHTML = itensLeitura.map(function(t){ return '<li>' + t + '</li>'; }).join('');
+
+    const top10 = ordenadoFederal.slice(0, 10);
+    let linhas = top10.map(function(r,i){
+      const destaque = r.municipio === m.municipio;
+      return '<tr style="border-bottom:1px solid var(--border);' + (destaque ? 'background:var(--gold-soft);' : (i%2===1?'background:var(--bg);':'')) + '"><td style="padding:8px 10px;' + (destaque?'font-weight:700;':'') + '">' + (i+1) + '\u00ba</td><td style="padding:8px 10px;' + (destaque?'font-weight:700;':'') + '">' + r.municipio + '</td><td style="padding:8px 10px;' + (destaque?'font-weight:700;':'') + '" class="mini-count">' + fmtRS(r.convenioFederal) + '</td></tr>';
+    }).join('');
+    if (rankFederal > 10) {
+      linhas += '<tr style="border-top:2px solid var(--gold); background:var(--gold-soft);"><td style="padding:8px 10px; font-weight:700;">' + rankFederal + '\u00ba</td><td style="padding:8px 10px; font-weight:700;">' + m.municipio + '</td><td style="padding:8px 10px; font-weight:700;" class="mini-count">' + fmtRS(m.convenioFederal) + '</td></tr>';
+    }
+    document.getElementById('ranking-tbody').innerHTML = linhas;
+    const notaEl = document.getElementById('ranking-nota');
+    if (notaEl) notaEl.textContent = m.municipio + (rankFederal <= 10 ? ' est\u00e1 entre os 10 munic\u00edpios que mais captam' : ' capta abaixo dos 10 munic\u00edpios que mais captam') + ' recursos p\u00fablicos federais (via Transferegov) entre os munic\u00edpios do ' + m.uf + ' que constam no SICONFI (2025). Em caso de empate no valor captado, a posi\u00e7\u00e3o \u00e9 desempatada por ordem alfab\u00e9tica do munic\u00edpio \u2014 argumento central para a proposta de assessoria.';
+    const panelNota = document.getElementById('ranking-panel-note');
+    if (panelNota) panelNota.textContent = 'conv\u00eanios federais (Transferegov) \u00b7 SICONFI 2025 \u00b7 ' + totalDoEstado + ' munic\u00edpios do ' + m.uf + ' que constam no SICONFI';
+  }
+
   function switchFinEntity(kind){
     document.querySelectorAll('.entity-switch button').forEach(b => b.classList.remove('active'));
     event.target.classList.add('active');
@@ -1572,17 +2019,34 @@
   function collectFinData(){
     const isMunicipio = document.getElementById('fin-municipio').style.display !== 'none';
     const container = isMunicipio ? document.getElementById('fin-municipio') : document.getElementById('fin-osc');
+    const nomeEntidade = isMunicipio
+      ? (document.getElementById('fin-mun-titulo')?.textContent.trim() || 'Município')
+      : (document.querySelector('#admin-financeiro .tenant-name')?.textContent.trim() || 'Instituto Semear');
     const titulo = container.querySelector('.panel-head h2')?.textContent.trim() || 'Análise financeira';
     const subtitulo = container.querySelector('.panel-head .note')?.textContent.trim() || '';
     const statusTitulo = container.querySelector('.status-banner h3')?.textContent.trim() || '';
     const statusTexto = container.querySelector('.status-banner p')?.textContent.trim() || '';
 
-    const checklist = Array.from(container.querySelectorAll('.checklist-row')).map(row => {
+    const diagnostico7 = document.getElementById('painel-diagnostico-7');
+    const painelCauc = document.getElementById('painel-cauc');
+    const checklist = diagnostico7 ? Array.from(diagnostico7.querySelectorAll('.checklist-row')).map((row, i) => {
+      const label = row.querySelector('.t strong')?.textContent.trim() || '';
+      const detalhe = row.querySelector('.t span')?.textContent.trim() || '';
+      const ok = row.querySelector('.check-icon')?.classList.contains('bad') ? false : true;
+      return { label: (i+1) + ') ' + label, detalhe, ok };
+    }) : Array.from(container.querySelectorAll('.checklist-row')).map(row => {
       const label = row.querySelector('.t strong')?.textContent.trim() || '';
       const detalhe = row.querySelector('.t span')?.textContent.trim() || '';
       const ok = row.querySelector('.check-icon')?.classList.contains('bad') ? false : true;
       return { label, detalhe, ok };
     });
+    const resumo8 = Array.from(document.getElementById('resumo-8-lista')?.querySelectorAll('li') || []).map(li => li.textContent.trim());
+    const caucChecklist = painelCauc ? Array.from(painelCauc.querySelectorAll('.checklist-row')).map(row => {
+      const label = row.querySelector('.t strong')?.textContent.trim() || '';
+      const detalhe = row.querySelector('.t span')?.textContent.trim() || '';
+      const ok = row.querySelector('.check-icon')?.classList.contains('bad') ? false : true;
+      return { label, detalhe, ok };
+    }) : [];
 
     const indicadores = Array.from(container.querySelectorAll('.indicator-card')).map(card => {
       return {
@@ -1595,10 +2059,81 @@
 
     const leitura = Array.from(container.querySelectorAll('.invest-box li')).map(li => li.textContent.trim());
 
-    return { titulo, subtitulo, statusTitulo, statusTexto, checklist, indicadores, leitura, isMunicipio };
+    // ===== Contexto nacional (dados reais, com fonte) =====
+    const contextoNacional = isMunicipio ? {
+      titulo: 'O tamanho da oportunidade a fundo perdido no Pará',
+      explicacao: 'Repasses obrigatórios (FPM, FUNDEB, SUS, royalties) chegam automaticamente à prefeitura, por determinação constitucional, e não exigem nenhuma ação do gestor. Já os recursos via convênio federal e contrato de repasse — os instrumentos sobre os quais a MuniForte atua, via Transferegov — só chegam mediante projeto técnico, regularidade fiscal (CAUC) e articulação ativa. São recursos a fundo perdido: uma vez aprovados e executados corretamente, não precisam ser devolvidos.',
+      destaqueVoluntario: { v: 'R$ 244,8 milhões', d: 'foi o total captado via convênios federais pelos 98 municípios do Pará que constam no SICONFI no ano de 2025 — dado real, calculado a partir da mesma base usada no diagnóstico deste município. É sobre essa captação técnica federal, via Transferegov, que a MuniForte atua.', fonte: 'SICONFI — Receitas Orçamentárias por Município, exercício 2025' },
+      destaques: [
+        { v: '34 de 98 municípios', d: 'do Pará que constam no SICONFI não captaram absolutamente nada via convênio federal em 2025 — nenhum centavo de recurso a fundo perdido do orçamento da União, apesar de disponível via Transferegov', fonte: 'SICONFI — Receitas Orçamentárias por Município, exercício 2025' },
+        { v: 'Só 28%', d: 'dos municípios paraenses que constam no SICONFI (27 de 98) receberam algum recurso via convênio privado em 2025 — a grande maioria nunca acessou esse tipo de parceria', fonte: 'SICONFI — Receitas Orçamentárias por Município, exercício 2025', secundario: true },
+      ],
+      chamada: 'Se o seu município não está captando ativamente recursos federais via convênio e contrato de repasse, é bem provável que esteja deixando de fazer investimentos que já existem — disponíveis, agora, a fundo perdido, no orçamento da União.',
+      ranking: [],
+      rankingNota: '',
+      rankingFonte: '',
+      rankingEstadual: null,
+      estadoContexto: 'A média de captação via convênio federal entre os 98 municípios do Pará que constam no SICONFI no ano de 2025 foi de R$ 2,50 milhões — mas a mediana foi de apenas R$ 498,4 mil, mostrando que a captação está concentrada em poucos municípios. A maioria fica abaixo da média, evidenciando o quanto a captação técnica ativa via Transferegov ainda é pouco explorada no estado onde a MuniForte está instalada.',
+      estadoFonte: 'SICONFI — Receitas Orçamentárias por Município, Estado do Pará, exercício 2025'
+    } : {
+      titulo: 'O tamanho da oportunidade a fundo perdido para OSCs',
+      explicacao: 'OSCs não recebem nenhum repasse constitucional automático — todo recurso federal que chega a uma organização social depende de captação ativa. Os instrumentos próprios para OSCs são o termo de fomento e o termo de colaboração (Lei nº 13.019/2014), que exigem projeto técnico, inscrição no CNEAS e certidões em dia. São recursos a fundo perdido: uma vez aprovados e bem executados, não precisam ser devolvidos. É sobre esses instrumentos que a MuniForte atua.',
+      destaqueVoluntario: { v: 'Minoria', d: 'das OSCs brasileiras aptas (inscritas no CNEAS, com certidões em dia) efetivamente concorre a termos de fomento e termos de colaboração federais — a maior parte do recurso a fundo perdido disponível para o setor não chega a ser disputada', fonte: 'Estimativa MuniForte com base em dados do Mapa das OSCs (IPEA/IBGE)' },
+      destaques: [
+        { v: 'R$ 761,86 bi', d: 'foi o total geral repassado pela União em 2025 a estados, municípios e entidades — citado aqui só como referência de tamanho do orçamento federal', fonte: 'Portal Transparência Brasil / Tesouro Nacional, 2025', secundario: true },
+      ],
+      chamada: 'Se a sua OSC não está captando ativamente via termos de fomento e termos de colaboração, está deixando de acessar recursos a fundo perdido que já existem — disponíveis, agora, para organizações do seu porte e área de atuação.',
+      ranking: [],
+      rankingNota: '',
+      rankingFonte: '',
+      rankingEstadual: null,
+      estadoContexto: '',
+      estadoFonte: ''
+    };
+
+    // ===== Fragilidades identificadas x Benefícios da captação =====
+    const fragilidadesBeneficios = isMunicipio ? [
+      { fragilidade: 'UBS rurais sem sala de telessaúde', beneficio: 'Programas de saúde digital financiam equipamento e conectividade — reduz deslocamento do paciente e amplia diagnóstico especializado.' },
+      { fragilidade: 'Estradas vicinais sem pavimentação', beneficio: 'Editais de infraestrutura viária cobrem pavimentação e drenagem — melhora escoamento da produção rural e acesso a serviços.' },
+      { fragilidade: 'Creches sem tempo integral', beneficio: 'O Novo PAC Creches financia construção e ampliação — libera responsáveis para o mercado de trabalho.' },
+      { fragilidade: 'Baixa cobertura de esgotamento sanitário', beneficio: 'O Novo PAC Saneamento tem linha específica para ampliação de rede — impacto direto em indicadores de saúde pública.' },
+    ] : [
+      { fragilidade: 'Capacidade de atendimento abaixo da demanda', beneficio: 'Termos de fomento financiam ampliação de vagas e contratação de equipe técnica.' },
+      { fragilidade: 'Dependência de doações pontuais e instáveis', beneficio: 'Recursos federais via parceria têm cronograma plurianual — dá previsibilidade orçamentária à OSC.' },
+      { fragilidade: 'Falta de veículo/estrutura própria', beneficio: 'Editais específicos cobrem aquisição de bens permanentes vinculados ao objeto do projeto.' },
+    ];
+
+    // ===== Ranking real (top10 + posição do município selecionado), direto do dataset — apenas captação federal =====
+    let rankingReal = [];
+    let rankingRealFonte = '';
+    let convenioChartData = null;
+    if (isMunicipio) {
+      const ufAtual = document.getElementById('uf-select')?.value;
+      const selecionado = document.getElementById('municipio-select')?.value;
+      const municipioAtual = typeof findMunicipioAtual === 'function' ? findMunicipioAtual(selecionado, ufAtual) : null;
+      if (municipioAtual && typeof calcularRankingFederal === 'function') {
+        const ordenado = calcularRankingFederal(municipioAtual.uf);
+        const rankFederalAtual = municipioAtual._rankFederal;
+        rankingReal = ordenado.slice(0, 10).map((r,i) => ({
+          pos: (i+1) + 'º', nome: r.municipio + ' — ' + r.uf, valor: 'R$ ' + r.convenioFederal.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}),
+          destaque: r.municipio === municipioAtual.municipio
+        }));
+        if (rankFederalAtual > 10) {
+          rankingReal.push({
+            pos: rankFederalAtual + 'º', nome: municipioAtual.municipio + ' — ' + municipioAtual.uf,
+            valor: 'R$ ' + municipioAtual.convenioFederal.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}),
+            destaque: true
+          });
+        }
+        rankingRealFonte = 'SICONFI — Receitas Orçamentárias por Município, Estado do ' + municipioAtual.uf + ', ' + ordenado.length + ' municípios que constam no SICONFI, exercício 2025 (convênios federais — Transferegov; empate desfeito por ordem alfabética)';
+        convenioChartData = { convenioFederal: municipioAtual.convenioFederal, convenioEstadual: municipioAtual.convenioEstadual, convenioPrivado: municipioAtual.convenioPrivado };
+      }
+    }
+
+    return { nomeEntidade, titulo, subtitulo, statusTitulo, statusTexto, checklist, resumo8, caucChecklist, indicadores, leitura, isMunicipio, contextoNacional, fragilidadesBeneficios, rankingReal, rankingRealFonte, convenioChartData };
   }
 
-  function exportFin(kind){
+  async function exportFin(kind){
     if (typeof window.jspdf === 'undefined' && kind === 'pdf') {
       alert('A biblioteca de exportação ainda está carregando — aguarde um instante e tente novamente.');
       return;
@@ -1608,126 +2143,776 @@
       return;
     }
     const data = collectFinData();
-    if (kind === 'pdf') exportFinPDF(data); else exportFinPPTX(data);
+    if (kind === 'pdf') await exportFinPDF(data); else exportFinPPTX(data);
   }
 
-  function exportFinPDF(data){
+  function pdfDot(doc, x, y, r, color){
+    doc.setFillColor(color);
+    doc.circle(x, y, r, 'F');
+  }
+
+  function renderIndicatorChartPDF(doc, marginX, maxW, yStart, ensureSpace, indicadores){
+    const rows = computeIndicatorRows(indicadores);
+    if (!rows.length) return yStart;
+    let y = yStart;
+    const labelW = 145, valueW = 46, barAreaW = maxW - labelW - valueW;
+    const barH = 14;
+
+    ensureSpace(24);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor('#16424A');
+    doc.text('Indicadores financeiros vs. limites legais', marginX, y);
+    y += 8;
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor('#566063');
+    doc.text('% já utilizado do limite (ou do mínimo exigido) de cada indicador — a linha marca 100%', marginX, y + 10);
+    y += 24;
+
+    rows.forEach(r => {
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+      const labelLines = doc.splitTextToSize(r.label, labelW - 6);
+      const rowH = Math.max(barH + 12, labelLines.length * 11 + 8);
+      ensureSpace(rowH);
+
+      doc.setTextColor('#1C2B2E');
+      doc.text(labelLines, marginX, y + 10);
+
+      const barColor = r.favoravel ? '#3A7A5D' : '#B4472A';
+      const trackX = marginX + labelW;
+      doc.setFillColor('#E7EEEE'); doc.roundedRect(trackX, y, barAreaW, barH, 3, 3, 'F');
+      const fillW = Math.max(3, Math.min(r.ratioPct / 100, 1) * barAreaW);
+      doc.setFillColor(barColor); doc.roundedRect(trackX, y, fillW, barH, 3, 3, 'F');
+      if (r.ratioPct > 100){
+        doc.setFillColor(barColor);
+        doc.roundedRect(trackX + barAreaW - 4, y, 4, barH, 2, 2, 'F');
+      }
+      doc.setDrawColor('#16424A'); doc.setLineWidth(1.1);
+      doc.line(trackX + barAreaW, y - 2, trackX + barAreaW, y + barH + 2);
+
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(barColor);
+      doc.text(String(r.ratioPct) + '%', trackX + barAreaW + 6, y + 10);
+
+      y += rowH;
+    });
+
+    y += 4;
+    doc.setFont('helvetica', 'italic'); doc.setFontSize(7.5); doc.setTextColor('#8A8577');
+    const legendLines = doc.splitTextToSize('A linha vertical marca 100% do limite legal (ou do mínimo constitucional exigido). Verde = dentro do limite/acima do mínimo; vermelho = fora do limite/abaixo do mínimo.', maxW);
+    ensureSpace(legendLines.length * 10 + 10);
+    doc.text(legendLines, marginX, y);
+    y += legendLines.length * 10 + 14;
+
+    return y;
+  }
+
+  function renderRankingChartPDF(doc, marginX, maxW, yStart, ensureSpace, rankingReal){
+    if (!rankingReal || !rankingReal.length) return yStart;
+    let y = yStart;
+    const maxValor = Math.max.apply(null, rankingReal.map(r => parseFloat(String(r.valor).replace(/[^\d,]/g,'').replace(',','.')) || 0));
+    if (!maxValor) return yStart;
+    const labelW = 130, barH = 13;
+    const barAreaW = maxW - labelW - 10;
+
+    ensureSpace(24);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor('#16424A');
+    doc.text('Comparativo visual — ranking de captação federal', marginX, y); y += 18;
+
+    rankingReal.forEach(r => {
+      const valorNum = parseFloat(String(r.valor).replace(/[^\d,]/g,'').replace(',','.')) || 0;
+      const rowH = barH + 8;
+      ensureSpace(rowH);
+      doc.setFont('helvetica', r.destaque ? 'bold' : 'normal'); doc.setFontSize(8.5);
+      doc.setTextColor(r.destaque ? '#8A6420' : '#1C2B2E');
+      const labelLines = doc.splitTextToSize(r.pos + ') ' + r.nome, labelW - 6);
+      doc.text(labelLines[0], marginX, y + 9);
+
+      const trackX = marginX + labelW;
+      doc.setFillColor('#E7EEEE'); doc.rect(trackX, y, barAreaW, barH, 'F');
+      const fillW = Math.max(2, (valorNum / maxValor) * barAreaW);
+      doc.setFillColor(r.destaque ? '#B8842C' : '#16424A'); doc.rect(trackX, y, fillW, barH, 'F');
+
+      y += rowH;
+    });
+    y += 10;
+    return y;
+  }
+
+  function renderConvenioChartPDF(doc, marginX, maxW, yStart, ensureSpace, m){
+    let y = yStart;
+    const dados = [
+      { label: 'Convênio federal (Transferegov)', valor: m.convenioFederal, cor: '#16424A' },
+      { label: 'Convênio estadual', valor: m.convenioEstadual, cor: '#2C6E76' },
+      { label: 'Convênio privado', valor: m.convenioPrivado, cor: '#B8842C' },
+    ];
+    const maxValor = Math.max(dados[0].valor, dados[1].valor, dados[2].valor, 1);
+    const labelW = 150, barH = 16;
+    const barAreaW = maxW - labelW - 90;
+
+    ensureSpace(24);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor('#16424A');
+    doc.text('Comparativo visual — origem dos recursos de convênio', marginX, y); y += 18;
+
+    dados.forEach(d => {
+      ensureSpace(barH + 10);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor('#1C2B2E');
+      doc.text(d.label, marginX, y + 11);
+
+      const trackX = marginX + labelW;
+      doc.setFillColor('#E7EEEE'); doc.roundedRect(trackX, y, barAreaW, barH, 3, 3, 'F');
+      const fillW = Math.max(2, (d.valor / maxValor) * barAreaW);
+      doc.setFillColor(d.cor); doc.roundedRect(trackX, y, fillW, barH, 3, 3, 'F');
+
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(d.cor);
+      doc.text('R$ ' + d.valor.toLocaleString('pt-BR', {minimumFractionDigits:2, maximumFractionDigits:2}), trackX + barAreaW + 6, y + 11);
+
+      y += barH + 10;
+    });
+    y += 6;
+    return y;
+  }
+
+
+  function extractPct(str){
+    if (!str) return null;
+    const m = String(str).match(/(\d+(?:[.,]\d+)?)\s*%/);
+    return m ? parseFloat(m[1].replace(',', '.')) : null;
+  }
+  function extractLimitPct(str){
+    if (!str) return null;
+    const maxMatch = String(str).match(/m[aá]ximo:?\s*(\d+(?:[.,]\d+)?)\s*%/i);
+    if (maxMatch) return parseFloat(maxMatch[1].replace(',', '.'));
+    return extractPct(str);
+  }
+  function computeIndicatorRows(indicadores){
+    return indicadores.map(ind => {
+      const valorNum = extractPct(ind.v);
+      const limiteNum = extractLimitPct(ind.limite);
+      if (valorNum === null || !limiteNum) return null;
+      const isFloor = /m[ií]nimo/i.test(ind.limite || '') || /m[ií]nimo/i.test(ind.k || '');
+      const favoravel = isFloor ? valorNum >= limiteNum : valorNum <= limiteNum;
+      const ratioPct = Math.round((valorNum / limiteNum) * 100);
+      return { label: ind.k, valorNum, limiteNum, isFloor, favoravel, ratioPct };
+    }).filter(Boolean);
+  }
+
+  function pdfSafe(str){
+    if (str === null || str === undefined) return str;
+    return String(str)
+      .replace(/[\u2212\u2012\u2013\u2014]/g, '-')
+      .replace(/[\u2605\u2606]/g, '')
+      .replace(/[\u2022\u25CF\u25AA]/g, '-')
+      .replace(/[\u2192\u21D2]/g, '->')
+      .replace(/[\u2713\u2714]/g, 'OK')
+      .replace(/[\u2717\u2718\u2715]/g, 'X')
+      .replace(/[\u2026]/g, '...')
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/[\u2018\u2019]/g, "'");
+  }
+
+  function pdfSafeData(data){
+    const c = (v) => typeof v === 'string' ? pdfSafe(v) : v;
+    const cn = data.contextoNacional;
+    return {
+      ...data,
+      titulo: c(data.titulo), subtitulo: c(data.subtitulo),
+      statusTitulo: c(data.statusTitulo), statusTexto: c(data.statusTexto),
+      checklist: data.checklist.map(x => ({ ...x, label: c(x.label), detalhe: c(x.detalhe) })),
+      resumo8: (data.resumo8 || []).map(c),
+      caucChecklist: (data.caucChecklist || []).map(x => ({ ...x, label: c(x.label), detalhe: c(x.detalhe) })),
+      indicadores: data.indicadores.map(x => ({ ...x, k: c(x.k), v: c(x.v), limite: c(x.limite) })),
+      leitura: data.leitura.map(c),
+      fragilidadesBeneficios: data.fragilidadesBeneficios.map(x => ({ ...x, fragilidade: c(x.fragilidade), beneficio: c(x.beneficio) })),
+      contextoNacional: {
+        ...cn,
+        titulo: c(cn.titulo), explicacao: c(cn.explicacao), chamada: c(cn.chamada),
+        destaqueVoluntario: cn.destaqueVoluntario ? { ...cn.destaqueVoluntario, v: c(cn.destaqueVoluntario.v), d: c(cn.destaqueVoluntario.d), fonte: c(cn.destaqueVoluntario.fonte) } : null,
+        destaques: cn.destaques.map(x => ({ ...x, v: c(x.v), d: c(x.d), fonte: c(x.fonte) })),
+        ranking: cn.ranking.map(x => ({ ...x, pos: c(x.pos), nome: c(x.nome), valor: c(x.valor), tipo: c(x.tipo) })),
+        rankingNota: c(cn.rankingNota),
+        rankingFonte: c(cn.rankingFonte),
+        rankingEstadual: cn.rankingEstadual ? {
+          ...cn.rankingEstadual,
+          titulo: c(cn.rankingEstadual.titulo),
+          linhas: cn.rankingEstadual.linhas.map(x => ({ ...x, pos: c(x.pos), nome: c(x.nome), valor: c(x.valor), tipo: c(x.tipo) })),
+          contextoEstado: c(cn.rankingEstadual.contextoEstado),
+          fonte: c(cn.rankingEstadual.fonte),
+        } : null,
+        estadoContexto: c(cn.estadoContexto), estadoFonte: c(cn.estadoFonte),
+      },
+      rankingReal: (data.rankingReal || []).map(x => ({ ...x, pos: c(x.pos), nome: c(x.nome), valor: c(x.valor) })),
+      rankingRealFonte: c(data.rankingRealFonte),
+    };
+  }
+
+  async function exportFinPDF(rawData){
+    const data = pdfSafeData(rawData);
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF({ unit: 'pt', format: 'a4' });
-    const marginX = 48;
+    const marginX = 50;
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
     const maxW = pageW - marginX * 2;
     let y = 56;
 
-    function ensureSpace(h){
-      if (y + h > pageH - 48) { doc.addPage(); y = 56; }
+    function footer(){
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++){
+        doc.setPage(i);
+        doc.setDrawColor('#E0DCCF'); doc.setLineWidth(0.5);
+        doc.line(marginX, pageH - 40, pageW - marginX, pageH - 40);
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(8); doc.setTextColor('#8A8577');
+        doc.text('MuniForte · Consultoria em Gestão Pública', marginX, pageH - 26);
+        doc.text('Página ' + i + ' de ' + pageCount, pageW - marginX, pageH - 26, { align: 'right' });
+      }
     }
-    function heading(text, size, color){
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(size); doc.setTextColor(color || '#16424A');
-      const lines = doc.splitTextToSize(text, maxW);
-      ensureSpace(lines.length * (size + 4));
-      doc.text(lines, marginX, y); y += lines.length * (size + 4) + 4;
+    function newPage(){ doc.addPage(); y = 56; }
+    function ensureSpace(h){ if (y + h > pageH - 56) newPage(); }
+    function sectionHeader(text, num){
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(15);
+      const lines = doc.splitTextToSize(text, maxW - 36);
+      const h = Math.max(26, lines.length * 18);
+      ensureSpace(h + 14);
+      doc.setFillColor('#16424A'); doc.roundedRect(marginX, y - 18, 26, 26, 4, 4, 'F');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor('#FFFFFF');
+      doc.text(String(num), marginX + 13, y - 1, { align: 'center' });
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor('#16424A');
+      doc.text(lines, marginX + 36, y);
+      y += Math.max(30, lines.length * 18 + 6);
     }
-    function body(text, size){
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(size || 10.5); doc.setTextColor('#1C2B2E');
+    function body(text, size, color){
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(size || 10.5); doc.setTextColor(color || '#1C2B2E');
       const lines = doc.splitTextToSize(text, maxW);
-      ensureSpace(lines.length * (size ? size + 3 : 13.5));
-      doc.text(lines, marginX, y); y += lines.length * (size ? size + 3 : 13.5) + 2;
+      ensureSpace(lines.length * (size ? size + 4 : 14));
+      doc.text(lines, marginX, y, { align: 'justify', maxWidth: maxW }); y += lines.length * (size ? size + 4 : 14) + 6;
+    }
+    function sourceNote(text){
+      doc.setFont('helvetica', 'italic'); doc.setFontSize(8); doc.setTextColor('#8A8577');
+      const lines = doc.splitTextToSize('Fonte: ' + text, maxW);
+      ensureSpace(lines.length * 10 + 4);
+      doc.text(lines, marginX, y); y += lines.length * 10 + 10;
     }
 
-    doc.setFillColor('#16424A'); doc.rect(0, 0, pageW, 70, 'F');
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.setTextColor('#FFFFFF');
-    doc.text('MuniForte — Análise financeira', marginX, 32);
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor('#DCEAE9');
-    doc.text('Gerado em ' + new Date().toLocaleDateString('pt-BR') + ' · fonte: SICONFI / CAUC / Transferegov', marginX, 50);
-    y = 100;
+    // ===== CAPA =====
+    doc.setFillColor('#16424A'); doc.rect(0, 0, pageW, pageH, 'F');
+    doc.setFillColor('#B8842C'); doc.roundedRect(marginX, 90, 56, 56, 12, 12, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.setTextColor('#16424A');
+    doc.text('MF', marginX + 28, 126, { align: 'center' });
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor('#9DBAB8');
+    doc.text('MUNIFORTE · CONSULTORIA EM GESTÃO PÚBLICA', marginX, 172);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(30); doc.setTextColor('#FFFFFF');
+    doc.text(doc.splitTextToSize('Análise Financeira e\nOportunidades de Captação', maxW), marginX, 230);
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(20); doc.setTextColor('#B8842C');
+    doc.text(data.nomeEntidade, marginX, 320);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor('#DCEAE9');
+    doc.text('Documento gerado em ' + new Date().toLocaleDateString('pt-BR'), marginX, 345);
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor('#9DBAB8');
+    doc.text(doc.splitTextToSize('Elaborado com base em dados oficiais: SICONFI, CAUC, Transferegov, Portal da Transparência, IBGE e Tribunal de Contas da União.', maxW - 20), marginX, pageH - 90);
 
-    heading(data.titulo, 15);
-    if (data.subtitulo) body(data.subtitulo, 10);
+    // ===== 1. CONTEXTO NACIONAL =====
+    newPage();
+    sectionHeader(data.contextoNacional.titulo, 1);
+    body(data.contextoNacional.explicacao, 10, '#566063');
     y += 6;
-    if (data.statusTitulo){ heading(data.statusTitulo, 12, '#B8842C'); body(data.statusTexto); y += 6; }
+
+    // --- destaque principal: repasse voluntário (a fundo perdido) ---
+    if (data.contextoNacional.destaqueVoluntario){
+      const dv = data.contextoNacional.destaqueVoluntario;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5);
+      const dvLines = doc.splitTextToSize(dv.d, maxW - 28);
+      const boxH = 58 + dvLines.length * 12.5;
+      ensureSpace(boxH + 18);
+      doc.setFillColor('#16424A'); doc.roundedRect(marginX, y, maxW, boxH, 10, 10, 'F');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+      const badgeLabel = 'FOCO DA MUNIFORTE';
+      const badgeW = doc.getTextWidth(badgeLabel) + 22;
+      doc.setFillColor('#B8842C'); doc.roundedRect(marginX + 14, y + 12, badgeW, 18, 9, 9, 'F');
+      doc.setTextColor('#FFFFFF');
+      doc.text(badgeLabel, marginX + 14 + badgeW / 2, y + 24, { align: 'center' });
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.setTextColor('#FFFFFF');
+      doc.text(dv.v, marginX + 14, y + 52);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor('#DCEAE9');
+      doc.text(dvLines, marginX + 14, y + 67, { align: 'justify', maxWidth: maxW - 28 });
+      y += boxH + 8;
+      sourceNote(dv.fonte);
+    }
+
+    // --- chamada de atenção (framing da oportunidade perdida) ---
+    if (data.contextoNacional.chamada){
+      doc.setFont('helvetica', 'bolditalic'); doc.setFontSize(10);
+      const chLines = doc.splitTextToSize('"' + data.contextoNacional.chamada + '"', maxW - 28);
+      const chBoxH = 16 + chLines.length * 13;
+      ensureSpace(chBoxH + 14);
+      doc.setFillColor('#F3E8D2'); doc.roundedRect(marginX, y, maxW, chBoxH, 8, 8, 'F');
+      doc.setTextColor('#8A6420');
+      doc.text(chLines, marginX + 14, y + 16, { align: 'justify', maxWidth: maxW - 28 });
+      y += chBoxH + 14;
+    }
+
+    // --- demais destaques (contexto, alguns secundários/menores) ---
+    data.contextoNacional.destaques.forEach(item => {
+      const isSec = !!item.secundario;
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+      const lines = doc.splitTextToSize(item.d, maxW - 32);
+      const textBlockH = (isSec ? 26 : 34) + (lines.length - 1) * 11.5;
+      const boxH = textBlockH + 14;
+      ensureSpace(boxH + 24);
+      doc.setFillColor(isSec ? '#F5F4EF' : '#E7EEEE');
+      if (isSec) { doc.setDrawColor('#E0DCCF'); doc.roundedRect(marginX, y - 4, maxW, boxH, 8, 8, 'S'); }
+      else doc.roundedRect(marginX, y - 4, maxW, boxH, 8, 8, 'F');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(isSec ? 13 : 17); doc.setTextColor(isSec ? '#8A8577' : '#16424A');
+      doc.text(item.v, marginX + 16, y + (isSec ? 14 : 18));
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor(isSec ? '#8A8577' : '#1C2B2E');
+      doc.text(lines, marginX + 16, y + (isSec ? 26 : 34), { align: 'justify', maxWidth: maxW - 32 });
+      y += boxH + 4;
+      doc.setFont('helvetica', 'italic'); doc.setFontSize(7.5); doc.setTextColor('#8A8577');
+      doc.text('Fonte: ' + item.fonte, marginX + 16, y);
+      y += 16;
+    });
+
+
+
+    if (data.contextoNacional.estadoContexto){
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9.5);
+      const lines = doc.splitTextToSize(data.contextoNacional.estadoContexto, maxW - 24);
+      const boxH = 14 + lines.length * 12;
+      ensureSpace(boxH + 24);
+      doc.setFillColor('#F3E8D2'); doc.roundedRect(marginX, y, maxW, boxH, 8, 8, 'F');
+      doc.setTextColor('#8A6420');
+      doc.text(lines, marginX + 14, y + 18, { align: 'justify', maxWidth: maxW - 24 });
+      y += boxH + 8;
+      sourceNote(data.contextoNacional.estadoFonte);
+    }
+
+    // ===== 2. SITUAÇÃO FINANCEIRA =====
+    newPage();
+    sectionHeader('Situação financeira e de regularidade', 2);
+    body(data.titulo + (data.subtitulo ? ' — ' + data.subtitulo : ''), 10.5, '#566063');
+    if (data.statusTitulo){
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9);
+      const statusLines = doc.splitTextToSize(data.statusTexto, maxW - 28);
+      const statusBoxH = 30 + statusLines.length * 12;
+      ensureSpace(statusBoxH + 12);
+      doc.setFillColor('#F3E8D2'); doc.roundedRect(marginX, y, maxW, statusBoxH, 8, 8, 'F');
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor('#8A6420');
+      doc.text(data.statusTitulo, marginX + 14, y + 16);
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.setTextColor('#6b5218');
+      doc.text(statusLines, marginX + 14, y + 30, { align: 'justify', maxWidth: maxW - 28 });
+      y += statusBoxH + 12;
+    }
 
     if (data.checklist.length){
-      heading('Verificação de regularidade e indicadores', 13);
-      data.checklist.forEach((item) => {
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5);
-        doc.setTextColor(item.ok ? '#3A7A5D' : '#B4472A');
-        ensureSpace(14);
-        doc.text((item.ok ? '✓ ' : '! '), marginX, y);
-        doc.setTextColor('#1C2B2E');
-        const lines = doc.splitTextToSize(item.label, maxW - 16);
-        doc.text(lines, marginX + 16, y); y += lines.length * 13;
-        if (item.detalhe){ body(item.detalhe, 9.5); }
-        y += 4;
+      ensureSpace(24);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor('#16424A');
+      doc.text('Diagnóstico financeiro e de captação (tópicos 1 a 7)', marginX, y); y += 12;
+      doc.autoTable({
+        startY: y,
+        margin: { left: marginX, right: marginX },
+        head: [['', 'Tópico', 'Resultado']],
+        body: data.checklist.map(item => [item.ok ? 'OK' : '!', item.label, item.detalhe]),
+        theme: 'grid',
+        headStyles: { fillColor: '#16424A', textColor: '#FFFFFF', fontSize: 9 },
+        columnStyles: {
+          0: { cellWidth: 26, halign: 'center' },
+          1: { cellWidth: 150 },
+          2: { cellWidth: maxW - 26 - 150 },
+        },
+        bodyStyles: { fontSize: 8.5, textColor: '#1C2B2E', valign: 'top', cellPadding: { top: 4, bottom: 6, left: 4, right: 4 } },
+        alternateRowStyles: { fillColor: '#F5F4EF' },
+        didParseCell: (d) => {
+          if (d.section !== 'body') return;
+          if (d.column.index === 0){
+            d.cell.styles.textColor = data.checklist[d.row.index].ok ? '#3A7A5D' : '#B4472A';
+            d.cell.styles.fontStyle = 'bold';
+          }
+          if (d.column.index === 1) d.cell.styles.fontStyle = 'bold';
+          if (d.column.index === 2){ d.cell.styles.textColor = '#566063'; d.cell.styles.halign = 'justify'; }
+        }
       });
-      y += 6;
+      y = doc.lastAutoTable.finalY + 16;
+    }
+
+    if (data.convenioChartData){
+      y = renderConvenioChartPDF(doc, marginX, maxW, y, ensureSpace, data.convenioChartData);
+    }
+
+    if (data.resumo8 && data.resumo8.length){
+      ensureSpace(24);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor('#16424A');
+      doc.text('8) Resumo dos tópicos analisados', marginX, y); y += 12;
+      doc.autoTable({
+        startY: y,
+        margin: { left: marginX, right: marginX },
+        head: [['#', 'Resumo']],
+        body: data.resumo8.map((txt, i) => [String(i + 1), txt]),
+        theme: 'grid',
+        headStyles: { fillColor: '#2C6E76', textColor: '#FFFFFF', fontSize: 9 },
+        columnStyles: {
+          0: { cellWidth: 22, halign: 'center', fontStyle: 'bold', textColor: '#16424A' },
+          1: { cellWidth: maxW - 22 },
+        },
+        bodyStyles: { fontSize: 9, textColor: '#1C2B2E', valign: 'top', cellPadding: { top: 5, bottom: 7, left: 4, right: 4 } },
+        alternateRowStyles: { fillColor: '#F5F4EF' },
+        didParseCell: (d) => {
+          if (d.section === 'body' && d.column.index === 1) d.cell.styles.halign = 'justify';
+        }
+      });
+      y = doc.lastAutoTable.finalY + 16;
+    }
+
+    if (data.caucChecklist && data.caucChecklist.length){
+      ensureSpace(24);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor('#16424A');
+      doc.text('Verificação de regularidade — CAUC', marginX, y); y += 12;
+      doc.autoTable({
+        startY: y,
+        margin: { left: marginX, right: marginX },
+        head: [['', 'Requisito', 'Situação']],
+        body: data.caucChecklist.map(item => [item.ok ? 'OK' : '!', item.label, item.detalhe]),
+        theme: 'grid',
+        headStyles: { fillColor: '#16424A', textColor: '#FFFFFF', fontSize: 9 },
+        columnStyles: {
+          0: { cellWidth: 26, halign: 'center' },
+          1: { cellWidth: 200 },
+          2: { cellWidth: maxW - 26 - 200 },
+        },
+        bodyStyles: { fontSize: 8.5, textColor: '#1C2B2E', valign: 'top', cellPadding: { top: 4, bottom: 6, left: 4, right: 4 } },
+        alternateRowStyles: { fillColor: '#F5F4EF' },
+        didParseCell: (d) => {
+          if (d.section !== 'body') return;
+          if (d.column.index === 0){
+            d.cell.styles.textColor = data.caucChecklist[d.row.index].ok ? '#3A7A5D' : '#B4472A';
+            d.cell.styles.fontStyle = 'bold';
+          }
+          if (d.column.index === 1) d.cell.styles.fontStyle = 'bold';
+          if (d.column.index === 2){ d.cell.styles.textColor = '#566063'; d.cell.styles.halign = 'justify'; }
+        }
+      });
+      y = doc.lastAutoTable.finalY + 16;
     }
 
     if (data.indicadores.length){
-      heading('Indicadores e limites', 13);
-      data.indicadores.forEach(ind => {
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(10.5); doc.setTextColor(ind.alerta ? '#B4472A' : '#1C2B2E');
-        ensureSpace(14);
-        doc.text(ind.k + ': ' + ind.v, marginX, y); y += 13;
-        if (ind.limite) body(ind.limite, 9.5);
-        y += 3;
+      ensureSpace(24);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor('#16424A');
+      doc.text('Indicadores e limites legais', marginX, y); y += 10;
+      doc.autoTable({
+        startY: y,
+        margin: { left: marginX, right: marginX },
+        head: [['Indicador', 'Valor', 'Limite / referência']],
+        body: data.indicadores.map(ind => [ind.k, ind.v, ind.limite]),
+        theme: 'striped',
+        headStyles: { fillColor: '#16424A', textColor: '#FFFFFF', fontSize: 9 },
+        bodyStyles: { fontSize: 8.5, cellPadding: { top: 4, bottom: 6, left: 4, right: 4 } },
+        columnStyles: { 0: { cellWidth: 150 }, 1: { cellWidth: 90 }, 2: { cellWidth: maxW - 150 - 90 } },
+        alternateRowStyles: { fillColor: '#F5F4EF' },
+        didParseCell: (d) => {
+          if (d.column.index === 1 && d.section === 'body' && data.indicadores[d.row.index].alerta){
+            d.cell.styles.textColor = '#B4472A'; d.cell.styles.fontStyle = 'bold';
+          }
+        }
       });
-      y += 6;
+      y = doc.lastAutoTable.finalY + 20;
+      y = renderIndicatorChartPDF(doc, marginX, maxW, y, ensureSpace, data.indicadores);
     }
 
+    if (data.rankingReal && data.rankingReal.length){
+      ensureSpace(24);
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(12); doc.setTextColor('#16424A');
+      doc.text('Ranking estadual — captação de recursos públicos federais', marginX, y); y += 10;
+      doc.autoTable({
+        startY: y,
+        margin: { left: marginX, right: marginX },
+        head: [['Posição', 'Município', 'Valor captado (convênio federal)']],
+        body: data.rankingReal.map(r => [r.pos, r.nome, r.valor]),
+        theme: 'striped',
+        headStyles: { fillColor: '#16424A', textColor: '#FFFFFF', fontSize: 9 },
+        bodyStyles: { fontSize: 8.5, textColor: '#1C2B2E' },
+        columnStyles: { 0: { cellWidth: 60 }, 1: { cellWidth: 200 }, 2: { cellWidth: maxW - 260 } },
+        alternateRowStyles: { fillColor: '#F5F4EF' },
+        didParseCell: (d) => {
+          if (data.rankingReal[d.row.index]?.destaque && d.section === 'body'){
+            d.cell.styles.fillColor = '#F3E8D2'; d.cell.styles.fontStyle = 'bold';
+          }
+        }
+      });
+      y = doc.lastAutoTable.finalY + 10;
+      sourceNote(data.rankingRealFonte);
+      y = renderRankingChartPDF(doc, marginX, maxW, y, ensureSpace, data.rankingReal);
+    }
+
+    // ===== 3. FRAGILIDADES x BENEFÍCIOS =====
+    if (data.fragilidadesBeneficios.length){
+      newPage();
+      sectionHeader('O que a captação de recursos pode resolver', 3);
+      body('Cruzamos as fragilidades já identificadas no diagnóstico com o tipo de recurso federal que existe hoje para resolvê-las — esta é a base da argumentação para priorizar a captação.', 10, '#566063');
+      y += 4;
+      doc.autoTable({
+        startY: y,
+        margin: { left: marginX, right: marginX },
+        head: [['Fragilidade identificada', 'Benefício possível com a captação de recursos']],
+        body: data.fragilidadesBeneficios.map(f => [f.fragilidade, f.beneficio]),
+        theme: 'grid',
+        headStyles: { fillColor: '#B4472A', textColor: '#FFFFFF', fontSize: 9.5 },
+        bodyStyles: { fontSize: 9.5, textColor: '#1C2B2E', valign: 'top', cellPadding: 8 },
+        columnStyles: { 0: { cellWidth: maxW * 0.38, fontStyle: 'bold' }, 1: { textColor: '#3A7A5D' } },
+        alternateRowStyles: { fillColor: '#F5F4EF' },
+      });
+      y = doc.lastAutoTable.finalY + 20;
+    }
+
+    // ===== 4. LEITURA E RECOMENDAÇÃO =====
     if (data.leitura.length){
-      heading('Leitura e recomendações', 13);
-      data.leitura.forEach(txt => body('• ' + txt, 10));
+      newPage();
+      sectionHeader('Leitura e recomendação da equipe MuniForte', 4);
+      data.leitura.forEach(txt => {
+        ensureSpace(20);
+        pdfDot(doc, marginX + 6, y - 4, 3, '#16424A');
+        doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor('#1C2B2E');
+        const lines = doc.splitTextToSize(txt, maxW - 24);
+        doc.text(lines, marginX + 20, y);
+        y += lines.length * 13 + 6;
+      });
     }
 
-    const pageCount = doc.internal.getNumberOfPages();
-    for (let i = 1; i <= pageCount; i++){
-      doc.setPage(i);
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor('#8A8577');
-      doc.text('MuniForte · Consultoria em Gestão Pública · página ' + i + ' de ' + pageCount, marginX, pageH - 24);
-    }
+    ensureSpace(90);
+    y += 10;
+    doc.setFillColor('#16424A'); doc.roundedRect(marginX, y, maxW, 70, 10, 10, 'F');
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(13); doc.setTextColor('#FFFFFF');
+    doc.text('Quer transformar esse diagnóstico em recursos captados de verdade?', marginX + 18, y + 28, { maxWidth: maxW - 36 });
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(9.5); doc.setTextColor('#DCEAE9');
+    doc.text('Fale com a equipe MuniForte: (93) 99115-4436 · consultoria em gestão pública', marginX + 18, y + 48);
 
+    footer();
     doc.save('muniforte-analise-financeira-' + new Date().toISOString().slice(0,10) + '.pdf');
   }
 
   function exportFinPPTX(data){
     const pptx = new PptxGenJS();
+    pptx.defineLayout({ name: 'MF', width: 10, height: 5.63 });
+    pptx.layout = 'MF';
+    const W = 10, H = 5.63;
 
-    const slide1 = pptx.addSlide();
-    slide1.background = { color: '16424A' };
-    slide1.addText('Análise financeira', { x: 0.6, y: 1.7, w: 9, h: 0.7, fontSize: 30, bold: true, color: 'FFFFFF', fontFace: 'Georgia' });
-    slide1.addText(data.titulo, { x: 0.6, y: 2.4, w: 9, h: 0.5, fontSize: 18, color: 'B8842C', bold: true });
-    slide1.addText(data.subtitulo || '', { x: 0.6, y: 2.9, w: 9, h: 0.5, fontSize: 12, color: 'BFD6D4' });
-    slide1.addText('Gerado em ' + new Date().toLocaleDateString('pt-BR') + ' · MuniForte Consultoria em Gestão Pública', { x: 0.6, y: 6.7, w: 9, h: 0.4, fontSize: 10, color: '9DBAB8' });
-
-    if (data.checklist.length){
-      const slide2 = pptx.addSlide();
-      slide2.addText('Verificação de regularidade e indicadores', { x: 0.5, y: 0.35, w: 9, h: 0.5, fontSize: 20, bold: true, color: '16424A' });
-      const rows = data.checklist.slice(0, 8).map(item => ([
-        { text: item.ok ? '✓' : '!', options: { color: item.ok ? '3A7A5D' : 'B4472A', bold: true, align: 'center' } },
-        { text: item.label, options: { bold: true, color: '1C2B2E' } },
-        { text: item.detalhe, options: { color: '566063', fontSize: 10 } },
-      ]));
-      slide2.addTable(rows, { x: 0.5, y: 1.0, w: 9, colW: [0.5, 3, 5.5], fontSize: 11, border: { type: 'solid', color: 'E0DCCF', pt: 0.5 }, autoPage: true });
+    function footerNote(slide, text){
+      slide.addText(text, { x: 0.4, y: H - 0.35, w: W - 0.8, h: 0.3, fontSize: 8, italic: true, color: '8A8577' });
+    }
+    function pageFrame(slide, title){
+      slide.addShape('rect', { x: 0, y: 0, w: W, h: 0.62, fill: { color: '16424A' } });
+      slide.addText(title, { x: 0.4, y: 0.08, w: W - 0.8, h: 0.46, fontSize: 18, bold: true, color: 'FFFFFF', valign: 'middle' });
     }
 
+    // ===== SLIDE 1 — CAPA =====
+    const s1 = pptx.addSlide();
+    s1.background = { color: '16424A' };
+    s1.addShape('roundRect', { x: 0.5, y: 0.7, w: 0.7, h: 0.7, fill: { color: 'B8842C' }, rectRadius: 0.12 });
+    s1.addText('MF', { x: 0.5, y: 0.7, w: 0.7, h: 0.7, fontSize: 20, bold: true, color: '16424A', align: 'center', valign: 'middle' });
+    s1.addText('MUNIFORTE · CONSULTORIA EM GESTÃO PÚBLICA', { x: 0.5, y: 1.55, w: 9, h: 0.3, fontSize: 11, bold: true, color: '9DBAB8', charSpacing: 1 });
+    s1.addText('Análise Financeira e\nOportunidades de Captação', { x: 0.5, y: 1.95, w: 9, h: 1.3, fontSize: 30, bold: true, color: 'FFFFFF' });
+    s1.addText(data.nomeEntidade, { x: 0.5, y: 3.35, w: 9, h: 0.5, fontSize: 20, bold: true, color: 'B8842C' });
+    s1.addText('Gerado em ' + new Date().toLocaleDateString('pt-BR'), { x: 0.5, y: 3.85, w: 9, h: 0.3, fontSize: 11, color: 'DCEAE9' });
+    s1.addText('Elaborado com base em dados oficiais: SICONFI, CAUC, Transferegov, Portal da Transparência, IBGE e Tribunal de Contas da União.', { x: 0.5, y: H - 0.7, w: 9, h: 0.5, fontSize: 8.5, color: '9DBAB8' });
+
+    // ===== SLIDE 2 — DESTAQUE: REPASSE VOLUNTÁRIO (foco da MuniForte) =====
+    const s2 = pptx.addSlide();
+    s2.background = { color: '16424A' };
+    pageFrame(s2, data.contextoNacional.titulo);
+    if (data.contextoNacional.destaqueVoluntario){
+      const dv = data.contextoNacional.destaqueVoluntario;
+      s2.addShape('roundRect', { x: 0.4, y: 1.0, w: 2.6, h: 0.4, fill: { color: 'B8842C' }, rectRadius: 0.08 });
+      s2.addText('FOCO DA MUNIFORTE', { x: 0.4, y: 1.0, w: 2.6, h: 0.4, fontSize: 11, bold: true, color: 'FFFFFF', align: 'center', valign: 'middle' });
+      s2.addText(dv.v, { x: 0.4, y: 1.55, w: W - 0.8, h: 1.1, fontSize: 44, bold: true, color: 'FFFFFF' });
+      s2.addText(dv.d, { x: 0.4, y: 2.7, w: W - 0.8, h: 1.0, fontSize: 13, color: 'DCEAE9', align: 'justify' });
+      s2.addText('Fonte: ' + dv.fonte, { x: 0.4, y: 3.7, w: W - 0.8, h: 0.5, fontSize: 8.5, italic: true, color: '9DBAB8' });
+    }
+    if (data.contextoNacional.chamada){
+      s2.addShape('roundRect', { x: 0.4, y: H - 1.35, w: W - 0.8, h: 0.9, fill: { color: 'F3E8D2' }, rectRadius: 0.08 });
+      s2.addText('"' + data.contextoNacional.chamada + '"', { x: 0.65, y: H - 1.25, w: W - 1.3, h: 0.75, fontSize: 13, italic: true, bold: true, color: '8A6420', valign: 'middle' });
+    }
+
+    // ===== SLIDE 2B — REPASSE OBRIGATÓRIO x VOLUNTÁRIO (explicação + contexto) =====
+    const s2b = pptx.addSlide();
+    pageFrame(s2b, 'Repasse obrigatório x voluntário — o que isso significa');
+    s2b.addText(data.contextoNacional.explicacao, { x: 0.4, y: 0.85, w: W - 0.8, h: 1.1, fontSize: 12.5, color: '1C2B2E', align: 'justify' });
+    let cx = 0.4, cy = 2.1;
+    const boxW = (W - 0.8 - 0.3 * (data.contextoNacional.destaques.length - 1)) / data.contextoNacional.destaques.length;
+    data.contextoNacional.destaques.forEach((item, i) => {
+      const x = 0.4 + i * (boxW + 0.3);
+      const isSec = !!item.secundario;
+      s2b.addShape('roundRect', Object.assign({ x, y: cy, w: boxW, h: 2.5, fill: { color: isSec ? 'F5F4EF' : 'E7EEEE' }, rectRadius: 0.08 }, isSec ? { line: { color: 'E0DCCF', width: 1 } } : {}));
+      s2b.addText(item.v, { x: x + 0.15, y: cy + 0.15, w: boxW - 0.3, h: 0.6, fontSize: isSec ? 15 : 19, bold: true, color: isSec ? '8A8577' : '16424A' });
+      s2b.addText(item.d, { x: x + 0.15, y: cy + 0.8, w: boxW - 0.3, h: 1.3, fontSize: 10.5, color: isSec ? '8A8577' : '1C2B2E', align: 'justify' });
+      s2b.addText('Fonte: ' + item.fonte, { x: x + 0.15, y: cy + 2.15, w: boxW - 0.3, h: 0.3, fontSize: 7, italic: true, color: '8A8577' });
+    });
+
+    // ===== SLIDE 4 — CONTEXTO ESTADUAL =====
+    if (data.contextoNacional.estadoContexto){
+      const s4 = pptx.addSlide();
+      pageFrame(s4, 'Contexto do estado');
+      s4.addShape('roundRect', { x: 0.4, y: 1.3, w: W - 0.8, h: 1.8, fill: { color: 'F3E8D2' }, rectRadius: 0.08 });
+      s4.addText(data.contextoNacional.estadoContexto, { x: 0.7, y: 1.55, w: W - 1.4, h: 1.3, fontSize: 15, bold: true, color: '8A6420', valign: 'middle' });
+      footerNote(s4, 'Fonte: ' + data.contextoNacional.estadoFonte);
+    }
+
+    // ===== SLIDE 5 — DIAGNÓSTICO FINANCEIRO E DE CAPTAÇÃO (1 a 7) =====
+    if (data.checklist.length){
+      const s5 = pptx.addSlide();
+      pageFrame(s5, 'Diagnóstico financeiro e de captação (tópicos 1 a 7)');
+      const rows = [[
+        { text: '', options: { bold: true, color: 'FFFFFF', fill: '16424A' } },
+        { text: 'Tópico', options: { bold: true, color: 'FFFFFF', fill: '16424A' } },
+        { text: 'Resultado', options: { bold: true, color: 'FFFFFF', fill: '16424A' } },
+      ]].concat(data.checklist.map(item => ([
+        { text: item.ok ? '✓' : '!', options: { color: item.ok ? '3A7A5D' : 'B4472A', bold: true, align: 'center' } },
+        { text: item.label, options: { bold: true, color: '1C2B2E', align: 'justify' } },
+        { text: item.detalhe, options: { color: '566063', fontSize: 10.5, align: 'justify' } },
+      ])));
+      s5.addTable(rows, { x: 0.4, y: 0.85, w: W - 0.8, colW: [0.5, 3, 5.5], fontSize: 11.5, border: { type: 'solid', color: 'E0DCCF', pt: 0.5 }, autoPage: true });
+    }
+
+    // ===== SLIDE 5A2 — GRÁFICO: COMPOSIÇÃO DOS CONVÊNIOS =====
+    if (data.convenioChartData){
+      const s5a2 = pptx.addSlide();
+      pageFrame(s5a2, 'Origem dos recursos de convênio');
+      const cc = data.convenioChartData;
+      const chartDataConv = [{
+        name: 'Valor captado (R$)',
+        labels: ['Convênio federal (Transferegov)', 'Convênio estadual', 'Convênio privado'],
+        values: [cc.convenioFederal, cc.convenioEstadual, cc.convenioPrivado],
+      }];
+      s5a2.addChart(pptx.ChartType.bar, chartDataConv, {
+        x: 0.6, y: 0.9, w: W - 1.2, h: 4.0,
+        barDir: 'col',
+        chartColors: ['16424A', '2C6E76', 'B8842C'],
+        showLegend: false, showTitle: false, showValue: true,
+        dataLabelColor: '1C2B2E', dataLabelFontSize: 10,
+        catAxisLabelColor: '1C2B2E', catAxisLabelFontSize: 10.5,
+        valAxisLabelColor: '566063',
+      });
+    }
+
+    // ===== SLIDE 5B — RESUMO (TÓPICO 8) =====
+    if (data.resumo8 && data.resumo8.length){
+      const s5b = pptx.addSlide();
+      pageFrame(s5b, '8) Resumo dos tópicos analisados');
+      const rowsResumo = [[
+        { text: '#', options: { bold: true, color: 'FFFFFF', fill: '2C6E76' } },
+        { text: 'Resumo', options: { bold: true, color: 'FFFFFF', fill: '2C6E76' } },
+      ]].concat(data.resumo8.map((t, i) => ([
+        { text: String(i + 1), options: { bold: true, color: '16424A', align: 'center' } },
+        { text: t, options: { color: '1C2B2E', fontSize: 12, align: 'justify' } },
+      ])));
+      s5b.addTable(rowsResumo, { x: 0.4, y: 0.85, w: W - 0.8, colW: [0.5, 8.5], fontSize: 12, border: { type: 'solid', color: 'E0DCCF', pt: 0.5 }, autoPage: true });
+    }
+
+    // ===== SLIDE 5C — VERIFICAÇÃO DE REGULARIDADE (CAUC) =====
+    if (data.caucChecklist && data.caucChecklist.length){
+      const s5c = pptx.addSlide();
+      pageFrame(s5c, 'Verificação de regularidade — CAUC');
+      const rowsCauc = [[
+        { text: '', options: { bold: true, color: 'FFFFFF', fill: '16424A' } },
+        { text: 'Requisito', options: { bold: true, color: 'FFFFFF', fill: '16424A' } },
+        { text: 'Situação', options: { bold: true, color: 'FFFFFF', fill: '16424A' } },
+      ]].concat(data.caucChecklist.map(item => ([
+        { text: item.ok ? '✓' : '!', options: { color: item.ok ? '3A7A5D' : 'B4472A', bold: true, align: 'center' } },
+        { text: item.label, options: { bold: true, color: '1C2B2E', align: 'justify' } },
+        { text: item.detalhe, options: { color: '566063', fontSize: 10.5, align: 'justify' } },
+      ])));
+      s5c.addTable(rowsCauc, { x: 0.4, y: 0.85, w: W - 0.8, colW: [0.5, 3.8, 4.7], fontSize: 10.5, border: { type: 'solid', color: 'E0DCCF', pt: 0.5 }, autoPage: true });
+    }
+
+    // ===== SLIDE 6 — INDICADORES =====
     if (data.indicadores.length){
-      const slide3 = pptx.addSlide();
-      slide3.addText('Indicadores e limites', { x: 0.5, y: 0.35, w: 9, h: 0.5, fontSize: 20, bold: true, color: '16424A' });
-      const rows3 = data.indicadores.map(ind => ([
+      const s6 = pptx.addSlide();
+      pageFrame(s6, 'Indicadores e limites legais');
+      const rows6 = [[
+        { text: 'Indicador', options: { bold: true, color: 'FFFFFF', fill: '16424A' } },
+        { text: 'Valor', options: { bold: true, color: 'FFFFFF', fill: '16424A' } },
+        { text: 'Limite / referência', options: { bold: true, color: 'FFFFFF', fill: '16424A' } },
+      ]].concat(data.indicadores.map(ind => ([
         { text: ind.k, options: { bold: true, color: '1C2B2E' } },
         { text: ind.v, options: { bold: true, color: ind.alerta ? 'B4472A' : '3A7A5D' } },
-        { text: ind.limite, options: { color: '566063', fontSize: 10 } },
-      ]));
-      slide3.addTable(rows3, { x: 0.5, y: 1.0, w: 9, colW: [3.5, 1.5, 4], fontSize: 11, border: { type: 'solid', color: 'E0DCCF', pt: 0.5 } });
+        { text: ind.limite, options: { color: '566063', fontSize: 9.5 } },
+      ])));
+      s6.addTable(rows6, { x: 0.4, y: 0.85, w: W - 0.8, colW: [3.5, 1.7, 4], fontSize: 10.5, border: { type: 'solid', color: 'E0DCCF', pt: 0.5 } });
     }
 
-    if (data.leitura.length){
-      const slide4 = pptx.addSlide();
-      slide4.addText('Leitura e recomendações', { x: 0.5, y: 0.35, w: 9, h: 0.5, fontSize: 20, bold: true, color: '16424A' });
-      slide4.addText(data.leitura.map(t => ({ text: t, options: { bullet: true, breakLine: true, color: '1C2B2E', fontSize: 13 } })), { x: 0.5, y: 1.1, w: 9, h: 5 });
+    // ===== SLIDE 6B — GRÁFICO: INDICADORES VS. LIMITES =====
+    const indicatorRows = computeIndicatorRows(data.indicadores);
+    if (indicatorRows.length){
+      const s6b = pptx.addSlide();
+      pageFrame(s6b, '% já utilizado do limite legal (ou do mínimo exigido)');
+      const chartData = [{
+        name: '% do limite/mínimo utilizado',
+        labels: indicatorRows.map(r => r.label),
+        values: indicatorRows.map(r => r.ratioPct),
+      }];
+      s6b.addChart(pptx.ChartType.bar, chartData, {
+        x: 0.4, y: 0.9, w: W - 0.8, h: 3.9,
+        barDir: 'bar',
+        chartColors: indicatorRows.map(r => r.favoravel ? '3A7A5D' : 'B4472A'),
+        showLegend: false, showTitle: false,
+        showValue: true, dataLabelColor: '1C2B2E', dataLabelFontSize: 10, dataLabelFormatCode: '0"%"',
+        catAxisLabelColor: '1C2B2E', catAxisLabelFontSize: 10,
+        valAxisLabelColor: '566063', valAxisTitle: '% do limite/mínimo (100% = limite legal)',
+      });
+      s6b.addText('Verde = dentro do limite / acima do mínimo exigido · Vermelho = fora do limite / abaixo do mínimo', { x: 0.4, y: H - 0.45, w: W - 0.8, h: 0.3, fontSize: 8.5, italic: true, color: '8A8577' });
     }
+
+    // ===== SLIDE 6C — RANKING ESTADUAL REAL (captação federal, SICONFI) =====
+    if (data.rankingReal && data.rankingReal.length){
+      const s6c = pptx.addSlide();
+      pageFrame(s6c, 'Ranking estadual — captação de recursos públicos federais');
+      const rowsR = [[
+        { text: 'Posição', options: { bold: true, color: 'FFFFFF', fill: '16424A' } },
+        { text: 'Município', options: { bold: true, color: 'FFFFFF', fill: '16424A' } },
+        { text: 'Valor captado (convênio federal)', options: { bold: true, color: 'FFFFFF', fill: '16424A' } },
+      ]].concat(data.rankingReal.map(r => ([
+        Object.assign({ text: r.pos, options: Object.assign({ bold: true, color: '16424A' }, r.destaque ? { fill: 'F3E8D2' } : {}) } ),
+        Object.assign({ text: r.nome, options: Object.assign({ bold: !!r.destaque }, r.destaque ? { fill: 'F3E8D2' } : {}) } ),
+        Object.assign({ text: r.valor, options: Object.assign({ bold: !!r.destaque }, r.destaque ? { fill: 'F3E8D2' } : {}) } ),
+      ])));
+      s6c.addTable(rowsR, { x: 0.4, y: 0.85, w: W - 0.8, colW: [1.1, 4.5, 3.4], fontSize: 11, border: { type: 'solid', color: 'E0DCCF', pt: 0.5 }, autoPage: true });
+      footerNote(s6c, 'Fonte: ' + data.rankingRealFonte);
+    }
+
+    // ===== SLIDE 6D — GRÁFICO DE RANKING =====
+    if (data.rankingReal && data.rankingReal.length){
+      const s6d = pptx.addSlide();
+      pageFrame(s6d, 'Comparativo visual — ranking de captação federal');
+      const chartRanking = [{
+        name: 'Valor captado (R$)',
+        labels: data.rankingReal.map(r => r.pos + ' ' + r.nome.split(' — ')[0]),
+        values: data.rankingReal.map(r => parseFloat(String(r.valor).replace(/[^\d,]/g,'').replace(',','.')) || 0),
+      }];
+      s6d.addChart(pptx.ChartType.bar, chartRanking, {
+        x: 0.4, y: 0.85, w: W - 0.8, h: 4.3,
+        barDir: 'bar',
+        chartColors: data.rankingReal.map(r => r.destaque ? 'B8842C' : '16424A'),
+        showLegend: false, showTitle: false,
+        catAxisLabelColor: '1C2B2E', catAxisLabelFontSize: 9,
+        valAxisLabelColor: '566063',
+      });
+    }
+
+    // ===== SLIDE 7 — FRAGILIDADES x BENEFÍCIOS =====
+    if (data.fragilidadesBeneficios.length){
+      const s7 = pptx.addSlide();
+      pageFrame(s7, 'O que a captação de recursos pode resolver');
+      const rows7 = [[
+        { text: 'Fragilidade identificada', options: { bold: true, color: 'FFFFFF', fill: 'B4472A' } },
+        { text: 'Benefício possível com a captação', options: { bold: true, color: 'FFFFFF', fill: '3A7A5D' } },
+      ]].concat(data.fragilidadesBeneficios.map(f => ([
+        { text: f.fragilidade, options: { bold: true, color: '1C2B2E' } },
+        { text: f.beneficio, options: { color: '3A7A5D', fontSize: 11, align: 'justify' } },
+      ])));
+      s7.addTable(rows7, { x: 0.4, y: 0.85, w: W - 0.8, colW: [3.6, 5.6], fontSize: 11.5, border: { type: 'solid', color: 'E0DCCF', pt: 0.5 }, autoPage: true });
+    }
+
+    // ===== SLIDE 8 — LEITURA E CTA =====
+    const s8 = pptx.addSlide();
+    pageFrame(s8, 'Leitura e recomendação da equipe MuniForte');
+    if (data.leitura.length){
+      s8.addText(data.leitura.map(t => ({ text: t, options: { bullet: true, breakLine: true, color: '1C2B2E', fontSize: 14, align: "justify" } })), { x: 0.4, y: 0.9, w: W - 0.8, h: 3.0 });
+    }
+    s8.addShape('roundRect', { x: 0.4, y: H - 1.4, w: W - 0.8, h: 1.0, fill: { color: '16424A' }, rectRadius: 0.1 });
+    s8.addText('Quer transformar esse diagnóstico em recursos captados de verdade?', { x: 0.65, y: H - 1.3, w: W - 1.3, h: 0.45, fontSize: 13, bold: true, color: 'FFFFFF' });
+    s8.addText('Fale com a equipe MuniForte: (93) 99115-4436 · consultoria em gestão pública', { x: 0.65, y: H - 0.8, w: W - 1.3, h: 0.35, fontSize: 11, color: 'DCEAE9' });
 
     pptx.writeFile({ fileName: 'muniforte-analise-financeira-' + new Date().toISOString().slice(0,10) + '.pptx' });
   }
@@ -1782,6 +2967,8 @@
   }
   function openSourcesModal(){ document.getElementById('sources-modal-overlay').classList.add('open'); }
   function closeSourcesModal(){ document.getElementById('sources-modal-overlay').classList.remove('open'); }
+
+  populateMunicipioSelect();
 </script>
 
 <!-- ===== MODAL: FONTES DE DADOS OFICIAIS ===== -->
